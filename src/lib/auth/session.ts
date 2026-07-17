@@ -279,7 +279,12 @@ export interface SignupInput {
 
 export async function signup(input: SignupInput): Promise<User> {
   // If the browser has a stale refresh token from an older attempt, clear it before creating the account.
-  await getSessionSafely();
+  try {
+    await getSessionSafely();
+  } catch (error) {
+    console.warn("Sessão anterior inválida antes do cadastro", error);
+    await clearBrokenSession();
+  }
 
   const { data, error } = await supabase.auth.signUp({
     email: input.email.trim().toLowerCase(),
@@ -302,6 +307,7 @@ export async function signup(input: SignupInput): Promise<User> {
   const user_number = `${prefix}-${String(next).padStart(4, "0")}`;
 
   if (!data.session) {
+    await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
     throw new Error(
       "Conta criada, mas ainda não é possível entrar. Confirme seu email ou contate o administrador.",
     );
@@ -329,10 +335,23 @@ export async function signup(input: SignupInput): Promise<User> {
     perfil_empresa: input.perfilEmpresa ?? null,
     site_rede_social: input.siteRedeSocial ?? null,
   });
-  if (insErr) throw new Error(`Perfil: ${translateAuthError(insErr)}`);
+  if (insErr) {
+    await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+    cachedUser = null;
+    notify();
+
+    const raw = insErr as { code?: string; details?: string; hint?: string; message?: string };
+    const parts = [
+      translateAuthError(insErr),
+      raw.details ? `Detalhe: ${raw.details}` : "",
+      raw.hint ? `Dica: ${raw.hint}` : "",
+      raw.code ? `Código: ${raw.code}` : "",
+    ].filter(Boolean);
+    throw new Error(`A conta foi criada, mas o perfil não pôde ser salvo. ${parts.join(" ")}`.trim());
+  }
 
 
-  const u = await loadProfile(data.user.id);
+  const u = await loadProfile(data.user.id, { fresh: true });
   if (!u) throw new Error("Perfil criado mas não encontrado.");
   cachedUser = u;
   notify();
