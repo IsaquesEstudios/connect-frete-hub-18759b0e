@@ -14,7 +14,7 @@ export const attachExternalSupabaseAuth = createMiddleware({ type: "function" })
     } catch (error) {
       const message = String(error instanceof Error ? error.message : error ?? "");
       if (/refresh_token_not_found|invalid refresh token/i.test(message)) {
-        window.localStorage.removeItem("ext-sb-auth-token");
+        if (typeof window !== "undefined") window.localStorage.removeItem("ext-sb-auth-token");
         await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
       } else {
         throw error;
