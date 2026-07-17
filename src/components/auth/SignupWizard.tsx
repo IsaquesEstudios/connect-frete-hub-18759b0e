@@ -203,7 +203,10 @@ export function SignupWizard({
       toast.success(`Cadastro criado: ${u.number}`);
       setCreatedUser(u);
     } catch (err) {
-      toast.error((err as Error).message);
+      toast.error("Não foi possível finalizar o cadastro", {
+        description: formatSignupError(err),
+        duration: 12000,
+      });
     } finally {
       setLoading(false);
     }
@@ -283,6 +286,23 @@ export function SignupWizard({
       </div>
     </div>
   );
+}
+
+function formatSignupError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error ?? "Ocorreu um erro inesperado.");
+  if (/row-level security|permission denied|42501|sem permissão/i.test(message)) {
+    return "O login foi criado, mas o perfil não pôde ser salvo por falta de permissão no banco. Contate o administrador.";
+  }
+  if (/duplicate key|already exists|23505|já existe|já cadastrado/i.test(message)) {
+    return "Já existe uma conta ou perfil com esses dados. Verifique email, CPF/CNPJ ou WhatsApp e tente novamente.";
+  }
+  if (/not-null|null value|23502|obrigat/i.test(message)) {
+    return "Algum campo obrigatório não foi enviado ao banco. Revise os dados preenchidos e tente novamente.";
+  }
+  if (/failed to fetch|network/i.test(message)) {
+    return "Falha de conexão com o servidor. Verifique sua internet e tente novamente.";
+  }
+  return message;
 }
 
 function SuccessScreen({ user, onContinue }: { user: User; onContinue: () => void }) {
@@ -492,20 +512,26 @@ function StepFoto({ data, update }: StepProps) {
       toast.error("Foto muito grande. Máx. 5MB.");
       return;
     }
-    // resize to max 512x512 and encode as jpeg dataURL to keep payload small.
-    const bmp = await createImageBitmap(file);
-    const size = 512;
-    const scale = Math.min(1, size / Math.max(bmp.width, bmp.height));
-    const w = Math.round(bmp.width * scale);
-    const h = Math.round(bmp.height * scale);
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.drawImage(bmp, 0, 0, w, h);
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
-    update("fotoUrl", dataUrl);
+    try {
+      // resize to max 512x512 and encode as jpeg dataURL to keep payload small.
+      const bmp = await createImageBitmap(file);
+      const size = 512;
+      const scale = Math.min(1, size / Math.max(bmp.width, bmp.height));
+      const w = Math.round(bmp.width * scale);
+      const h = Math.round(bmp.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Seu navegador não conseguiu processar a imagem.");
+      ctx.drawImage(bmp, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+      update("fotoUrl", dataUrl);
+    } catch {
+      toast.error("Não foi possível carregar a foto", {
+        description: "Use uma imagem JPG, PNG ou WEBP válida e tente novamente.",
+      });
+    }
   };
 
   return (
