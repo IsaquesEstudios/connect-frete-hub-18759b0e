@@ -964,37 +964,57 @@ function StepDetalhesEmpresa({ data, update }: StepProps) {
 
 function StepLocalByEstado({ data, update }: StepProps) {
   const [all, setAll] = useState<Municipio[] | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const [query, setQuery] = useState(data.cidade);
   const [openSug, setOpenSug] = useState(false);
 
-  useEffect(() => {
+  const fetchMunicipios = () => {
+    setLoadError(false);
     void loadMunicipios()
-      .then(setAll)
-      .catch(() => toast.error("Falha ao carregar cidades do IBGE."));
+      .then((list) => setAll(list))
+      .catch(() => {
+        setLoadError(true);
+        toast.error("Falha ao carregar cidades. Toque em 'Tentar novamente'.");
+      });
+  };
+
+  useEffect(() => {
+    fetchMunicipios();
   }, []);
 
   const ufs = useMemo(() => (all ? listUFs(all) : []), [all]);
 
-  // Sugestões filtradas por UF + query (limitadas para não travar o navegador
-  // ao renderizar centenas de municípios de uma vez).
   const suggestions = useMemo(() => {
     if (!all || !data.estado) return [];
-    const norm = (s: string) =>
-      s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    const qn = norm(query.trim());
-    const list = all.filter((m) => m.uf === data.estado);
-    const filtered = qn
-      ? list.filter((m) => norm(m.nome).includes(qn))
-      : list;
-    return filtered.slice(0, 50).map((m) => m.nome);
+    try {
+      const norm = (s: string) =>
+        s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      const qn = norm(query.trim());
+      const list = all.filter((m) => m.uf === data.estado);
+      const filtered = qn ? list.filter((m) => norm(m.nome).includes(qn)) : list;
+      return filtered.slice(0, 50).map((m) => m.nome);
+    } catch {
+      return [];
+    }
   }, [all, data.estado, query]);
+
+  const pickCity = (name: string) => {
+    try {
+      update("cidade", name);
+      setQuery(name);
+      setOpenSug(false);
+    } catch (err) {
+      console.error("[StepLocal] pickCity error", err);
+      toast.error("Não foi possível selecionar a cidade. Tente novamente.");
+    }
+  };
 
   return (
     <div className="space-y-3">
       <div className={fieldWrap}>
         <Label className={fieldLabel}>Estado<span className="ml-1 text-red-500">*</span></Label>
         <Select
-          value={data.estado ?? ""}
+          value={data.estado || undefined}
           onValueChange={(v) => {
             update("estado", v);
             update("cidade", "");
@@ -1003,7 +1023,7 @@ function StepLocalByEstado({ data, update }: StepProps) {
           disabled={!all}
         >
           <SelectTrigger className="h-7 border-0 bg-transparent p-0 text-sm text-white shadow-none focus:ring-0">
-            <SelectValue placeholder={all ? "Selecione o estado" : "Carregando..."} />
+            <SelectValue placeholder={all ? "Selecione o estado" : loadError ? "Falha ao carregar" : "Carregando..."} />
           </SelectTrigger>
           <SelectContent>
             {ufs.map((s) => (
@@ -1014,6 +1034,16 @@ function StepLocalByEstado({ data, update }: StepProps) {
           </SelectContent>
         </Select>
       </div>
+
+      {loadError && !all && (
+        <button
+          type="button"
+          onClick={fetchMunicipios}
+          className="text-xs text-sky-300 underline underline-offset-4 hover:text-sky-200"
+        >
+          Tentar novamente
+        </button>
+      )}
 
       <div className={cn("relative", !data.estado && "opacity-50")}>
         <Field label="Cidade" required>
@@ -1027,24 +1057,38 @@ function StepLocalByEstado({ data, update }: StepProps) {
               }
             }}
             onFocus={() => setOpenSug(true)}
-            onBlur={() => setTimeout(() => setOpenSug(false), 150)}
+            onBlur={() => window.setTimeout(() => setOpenSug(false), 200)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                if (suggestions[0]) pickCity(suggestions[0]);
+              }
+            }}
             disabled={!data.estado}
             placeholder={data.estado ? "Digite para buscar a cidade..." : "Selecione o estado primeiro"}
             className={fieldInput}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="words"
+            inputMode="text"
           />
         </Field>
         {openSug && data.estado && suggestions.length > 0 && (
-          <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-white/10 bg-[#0b1730] shadow-xl">
+          <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-white/10 bg-[#0b1730] shadow-xl overscroll-contain">
             {suggestions.map((name) => (
               <button
                 key={name}
                 type="button"
-                className="block w-full px-4 py-2 text-left text-sm text-white hover:bg-white/5"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  update("cidade", name);
-                  setQuery(name);
-                  setOpenSug(false);
+                className="block w-full px-4 py-2 text-left text-sm text-white hover:bg-white/5 active:bg-white/10"
+                onPointerDown={(e) => {
+                  // Impede o blur do input em iOS/Android antes do click ser processado
+                  e.preventDefault();
+                  pickCity(name);
+                }}
+                onClick={(e) => {
+                  // Fallback para dispositivos sem PointerEvents
+                  e.preventDefault();
+                  pickCity(name);
                 }}
               >
                 {name}
