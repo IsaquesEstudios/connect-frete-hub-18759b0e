@@ -1075,25 +1075,25 @@ function StepLocalByEstado({ data, update }: StepProps) {
         </Field>
         {openSug && data.estado && suggestions.length > 0 && (
           <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-white/10 bg-[#0b1730] shadow-xl overscroll-contain">
-            {suggestions.map((name) => (
-              <button
-                key={name}
-                type="button"
-                className="block w-full px-4 py-2 text-left text-sm text-white hover:bg-white/5 active:bg-white/10"
-                onPointerDown={(e) => {
-                  // Impede o blur do input em iOS/Android antes do click ser processado
-                  e.preventDefault();
-                  pickCity(name);
-                }}
-                onClick={(e) => {
-                  // Fallback para dispositivos sem PointerEvents
-                  e.preventDefault();
-                  pickCity(name);
-                }}
-              >
-                {name}
-              </button>
-            ))}
+            {suggestions.map((name) => {
+              const handlePick = (e: React.SyntheticEvent) => {
+                e.preventDefault();
+                pickCity(name);
+              };
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  className="block w-full px-4 py-2 text-left text-sm text-white hover:bg-white/5 active:bg-white/10"
+                  // Cobrem iOS antigo (touch), desktop antigo (mouse) e navegadores modernos (click)
+                  onTouchStart={handlePick}
+                  onMouseDown={handlePick}
+                  onClick={handlePick}
+                >
+                  {name}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
