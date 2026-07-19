@@ -14,8 +14,14 @@ import { PasswordInput } from "@/components/auth/PasswordInput";
 
 
 
+type SignupKind = "empresa" | "motorista";
+
 export const Route = createFileRoute("/auth")({
   ssr: false,
+  validateSearch: (search: Record<string, unknown>): { signup?: SignupKind } => {
+    const s = search.signup;
+    return s === "empresa" || s === "motorista" ? { signup: s } : {};
+  },
   head: () => ({
     meta: [
       { title: "Entrar — SV Logística" },
@@ -28,11 +34,13 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const { signup } = Route.useSearch();
+  const [mode, setMode] = useState<"login" | "signup">(signup ? "signup" : "login");
 
   useEffect(() => {
     if (!loading && user) navigate({ to: homeFor(user) as "/admin" });
   }, [user, loading, navigate]);
+
 
   const goHome = (u: User) => navigate({ to: homeFor(u) as "/admin" });
 
@@ -90,7 +98,7 @@ function AuthPage() {
           {mode === "login" ? (
             <LoginForm onDone={goHome} />
           ) : (
-            <SignupWizard onDone={goHome} onBackToLogin={() => setMode("login")} />
+            <SignupWizard onDone={goHome} onBackToLogin={() => setMode("login")} initialKind={signup} />
           )}
 
 

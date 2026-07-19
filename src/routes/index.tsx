@@ -93,6 +93,43 @@ function LandingPage() {
           </div>
         </section>
 
+        {/* Atalhos de cadastro */}
+        <section className="mx-auto max-w-6xl px-6 pb-16">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-white">
+              Crie sua conta agora
+            </h2>
+            <p className="mt-3 text-slate-400 max-w-xl mx-auto">
+              Escolha o seu perfil e finalize o cadastro em poucos passos.
+            </p>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            <SignupShortcut
+              icon={<ShieldCheck className="h-6 w-6" />}
+              title="Sou Empresa"
+              description="Transportadora, embarcador ou agência de carga. Conecte-se com motoristas e agilize seus fretes."
+              to="/auth"
+              search={{ signup: "empresa" as const }}
+              accent="from-blue-500/20 to-transparent"
+              iconRing="ring-blue-400/40 bg-blue-500/20 text-blue-300"
+              cta="Cadastrar empresa"
+            />
+            <SignupShortcut
+              icon={<Truck className="h-6 w-6" />}
+              title="Sou Motorista"
+              description="Cadastre seu veículo, receba oportunidades de carga e faça parte da nossa rede."
+              to="/auth"
+              search={{ signup: "motorista" as const }}
+              accent="from-sky-500/20 to-transparent"
+              iconRing="ring-sky-400/40 bg-sky-500/20 text-sky-300"
+              cta="Cadastrar motorista"
+            />
+          </div>
+        </section>
+
+
+
+
         {/* Comunidades WhatsApp */}
         <section id="comunidades" className="mx-auto max-w-6xl px-6 pb-24">
           <div className="text-center mb-10">
@@ -178,3 +215,48 @@ function CommunityCard({
     </a>
   );
 }
+
+function SignupShortcut({
+  icon,
+  title,
+  description,
+  to,
+  search,
+  accent,
+  iconRing,
+  cta,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  to: "/auth";
+  search: { signup: "empresa" | "motorista" };
+  accent: string;
+  iconRing: string;
+  cta: string;
+}) {
+  return (
+    <Link
+      to={to}
+      search={search}
+      className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur transition hover:border-sky-400/40 hover:bg-white/[0.06]"
+    >
+      <div
+        className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${accent} opacity-60`}
+      />
+      <div className="relative">
+        <div
+          className={`inline-flex h-12 w-12 items-center justify-center rounded-xl ring-1 ${iconRing}`}
+        >
+          {icon}
+        </div>
+        <h3 className="mt-4 text-lg font-semibold text-white">{title}</h3>
+        <p className="mt-2 text-sm text-slate-300">{description}</p>
+        <span className="mt-5 inline-flex items-center gap-1.5 rounded-md bg-sky-500 px-4 py-2 text-sm font-medium text-white group-hover:bg-sky-400 transition">
+          {cta} <ArrowRight className="h-4 w-4" />
+        </span>
+      </div>
+    </Link>
+  );
+}
+
