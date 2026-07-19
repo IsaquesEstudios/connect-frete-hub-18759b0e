@@ -125,6 +125,9 @@ function LandingPage() {
               cta="Cadastrar motorista"
             />
           </div>
+        </section>
+
+
 
 
         {/* Comunidades WhatsApp */}
