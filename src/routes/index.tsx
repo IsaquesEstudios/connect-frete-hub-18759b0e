@@ -93,6 +93,40 @@ function LandingPage() {
           </div>
         </section>
 
+        {/* Atalhos de cadastro */}
+        <section className="mx-auto max-w-6xl px-6 pb-16">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-white">
+              Crie sua conta agora
+            </h2>
+            <p className="mt-3 text-slate-400 max-w-xl mx-auto">
+              Escolha o seu perfil e finalize o cadastro em poucos passos.
+            </p>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            <SignupShortcut
+              icon={<ShieldCheck className="h-6 w-6" />}
+              title="Sou Empresa"
+              description="Transportadora, embarcador ou agência de carga. Conecte-se com motoristas e agilize seus fretes."
+              to="/auth"
+              search={{ signup: "empresa" as const }}
+              accent="from-blue-500/20 to-transparent"
+              iconRing="ring-blue-400/40 bg-blue-500/20 text-blue-300"
+              cta="Cadastrar empresa"
+            />
+            <SignupShortcut
+              icon={<Truck className="h-6 w-6" />}
+              title="Sou Motorista"
+              description="Cadastre seu veículo, receba oportunidades de carga e faça parte da nossa rede."
+              to="/auth"
+              search={{ signup: "motorista" as const }}
+              accent="from-sky-500/20 to-transparent"
+              iconRing="ring-sky-400/40 bg-sky-500/20 text-sky-300"
+              cta="Cadastrar motorista"
+            />
+          </div>
+
+
         {/* Comunidades WhatsApp */}
         <section id="comunidades" className="mx-auto max-w-6xl px-6 pb-24">
           <div className="text-center mb-10">
