@@ -105,16 +105,6 @@ function LandingPage() {
           </div>
           <div className="grid gap-6 md:grid-cols-2">
             <SignupShortcut
-              icon={<Truck className="h-6 w-6" />}
-              title="Sou Motorista"
-              description="Cadastre seu veículo, receba oportunidades de carga e faça parte da nossa rede."
-              to="/auth"
-              search={{ signup: "motorista" as const }}
-              accent="from-sky-500/20 to-transparent"
-              iconRing="ring-sky-400/40 bg-sky-500/20 text-sky-300"
-              cta="Cadastrar motorista"
-            />
-            <SignupShortcut
               icon={<ShieldCheck className="h-6 w-6" />}
               title="Sou Empresa"
               description="Transportadora, embarcador ou agência de carga. Conecte-se com motoristas e agilize seus fretes."
@@ -123,6 +113,16 @@ function LandingPage() {
               accent="from-blue-500/20 to-transparent"
               iconRing="ring-blue-400/40 bg-blue-500/20 text-blue-300"
               cta="Cadastrar empresa"
+            />
+            <SignupShortcut
+              icon={<Truck className="h-6 w-6" />}
+              title="Sou Motorista"
+              description="Cadastre seu veículo, receba oportunidades de carga e faça parte da nossa rede."
+              to="/auth"
+              search={{ signup: "motorista" as const }}
+              accent="from-sky-500/20 to-transparent"
+              iconRing="ring-sky-400/40 bg-sky-500/20 text-sky-300"
+              cta="Cadastrar motorista"
             />
           </div>
         </section>
