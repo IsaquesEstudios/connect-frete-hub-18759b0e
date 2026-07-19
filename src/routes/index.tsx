@@ -215,3 +215,48 @@ function CommunityCard({
     </a>
   );
 }
+
+function SignupShortcut({
+  icon,
+  title,
+  description,
+  to,
+  search,
+  accent,
+  iconRing,
+  cta,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  to: "/auth";
+  search: { signup: "empresa" | "motorista" };
+  accent: string;
+  iconRing: string;
+  cta: string;
+}) {
+  return (
+    <Link
+      to={to}
+      search={search}
+      className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur transition hover:border-sky-400/40 hover:bg-white/[0.06]"
+    >
+      <div
+        className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${accent} opacity-60`}
+      />
+      <div className="relative">
+        <div
+          className={`inline-flex h-12 w-12 items-center justify-center rounded-xl ring-1 ${iconRing}`}
+        >
+          {icon}
+        </div>
+        <h3 className="mt-4 text-lg font-semibold text-white">{title}</h3>
+        <p className="mt-2 text-sm text-slate-300">{description}</p>
+        <span className="mt-5 inline-flex items-center gap-1.5 rounded-md bg-sky-500 px-4 py-2 text-sm font-medium text-white group-hover:bg-sky-400 transition">
+          {cta} <ArrowRight className="h-4 w-4" />
+        </span>
+      </div>
+    </Link>
+  );
+}
+
