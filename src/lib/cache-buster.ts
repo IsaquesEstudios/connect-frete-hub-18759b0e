@@ -2,9 +2,11 @@
 // deployed app version changes. Prevents users from getting stuck on an old
 // bundle (which was the source of "só funciona em aba anônima" reports).
 
+declare const __APP_VERSION__: string;
+
 const VERSION_KEY = "svlogistica:app-version";
-// Bump this string on every deploy that needs to invalidate old clients.
-export const APP_VERSION = __APP_VERSION__;
+export const APP_VERSION: string =
+  typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "dev";
 
 async function clearBrowserCaches() {
   try {
