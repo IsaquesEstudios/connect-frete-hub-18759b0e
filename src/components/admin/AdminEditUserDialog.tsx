@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { PhotoUploader } from "@/components/common/PhotoUploader";
 import { repo } from "@/lib/data";
-import { setExternalUserActive } from "@/lib/data/admin-users.functions";
+import { setExternalUserActive, setExternalUserEmail } from "@/lib/data/admin-users.functions";
 import { translateAuthError } from "@/lib/auth/translate-error";
 import { formatPhone } from "@/lib/format-phone";
 import { formatDoc } from "@/lib/format-doc";
@@ -50,6 +50,7 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
     };
     setForm({
       name: u.name ?? "",
+      email: u.email ?? "",
       whatsapp: formatPhone(u.whatsapp ?? ""),
       cpf: u.cpf ?? "",
       cnpj: u.cnpj ?? "",
