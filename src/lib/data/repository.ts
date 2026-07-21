@@ -21,6 +21,7 @@ export interface Repository {
   applyLocalUserPatch(id: string, patch: UserProfilePatch): User | undefined;
   // messages
   listMessages(conversationId: string, options?: { staffInbox?: boolean }): Message[];
+  refreshMessages(): Promise<void>;
   sendMessage(input: { fromUserId: string; toUserId: string; body: string }): Message;
   deleteMessage(id: string): void;
   deleteConversation(conversationId: string): void;

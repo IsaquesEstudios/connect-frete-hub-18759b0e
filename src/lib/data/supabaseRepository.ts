@@ -479,6 +479,12 @@ class SupabaseRepository implements Repository {
       .sort((a, b) => a.createdAt - b.createdAt);
   }
 
+  async refreshMessages(): Promise<void> {
+    await this.loadMessages();
+    this.normalizeMessageConversationIds();
+    this.notify();
+  }
+
   sendMessage({
     fromUserId,
     toUserId,
