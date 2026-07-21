@@ -143,7 +143,9 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
               <>
                 <Field label="CNPJ"><Input value={form.cnpj || ""} onChange={(e) => set("cnpj", formatDoc(e.target.value, "cnpj"))} /></Field>
                 <Field label="Nome fantasia"><Input value={form.nomeFantasia || ""} onChange={(e) => set("nomeFantasia", e.target.value)} /></Field>
-                <Field label="Perfil"><Input value={form.perfilEmpresa || ""} onChange={(e) => set("perfilEmpresa", e.target.value)} /></Field>
+                <Field label="Perfil">
+                  <PerfilSelect value={form.perfilEmpresa || ""} onChange={(v) => set("perfilEmpresa", v)} />
+                </Field>
                 <Field label="Site / Redes sociais" className="md:col-span-2">
                   <Textarea value={form.siteRedeSocial || ""} onChange={(e) => set("siteRedeSocial", e.target.value)} />
                 </Field>
@@ -152,6 +154,9 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
 
             {user.type === "motorista" && (
               <>
+                <Field label="Perfil">
+                  <PerfilSelect value={form.perfilEmpresa || ""} onChange={(v) => set("perfilEmpresa", v)} />
+                </Field>
                 <Field label="Placa"><Input value={form.placa || ""} onChange={(e) => set("placa", e.target.value)} /></Field>
                 <Field label="Tipo de veículo"><Input value={form.tipoVeiculo || ""} onChange={(e) => set("tipoVeiculo", e.target.value)} /></Field>
                 <Field label="RNTRC"><Input value={form.rntrc || ""} onChange={(e) => set("rntrc", e.target.value)} /></Field>
