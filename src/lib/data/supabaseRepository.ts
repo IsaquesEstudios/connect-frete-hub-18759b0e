@@ -300,6 +300,16 @@ class SupabaseRepository implements Repository {
           if (payload.eventType === "INSERT") {
             const m = this.mapMessage(payload.new as MessageRow);
             if (!this.messages.find((x) => x.id === m.id)) this.messages.push(m);
+            // If the message references a user we haven't loaded yet
+            // (fresh signup after admin logged in), refresh profiles so
+            // the conversation shows up in the sidebar.
+            const knownIds = new Set(this.users.map((u) => u.id));
+            const needsRefresh =
+              (m.fromUserId && !knownIds.has(m.fromUserId)) ||
+              (m.toUserId && !knownIds.has(m.toUserId));
+            if (needsRefresh) {
+              void this.loadUsers().then(() => this.notify());
+            }
           } else if (payload.eventType === "UPDATE") {
             const m = this.mapMessage(payload.new as MessageRow);
             const i = this.messages.findIndex((x) => x.id === m.id);
@@ -309,6 +319,19 @@ class SupabaseRepository implements Repository {
             this.messages = this.messages.filter((x) => x.id !== oldId);
           }
           this.notify();
+        },
+      )
+      .subscribe();
+
+    // Watch profiles so new signups appear in the admin conversation list
+    // without requiring a page reload.
+    supabase
+      .channel("cf-profiles")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "profiles" },
+        () => {
+          void this.loadUsers().then(() => this.notify());
         },
       )
       .subscribe();
