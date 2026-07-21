@@ -186,7 +186,7 @@ export function SignupWizard({
     return null;
   };
 
-  const canAdvance = (): boolean => validateStep() === null;
+  
 
   const checkUniquenessForStep1 = async (): Promise<string | null> => {
     try {
