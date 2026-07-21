@@ -454,12 +454,32 @@ class SupabaseRepository implements Repository {
   }
 
   // ============ messages ============
-  private conversationLookupIds(conversationId: string): string[] {
+  private staffInboxConversationIds(conversationId: string): string[] {
+    const parts = conversationId.split("__").filter(Boolean);
+    const nonStaffNumber =
+      parts.find((part) => {
+        const user = this.getUser(part);
+        return user && !this.isStaff(user);
+      }) ?? (parts.length === 0 ? conversationId : "");
+    if (!nonStaffNumber) return [conversationId];
+    const staffNumbers = this.users.filter((u) => this.isStaff(u)).map((u) => u.number);
+    return Array.from(
+      new Set([
+        conversationId,
+        nonStaffNumber,
+        ...staffNumbers.map((n) => this.staffPairId(nonStaffNumber, n)),
+        ...staffNumbers.map((n) => `${nonStaffNumber}__${n}`),
+      ]),
+    );
+  }
+
+  private conversationLookupIds(conversationId: string, staffInbox?: boolean): string[] {
+    if (staffInbox) return this.staffInboxConversationIds(conversationId);
     return [conversationId];
   }
 
-  listMessages(conversationId: string, _options?: { staffInbox?: boolean }) {
-    const ids = this.conversationLookupIds(conversationId);
+  listMessages(conversationId: string, options?: { staffInbox?: boolean }) {
+    const ids = this.conversationLookupIds(conversationId, options?.staffInbox);
     return this.messages
       .filter((m) => ids.includes(m.conversationId))
       .sort((a, b) => a.createdAt - b.createdAt);
