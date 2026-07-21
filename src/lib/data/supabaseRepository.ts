@@ -776,18 +776,16 @@ class SupabaseRepository implements Repository {
     const sender = this.getUser(fromUserId);
     const now = Date.now();
     const rows = recipients.map((r) => ({
-      // Se o destinatário também for staff (colaborador), usamos o mesmo formato
-      // que o ChatWindow do admin espera: `${adminNumber}__${colabNumber}`.
-      // Caso contrário, o número do não-staff basta (resolveConversationId reconstrói).
-      conversation_id: this.isStaff(r) && sender
-        ? this.staffPairId(sender.number, r.number)
-        : r.number,
+      // Cada par (remetente ↔ destinatário) tem sua própria conversa, usando
+      // os IDs (UUIDs) dos usuários para garantir unicidade.
+      conversation_id: this.staffPairId(fromUserId, r.id),
       from_user_id: fromUserId,
       to_user_id: r.id,
       body,
       read_by_admin: true,
       read_by_user: false,
     }));
+
     if (rows.length > 0)
       void supabase
         .from("messages")
