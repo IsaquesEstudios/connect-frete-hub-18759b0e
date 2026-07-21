@@ -21,6 +21,7 @@ import { WHATSAPP_MOTORISTAS, WHATSAPP_EMPRESAS } from "@/lib/whatsapp-groups";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 
 import { signup } from "@/lib/auth/session";
+import { checkSignupAvailability } from "@/lib/data/signup-check.functions";
 import type { User } from "@/lib/data";
 import {
   CARROCERIAS,
