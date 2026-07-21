@@ -454,12 +454,32 @@ class SupabaseRepository implements Repository {
   }
 
   // ============ messages ============
-  private conversationLookupIds(conversationId: string): string[] {
+  private staffInboxConversationIds(conversationId: string): string[] {
+    const parts = conversationId.split("__").filter(Boolean);
+    const nonStaffNumber =
+      parts.find((part) => {
+        const user = this.getUser(part);
+        return user && !this.isStaff(user);
+      }) ?? (parts.length === 0 ? conversationId : "");
+    if (!nonStaffNumber) return [conversationId];
+    const staffNumbers = this.users.filter((u) => this.isStaff(u)).map((u) => u.number);
+    return Array.from(
+      new Set([
+        conversationId,
+        nonStaffNumber,
+        ...staffNumbers.map((n) => this.staffPairId(nonStaffNumber, n)),
+        ...staffNumbers.map((n) => `${nonStaffNumber}__${n}`),
+      ]),
+    );
+  }
+
+  private conversationLookupIds(conversationId: string, staffInbox?: boolean): string[] {
+    if (staffInbox) return this.staffInboxConversationIds(conversationId);
     return [conversationId];
   }
 
-  listMessages(conversationId: string, _options?: { staffInbox?: boolean }) {
-    const ids = this.conversationLookupIds(conversationId);
+  listMessages(conversationId: string, options?: { staffInbox?: boolean }) {
+    const ids = this.conversationLookupIds(conversationId, options?.staffInbox);
     return this.messages
       .filter((m) => ids.includes(m.conversationId))
       .sort((a, b) => a.createdAt - b.createdAt);
@@ -566,12 +586,13 @@ class SupabaseRepository implements Repository {
     })();
   }
 
-  markConversationRead(conversationId: string, viewer: "admin" | "user", _options?: { staffInbox?: boolean }) {
+  markConversationRead(conversationId: string, viewer: "admin" | "user", options?: { staffInbox?: boolean }) {
     const field = viewer === "admin" ? "read_by_admin" : "read_by_user";
+    const ids = this.conversationLookupIds(conversationId, options?.staffInbox);
     const idsToUpdate: string[] = [];
     let changed = false;
     for (const m of this.messages) {
-      if (m.conversationId !== conversationId) continue;
+      if (!ids.includes(m.conversationId)) continue;
       if (viewer === "admin" && !m.readByAdmin) {
         m.readByAdmin = true;
         changed = true;
