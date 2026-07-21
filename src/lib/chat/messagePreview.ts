@@ -21,6 +21,7 @@ export function parseFileBody(body: string): { name: string; url: string; mime?:
 
 /** Texto curto para preview em lista de conversas. */
 export function messagePreview(body: string): string {
+  if (!body || typeof body !== "string") return "";
   if (isImageBody(body)) return "📷 Imagem";
   if (isAudioBody(body)) return "🎵 Áudio";
   if (isFileBody(body)) {
