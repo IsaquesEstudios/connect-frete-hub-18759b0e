@@ -1,13 +1,13 @@
 export function isImageBody(body: string) {
-  return body.startsWith("data:image/");
+  return typeof body === "string" && body.startsWith("data:image/");
 }
 
 export function isAudioBody(body: string) {
-  return body.startsWith("data:audio/");
+  return typeof body === "string" && body.startsWith("data:audio/");
 }
 
 export function isFileBody(body: string) {
-  return body.startsWith("file:{");
+  return typeof body === "string" && body.startsWith("file:{");
 }
 
 export function parseFileBody(body: string): { name: string; url: string; mime?: string } | null {
