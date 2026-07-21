@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { PhotoUploader } from "@/components/common/PhotoUploader";
 import { repo } from "@/lib/data";
@@ -95,6 +96,7 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
         patch.rntrc = form.rntrc;
         patch.carroceria = form.carroceria;
         patch.peso = form.peso;
+        patch.perfilEmpresa = form.perfilEmpresa || undefined;
       }
       repo.updateUser(user.id, patch);
       if (active !== (user.active !== false)) {
@@ -141,7 +143,9 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
               <>
                 <Field label="CNPJ"><Input value={form.cnpj || ""} onChange={(e) => set("cnpj", formatDoc(e.target.value, "cnpj"))} /></Field>
                 <Field label="Nome fantasia"><Input value={form.nomeFantasia || ""} onChange={(e) => set("nomeFantasia", e.target.value)} /></Field>
-                <Field label="Perfil"><Input value={form.perfilEmpresa || ""} onChange={(e) => set("perfilEmpresa", e.target.value)} /></Field>
+                <Field label="Perfil">
+                  <PerfilSelect value={form.perfilEmpresa || ""} onChange={(v) => set("perfilEmpresa", v)} />
+                </Field>
                 <Field label="Site / Redes sociais" className="md:col-span-2">
                   <Textarea value={form.siteRedeSocial || ""} onChange={(e) => set("siteRedeSocial", e.target.value)} />
                 </Field>
@@ -150,6 +154,9 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
 
             {user.type === "motorista" && (
               <>
+                <Field label="Perfil">
+                  <PerfilSelect value={form.perfilEmpresa || ""} onChange={(v) => set("perfilEmpresa", v)} />
+                </Field>
                 <Field label="Placa"><Input value={form.placa || ""} onChange={(e) => set("placa", e.target.value)} /></Field>
                 <Field label="Tipo de veículo"><Input value={form.tipoVeiculo || ""} onChange={(e) => set("tipoVeiculo", e.target.value)} /></Field>
                 <Field label="RNTRC"><Input value={form.rntrc || ""} onChange={(e) => set("rntrc", e.target.value)} /></Field>
@@ -183,5 +190,20 @@ function Field({ label, children, className }: { label: string; children: React.
       <Label className="text-xs">{label}</Label>
       {children}
     </div>
+  );
+}
+
+function PerfilSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <Select value={value || undefined} onValueChange={onChange}>
+      <SelectTrigger>
+        <SelectValue placeholder="Selecione o perfil" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="transportador">Transportadora</SelectItem>
+        <SelectItem value="embarcador">Empresa</SelectItem>
+        <SelectItem value="agenciador">Agência de carga</SelectItem>
+      </SelectContent>
+    </Select>
   );
 }
