@@ -120,45 +120,97 @@ export function SignupWizard({
   const update = <K extends keyof WizardData>(k: K, v: WizardData[K]) =>
     setData((d) => ({ ...d, [k]: v }));
 
-  const canAdvance = (): boolean => {
-    if (step === 0) return data.kind !== null;
+  const validateStep = (): string | null => {
+    if (step === 0) {
+      return data.kind ? null : "Selecione se você é Empresa ou Motorista.";
+    }
+
+    const emailOk = /\S+@\S+\.\S+/.test(data.email.trim());
+    const senhaOk = data.senha.length >= 6;
+    const docOk = docDigitsValid(data.documento, data.documentoTipo);
+    const waOk = phoneDigits(data.whatsapp).length >= 10;
 
     if (isEmpresa) {
       if (step === 1) {
-        const baseOk =
-          /\S+@\S+\.\S+/.test(data.email) &&
-          data.senha.length >= 6 &&
-          docDigitsValid(data.documento, data.documentoTipo) &&
-          phoneDigits(data.whatsapp).length >= 10;
-        // Nome fantasia só é obrigatório para CNPJ
-        if (data.documentoTipo === "cnpj") return baseOk && data.nomeFantasia.trim().length > 1;
-        return baseOk && data.nome.trim().length > 1;
+        if (!emailOk) return "Informe um email válido (ex.: nome@empresa.com).";
+        if (!senhaOk) return "A senha precisa ter no mínimo 6 caracteres.";
+        if (!docOk)
+          return data.documentoTipo === "cnpj"
+            ? "CNPJ inválido. Verifique os 14 dígitos."
+            : "CPF inválido. Verifique os 11 dígitos.";
+        if (data.documentoTipo === "cnpj" && data.nomeFantasia.trim().length < 2)
+          return "Informe o nome fantasia da empresa.";
+        if (data.documentoTipo === "cpf" && data.nome.trim().length < 2)
+          return "Informe seu nome completo.";
+        if (!waOk) return "WhatsApp inválido. Inclua DDD + número (mín. 10 dígitos).";
+        return null;
       }
-      if (step === 2) return true; // foto opcional
-      if (step === 3) return !!data.perfilEmpresa;
-      if (step === 4) return !!data.estado && !!data.cidade;
-      if (step === 5) return true; // redes sociais opcional
-      return true;
+      if (step === 2) return null;
+      if (step === 3) return data.perfilEmpresa ? null : "Selecione o perfil da empresa.";
+      if (step === 4) {
+        if (!data.estado) return "Selecione o estado.";
+        if (!data.cidade) return "Selecione a cidade.";
+        return null;
+      }
+      if (step === 5) return null;
+      return null;
     }
 
     // Motorista
-    if (step === 1)
-      return (
-        data.nome.trim().length > 1 &&
-        docDigitsValid(data.documento, data.documentoTipo) &&
-        phoneDigits(data.whatsapp).length >= 10 &&
-        /\S+@\S+\.\S+/.test(data.email) &&
-        data.senha.length >= 6
-      );
+    if (step === 1) {
+      if (data.nome.trim().length < 2) return "Informe seu nome completo.";
+      if (!docOk)
+        return data.documentoTipo === "cnpj"
+          ? "CNPJ inválido. Verifique os 14 dígitos."
+          : "CPF inválido. Verifique os 11 dígitos.";
+      if (!waOk) return "WhatsApp inválido. Inclua DDD + número (mín. 10 dígitos).";
+      if (!emailOk) return "Informe um email válido (ex.: nome@exemplo.com).";
+      if (!senhaOk) return "A senha precisa ter no mínimo 6 caracteres.";
+      return null;
+    }
+    if (step === 2) return null;
+    if (step === 3) {
+      if (!data.estado) return "Selecione o estado.";
+      if (!data.cidade) return "Selecione a cidade.";
+      return null;
+    }
+    if (step === 4) return data.placa.trim().length >= 5 ? null : "Informe a placa do veículo (mín. 5 caracteres).";
+    if (step === 5) return data.tipoVeiculo ? null : "Selecione o tipo de veículo.";
+    if (step === 6) return null;
+    if (step === 7) {
+      if (!data.carroceria) return "Selecione o tipo de carroceria.";
+      if (data.peso.replace(/\D/g, "").length === 0) return "Informe o peso (kg).";
+      return null;
+    }
+    if (step === 8) return null;
+    return null;
+  };
 
-    if (step === 2) return true;
-    if (step === 3) return !!data.estado && !!data.cidade;
-    if (step === 4) return data.placa.trim().length >= 5;
-    if (step === 5) return !!data.tipoVeiculo;
-    if (step === 6) return true; // RNTRC opcional
-    if (step === 7) return !!data.carroceria && data.peso.replace(/\D/g, "").length > 0;
-    if (step === 8) return true; // redes sociais opcional
-    return true;
+  const canAdvance = (): boolean => validateStep() === null;
+
+  const checkUniquenessForStep1 = async (): Promise<string | null> => {
+    try {
+      const payload: {
+        email?: string;
+        cnpj?: string;
+        cpf?: string;
+        whatsapp?: string;
+      } = { email: data.email.trim().toLowerCase() };
+      if (data.documentoTipo === "cnpj") payload.cnpj = data.documento;
+      else payload.cpf = data.documento;
+      payload.whatsapp = data.whatsapp;
+
+      const res = await checkSignupAvailability({ data: payload });
+      if (res.skipped) return null;
+      if (res.emailTaken) return "Este email já está cadastrado. Use outro ou faça login.";
+      if (res.cnpjTaken) return "Este CNPJ já está cadastrado.";
+      if (res.cpfTaken) return "Este CPF já está cadastrado.";
+      if (res.whatsappTaken) return "Este WhatsApp já está cadastrado em outra conta.";
+      return null;
+    } catch {
+      // network error — don't block, final signup will surface any conflict
+      return null;
+    }
   };
 
   const submit = async () => {
