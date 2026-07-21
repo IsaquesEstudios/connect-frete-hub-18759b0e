@@ -377,13 +377,11 @@ class SupabaseRepository implements Repository {
   }
 
   private resolveConversationId(fromUserId: string, toUserId: string, fallback: string): string {
-    const from = this.getUser(fromUserId);
-    const to = this.getUser(toUserId);
-    if (!from || !to) return fallback;
-    // Cada par (remetente ↔ destinatário) tem sua própria conversa,
-    // então uma mensagem enviada a um colaborador não aparece na conversa
-    // com o admin (ou vice-versa).
-    return this.staffPairId(from.number, to.number);
+    // Cada par (remetente ↔ destinatário) tem sua própria conversa.
+    // Usamos os IDs (UUIDs) dos usuários para garantir unicidade mesmo
+    // quando `user_number` estiver ausente ou duplicado.
+    if (fromUserId && toUserId) return this.staffPairId(fromUserId, toUserId);
+    return fallback;
   }
 
   private mapMessage(row: MessageRow): Message {
@@ -403,11 +401,9 @@ class SupabaseRepository implements Repository {
   }
 
   private storageConversationId(fromUserId: string, toUserId: string): string {
-    const from = this.getUser(fromUserId);
-    const to = this.getUser(toUserId);
-    if (from && to) return this.staffPairId(from.number, to.number);
     return this.resolveConversationId(fromUserId, toUserId, "");
   }
+
 
   nextNumberFor(_type: UserType): string {
     return "";
@@ -456,22 +452,20 @@ class SupabaseRepository implements Repository {
   // ============ messages ============
   private staffInboxConversationIds(conversationId: string): string[] {
     const parts = conversationId.split("__").filter(Boolean);
-    const nonStaffNumber =
-      parts.find((part) => {
-        const user = this.getUser(part);
-        return user && !this.isStaff(user);
-      }) ?? (parts.length === 0 ? conversationId : "");
-    if (!nonStaffNumber) return [conversationId];
-    const staffNumbers = this.users.filter((u) => this.isStaff(u)).map((u) => u.number);
+    const nonStaffId = parts.find((part) => {
+      const user = this.getUser(part);
+      return user && !this.isStaff(user);
+    });
+    if (!nonStaffId) return [conversationId];
+    const staffIds = this.users.filter((u) => this.isStaff(u)).map((u) => u.id);
     return Array.from(
       new Set([
         conversationId,
-        nonStaffNumber,
-        ...staffNumbers.map((n) => this.staffPairId(nonStaffNumber, n)),
-        ...staffNumbers.map((n) => `${nonStaffNumber}__${n}`),
+        ...staffIds.map((sid) => this.staffPairId(nonStaffId, sid)),
       ]),
     );
   }
+
 
   private conversationLookupIds(conversationId: string, staffInbox?: boolean): string[] {
     if (staffInbox) return this.staffInboxConversationIds(conversationId);
@@ -495,12 +489,9 @@ class SupabaseRepository implements Repository {
     body: string;
   }): Message {
     const from = this.getUser(fromUserId);
-    const to = this.getUser(toUserId);
     const fromStaff = this.isStaff(from);
-    const conversationId =
-      from && to
-        ? this.staffPairId(from.number, to.number)
-        : "";
+    const conversationId = this.staffPairId(fromUserId, toUserId);
+
     const tempId = `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     const now = Date.now();
     const msg: Message = {
@@ -782,21 +773,19 @@ class SupabaseRepository implements Repository {
     fromUserId: string;
   }): BroadcastMessage {
     const recipients = this.resolveBroadcastRecipients(audience);
-    const sender = this.getUser(fromUserId);
     const now = Date.now();
+
     const rows = recipients.map((r) => ({
-      // Se o destinatário também for staff (colaborador), usamos o mesmo formato
-      // que o ChatWindow do admin espera: `${adminNumber}__${colabNumber}`.
-      // Caso contrário, o número do não-staff basta (resolveConversationId reconstrói).
-      conversation_id: this.isStaff(r) && sender
-        ? this.staffPairId(sender.number, r.number)
-        : r.number,
+      // Cada par (remetente ↔ destinatário) tem sua própria conversa, usando
+      // os IDs (UUIDs) dos usuários para garantir unicidade.
+      conversation_id: this.staffPairId(fromUserId, r.id),
       from_user_id: fromUserId,
       to_user_id: r.id,
       body,
       read_by_admin: true,
       read_by_user: false,
     }));
+
     if (rows.length > 0)
       void supabase
         .from("messages")
