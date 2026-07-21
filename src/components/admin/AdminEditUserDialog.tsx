@@ -96,6 +96,7 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
         patch.rntrc = form.rntrc;
         patch.carroceria = form.carroceria;
         patch.peso = form.peso;
+        patch.perfilEmpresa = form.perfilEmpresa || undefined;
       }
       repo.updateUser(user.id, patch);
       if (active !== (user.active !== false)) {
