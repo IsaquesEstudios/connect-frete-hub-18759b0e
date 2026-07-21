@@ -489,12 +489,9 @@ class SupabaseRepository implements Repository {
     body: string;
   }): Message {
     const from = this.getUser(fromUserId);
-    const to = this.getUser(toUserId);
     const fromStaff = this.isStaff(from);
-    const conversationId =
-      from && to
-        ? this.staffPairId(from.number, to.number)
-        : "";
+    const conversationId = this.staffPairId(fromUserId, toUserId);
+
     const tempId = `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     const now = Date.now();
     const msg: Message = {
