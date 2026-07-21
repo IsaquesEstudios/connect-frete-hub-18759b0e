@@ -222,6 +222,7 @@ class SupabaseRepository implements Repository {
         this.loadMessages(),
         this.loadBroadcasts(),
       ]);
+      this.normalizeMessageConversationIds();
       const { data } = await supabase.auth.getSession().catch(async (error) => {
         const message = String(error instanceof Error ? error.message : error ?? "");
         if (/refresh_token_not_found|invalid refresh token/i.test(message)) {
@@ -255,6 +256,7 @@ class SupabaseRepository implements Repository {
       for (const r of rows) {
         if (r.last_seen_at) this.lastSeen.set(r.id, new Date(r.last_seen_at).getTime());
       }
+      this.normalizeMessageConversationIds();
     }
   }
   private async loadTags() {
@@ -385,6 +387,16 @@ class SupabaseRepository implements Repository {
     const msg = mapMessage(row);
     msg.conversationId = this.resolveConversationId(row.from_user_id, row.to_user_id, row.conversation_id);
     return msg;
+  }
+
+  private normalizeMessageConversationIds() {
+    for (const message of this.messages) {
+      message.conversationId = this.resolveConversationId(
+        message.fromUserId,
+        message.toUserId,
+        message.conversationId,
+      );
+    }
   }
 
   private storageConversationId(fromUserId: string, toUserId: string): string {
