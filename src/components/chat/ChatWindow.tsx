@@ -97,6 +97,7 @@ export function ChatWindow({ me, other, viewer }: Props) {
   const [editOpen, setEditOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
   const [otherEmail, setOtherEmail] = useState(other.email ?? "");
+  const [otherEmailLoading, setOtherEmailLoading] = useState(false);
 
   // Cada par (eu ↔ outro) tem sua própria conversa, identificada pelos
   // IDs (UUIDs) dos usuários. O admin vê a caixa unificada com todas as
@@ -123,16 +124,21 @@ export function ChatWindow({ me, other, viewer }: Props) {
     setOtherEmail(other.email ?? "");
     if (other.id === me.id) {
       setOtherEmail(me.email ?? other.email ?? "");
+      setOtherEmailLoading(false);
       return;
     }
+    setOtherEmailLoading(!other.email);
     getExternalUserEmailsForIds({ data: { userIds: [other.id] } })
       .then((map) => {
-        if (!cancelled) setOtherEmail(map[other.id] || other.email || "");
+        if (cancelled) return;
+        setOtherEmail(map[other.id] || other.email || "");
+        setOtherEmailLoading(false);
       })
       .catch((err) => {
         if (cancelled) return;
         reportEmailsUnavailable(err);
         setOtherEmail(other.email || EMAIL_UNAVAILABLE_LABEL);
+        setOtherEmailLoading(false);
       });
     return () => {
       cancelled = true;
@@ -376,7 +382,10 @@ export function ChatWindow({ me, other, viewer }: Props) {
           </div>
           <div className="mt-6 space-y-3 text-sm max-h-[65vh] overflow-y-auto pr-1">
             <ProfileField label="Tipo" value={other.type} />
-            <ProfileField label="Email" value={otherEmail || other.email || "Não informado"} />
+            <ProfileField
+              label="Email"
+              value={otherEmailLoading ? "Carregando email..." : otherEmail || other.email || "Não informado"}
+            />
             {other.whatsapp && <ProfileField label="WhatsApp" value={formatPhone(other.whatsapp)} />}
             {other.cpf && <ProfileField label="CPF" value={other.cpf} />}
             {other.type === "empresa" && (
