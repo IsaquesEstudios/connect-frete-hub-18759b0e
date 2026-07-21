@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { PhotoUploader } from "@/components/common/PhotoUploader";
 import { repo } from "@/lib/data";
 import { getExternalUserEmailsForIds } from "@/lib/data/emails.functions";
+import { reportEmailsUnavailable, EMAIL_UNAVAILABLE_LABEL } from "@/lib/data/emails-client";
 import { setExternalUserActive } from "@/lib/data/admin-users.functions";
 import { translateAuthError } from "@/lib/auth/translate-error";
 import { formatPhone } from "@/lib/format-phone";
@@ -82,7 +83,11 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
         setAuthEmail(email);
         setForm((current) => ({ ...current, email }));
       })
-      .catch(() => undefined);
+      .catch((err) => {
+        if (cancelled) return;
+        reportEmailsUnavailable(err);
+        setAuthEmail(user.email || "");
+      });
     return () => {
       cancelled = true;
     };
