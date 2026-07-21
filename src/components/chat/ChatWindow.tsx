@@ -84,10 +84,12 @@ export function ChatWindow({ me, other, viewer }: Props) {
   const [editOpen, setEditOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
 
-  // Cada par (eu ↔ outro) tem sua própria conversa. O admin vê a caixa
-  // unificada com todas as mensagens trocadas entre a equipe e o usuário.
-  const conversationId = [me.number, other.number].sort().join("__");
+  // Cada par (eu ↔ outro) tem sua própria conversa, identificada pelos
+  // IDs (UUIDs) dos usuários. O admin vê a caixa unificada com todas as
+  // mensagens trocadas entre a equipe e o usuário.
+  const conversationId = [me.id, other.id].sort().join("__");
   const useStaffInbox = viewer === "admin";
+
 
   // Feedback visual ao trocar de conversa
   useEffect(() => {
