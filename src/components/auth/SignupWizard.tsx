@@ -344,7 +344,7 @@ export function SignupWizard({
         <Button
           type="button"
           onClick={next}
-          disabled={!canAdvance() || loading}
+          disabled={loading || checking}
           className="rounded-2xl bg-gradient-to-b from-sky-300 to-sky-500 text-slate-900 hover:from-sky-200 hover:to-sky-400"
         >
           {step === totalSteps ? (
