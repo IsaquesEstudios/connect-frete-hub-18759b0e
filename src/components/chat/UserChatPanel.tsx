@@ -66,7 +66,7 @@ export function UserChatPanel({ me }: Props) {
           <div className="flex-1 overflow-y-auto">
             {staff.map((s) => {
               const conversationId = `${me.number}__${s.number}`;
-              const useStaffInbox = s.number === ADMIN_ID || s.type === "admin";
+              const useStaffInbox = s.type === "admin" || s.type === "colaborador";
               const messages = (() => {
                 void v;
                 return repo.listMessages(conversationId, { staffInbox: useStaffInbox });
