@@ -34,9 +34,12 @@ function isStaff(profile: ProfileForMessage): boolean {
 }
 
 function messageConversationId(from: ProfileForMessage, to: ProfileForMessage): string {
-  // Cada par (remetente ↔ destinatário) tem sua própria conversa.
-  return [from.user_number, to.user_number].sort().join("__");
+  // Cada par (remetente ↔ destinatário) tem sua própria conversa. Usamos os
+  // IDs (UUIDs) dos perfis para garantir unicidade mesmo quando
+  // `user_number` estiver ausente.
+  return [from.id, to.id].sort().join("__");
 }
+
 
 async function readError(res: Response): Promise<string> {
   const text = await res.text().catch(() => "");
