@@ -528,26 +528,11 @@ class SupabaseRepository implements Repository {
     this.messages.push(msg);
     this.notify();
 
-    void supabase
-      .from("messages")
-      .insert({
-        conversation_id: dbConversationId,
-        from_user_id: fromUserId,
-        to_user_id: toUserId,
-        body,
-        read_by_admin: fromStaff,
-        read_by_user: !fromStaff,
-      })
-      .select("*")
-      .single()
-      .then(({ data, error }) => {
-        if (error) {
-          this.messages = this.messages.filter((m) => m.id !== tempId);
-          this.notify();
-          reportError("Não foi possível enviar a mensagem", error);
-          return;
-        }
-        const real = this.mapMessage(data as MessageRow);
+    void (async () => {
+      try {
+        const { sendChatMessage } = await import("./messages.functions");
+        const result = await sendChatMessage({ data: { toUserId, body } });
+        const real = this.mapMessage(result.row as MessageRow);
         const tempIdx = this.messages.findIndex((m) => m.id === tempId);
         const realIdx = this.messages.findIndex((m) => m.id === real.id);
         if (realIdx >= 0) {
@@ -558,7 +543,12 @@ class SupabaseRepository implements Repository {
           this.messages.push(real);
         }
         this.notify();
-      });
+      } catch (error) {
+        this.messages = this.messages.filter((m) => m.id !== tempId);
+        this.notify();
+        reportError("Não foi possível enviar a mensagem", error);
+      }
+    })();
     return msg;
   }
 
