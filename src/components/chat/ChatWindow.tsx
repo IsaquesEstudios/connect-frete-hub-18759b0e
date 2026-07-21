@@ -92,6 +92,8 @@ export function ChatWindow({ me, other, viewer }: Props) {
     meIsStaff && otherIsStaff
       ? [me.number, other.number].sort().join("__")
       : `${nonStaffNumber}__${staffNumber}`;
+  const useStaffInbox =
+    viewer === "admin" || (viewer === "user" && otherIsStaff && (other.number === ADMIN_ID || other.type === "admin"));
 
   // Feedback visual ao trocar de conversa
   useEffect(() => {
@@ -101,14 +103,14 @@ export function ChatWindow({ me, other, viewer }: Props) {
   }, [conversationId]);
 
   const messages = useMemo(
-    () => repo.listMessages(conversationId, { staffInbox: viewer === "admin" }),
-    [conversationId, viewer, v],
+    () => repo.listMessages(conversationId, { staffInbox: useStaffInbox }),
+    [conversationId, useStaffInbox, v],
   );
   const otherOnline = useMemo(() => repo.isOnline(other.id), [other.id, ev, v]);
 
   useEffect(() => {
-    repo.markConversationRead(conversationId, viewer, { staffInbox: viewer === "admin" });
-  }, [conversationId, viewer, v, messages.length]);
+    repo.markConversationRead(conversationId, viewer, { staffInbox: useStaffInbox });
+  }, [conversationId, viewer, useStaffInbox, v, messages.length]);
 
   useEffect(() => {
     const onVis = () => {
@@ -116,14 +118,14 @@ export function ChatWindow({ me, other, viewer }: Props) {
         repo.markConversationRead(conversationId, viewer, { staffInbox: viewer === "admin" });
       }
     };
-    const onFocus = () => repo.markConversationRead(conversationId, viewer, { staffInbox: viewer === "admin" });
+    const onFocus = () => repo.markConversationRead(conversationId, viewer, { staffInbox: useStaffInbox });
     document.addEventListener("visibilitychange", onVis);
     window.addEventListener("focus", onFocus);
     return () => {
       document.removeEventListener("visibilitychange", onVis);
       window.removeEventListener("focus", onFocus);
     };
-  }, [conversationId, viewer]);
+  }, [conversationId, viewer, useStaffInbox]);
 
   useEffect(() => {
     const el = scrollRef.current;
