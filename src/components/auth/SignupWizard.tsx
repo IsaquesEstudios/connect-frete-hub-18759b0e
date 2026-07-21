@@ -270,8 +270,28 @@ export function SignupWizard({
     }
   };
 
-  const next = () => {
-    if (!canAdvance()) return;
+  const [checking, setChecking] = useState(false);
+
+  const next = async () => {
+    const err = validateStep();
+    if (err) {
+      toast.error("Verifique os dados antes de continuar", { description: err });
+      return;
+    }
+    // Uniqueness check on the credential step (before we move on)
+    const isCredStep = (isEmpresa && step === 1) || (!isEmpresa && step === 1);
+    if (isCredStep) {
+      setChecking(true);
+      try {
+        const conflict = await checkUniquenessForStep1();
+        if (conflict) {
+          toast.error("Dados já cadastrados", { description: conflict, duration: 10000 });
+          return;
+        }
+      } finally {
+        setChecking(false);
+      }
+    }
     if (step === totalSteps) return void submit();
     setStep((s) => s + 1);
   };
