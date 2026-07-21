@@ -120,6 +120,24 @@ export function ChatWindow({ me, other, viewer }: Props) {
   }, [conversationId, viewer, useStaffInbox, v, messages.length]);
 
   useEffect(() => {
+    let busy = false;
+    const refresh = () => {
+      if (busy) return;
+      busy = true;
+      void repo.refreshMessages().finally(() => {
+        busy = false;
+      });
+    };
+    refresh();
+    const interval = window.setInterval(refresh, 3000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [conversationId]);
+
+  useEffect(() => {
     const onVis = () => {
       if (document.visibilityState === "visible") {
         repo.markConversationRead(conversationId, viewer, { staffInbox: useStaffInbox });
