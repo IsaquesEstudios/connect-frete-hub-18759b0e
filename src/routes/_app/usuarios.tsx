@@ -107,6 +107,7 @@ function UsuariosPage() {
       .then((m) => setEmails(m || {}))
       .catch((error) => {
         setEmails({});
+        console.warn("[emails] falha ao listar", error);
         toast.error("Não foi possível carregar os emails dos usuários", {
           description: translateAuthError(error),
           duration: 12000,

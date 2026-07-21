@@ -20,6 +20,7 @@ import { AdminEditUserDialog } from "@/components/admin/AdminEditUserDialog";
 import { AudioMessage } from "./AudioMessage";
 import { isAudioBody, isFileBody, isImageBody, parseFileBody } from "@/lib/chat/messagePreview";
 import { getExternalUserEmailsForIds } from "@/lib/data/emails.functions";
+import { reportEmailsUnavailable, EMAIL_UNAVAILABLE_LABEL } from "@/lib/data/emails-client";
 import { formatPhone } from "@/lib/format-phone";
 import { optimizeImageToDataUrl } from "@/lib/media/optimize";
 import {
@@ -120,15 +121,23 @@ export function ChatWindow({ me, other, viewer }: Props) {
   useEffect(() => {
     let cancelled = false;
     setOtherEmail(other.email ?? "");
+    if (other.id === me.id) {
+      setOtherEmail(me.email ?? other.email ?? "");
+      return;
+    }
     getExternalUserEmailsForIds({ data: { userIds: [other.id] } })
       .then((map) => {
         if (!cancelled) setOtherEmail(map[other.id] || other.email || "");
       })
-      .catch(() => undefined);
+      .catch((err) => {
+        if (cancelled) return;
+        reportEmailsUnavailable(err);
+        setOtherEmail(other.email || EMAIL_UNAVAILABLE_LABEL);
+      });
     return () => {
       cancelled = true;
     };
-  }, [other.id, other.email]);
+  }, [other.id, other.email, me.id, me.email]);
 
   useEffect(() => {
     repo.markConversationRead(conversationId, viewer, { staffInbox: useStaffInbox });
