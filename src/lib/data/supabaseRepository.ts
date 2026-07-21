@@ -378,9 +378,13 @@ class SupabaseRepository implements Repository {
     const toStaff = this.isStaff(to);
     if (fromStaff && toStaff) return this.staffPairId(from.number, to.number);
     if (fromStaff === toStaff) return fallback;
-    const staff = fromStaff ? from : to;
+    // Non-staff <-> staff: canonicalize to the main admin bucket so every
+    // user↔staff message lands on the same id the server writes
+    // (`<user>__ADM-0001`), independentemente de qual admin/colaborador
+    // atendeu. Sem isso, o cliente reescreve o id para o admin específico
+    // e a mensagem "some" da tela do usuário.
     const nonStaff = fromStaff ? to : from;
-    return `${nonStaff.number}__${staff.number}`;
+    return `${nonStaff.number}__ADM-0001`;
   }
 
   private mapMessage(row: MessageRow): Message {
@@ -405,9 +409,8 @@ class SupabaseRepository implements Repository {
     const fromStaff = this.isStaff(from);
     const toStaff = this.isStaff(to);
     if (fromStaff && toStaff && from && to) return this.staffPairId(from.number, to.number);
-    const staff = fromStaff ? from : to;
     const nonStaff = fromStaff ? to : from;
-    if (staff && nonStaff) return `${nonStaff.number}__${staff.number}`;
+    if (nonStaff) return `${nonStaff.number}__ADM-0001`;
     return this.resolveConversationId(fromUserId, toUserId, "");
   }
 
@@ -506,12 +509,11 @@ class SupabaseRepository implements Repository {
     const to = this.getUser(toUserId);
     const fromStaff = this.isStaff(from);
     const toStaff = this.isStaff(to);
-    const staff = fromStaff ? from : to;
     const nonStaff = fromStaff ? to : from;
     const conversationId =
       fromStaff && toStaff && from && to
         ? this.staffPairId(from.number, to.number)
-        : `${nonStaff?.number ?? ""}__${staff?.number ?? ""}`;
+        : `${nonStaff?.number ?? ""}__ADM-0001`;
     const tempId = `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     const now = Date.now();
     const msg: Message = {
