@@ -99,13 +99,7 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
         patch.peso = form.peso;
         patch.perfilEmpresa = form.perfilEmpresa || undefined;
       }
-      repo.updateUser(user.id, patch);
-      const newEmail = (form.email || "").trim().toLowerCase();
-      const oldEmail = (user.email || "").trim().toLowerCase();
-      if (newEmail && newEmail !== oldEmail) {
-        await setExternalUserEmail({ data: { userId: user.id, email: newEmail } });
-        repo.applyLocalUserPatch(user.id, { email: newEmail });
-      }
+      await repo.updateUser(user.id, patch);
       if (active !== (user.active !== false)) {
         await setExternalUserActive({ data: { userId: user.id, active } });
         repo.applyLocalUserPatch(user.id, { active });
