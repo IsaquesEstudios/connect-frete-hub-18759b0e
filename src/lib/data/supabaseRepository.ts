@@ -469,6 +469,16 @@ class SupabaseRepository implements Repository {
 
   private conversationLookupIds(conversationId: string, staffInbox?: boolean): string[] {
     if (staffInbox) return this.staffInboxConversationIds(conversationId);
+    const parts = conversationId.split("__").filter(Boolean);
+    const nonStaffId = parts.find((part) => {
+      const user = this.getUser(part);
+      return user && !this.isStaff(user);
+    });
+    const hasAdminContact = parts.some((part) => this.getUser(part)?.type === "admin");
+    if (nonStaffId && hasAdminContact) {
+      const adminIds = this.users.filter((u) => u.type === "admin").map((u) => u.id);
+      return Array.from(new Set([conversationId, ...adminIds.map((id) => this.staffPairId(nonStaffId, id))]));
+    }
     return [conversationId];
   }
 

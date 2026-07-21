@@ -21,6 +21,8 @@ type MessageForClient = {
   read_by_user: boolean;
 };
 
+const CANONICAL_ADMIN_NUMBER = "ADM-0001";
+
 function apiHeaders(key: string, bearer?: string): Record<string, string> {
   const headers: Record<string, string> = { apikey: key };
   const isOpaque = key.startsWith("sb_publishable_") || key.startsWith("sb_secret_");
@@ -38,6 +40,27 @@ function messageConversationId(from: ProfileForMessage, to: ProfileForMessage): 
   // IDs (UUIDs) dos perfis para garantir unicidade mesmo quando
   // `user_number` estiver ausente.
   return [from.id, to.id].sort().join("__");
+}
+
+async function resolveSenderProfile(
+  serviceKey: string,
+  currentProfile: ProfileForMessage,
+): Promise<ProfileForMessage> {
+  if (currentProfile.type !== "admin") return currentProfile;
+  if (currentProfile.user_number === CANONICAL_ADMIN_NUMBER) return currentProfile;
+
+  const adminRes = await fetch(
+    `${EXT_SUPABASE_URL}/rest/v1/profiles?user_number=eq.${encodeURIComponent(CANONICAL_ADMIN_NUMBER)}&select=id,user_number,type,active&limit=1`,
+    { headers: apiHeaders(serviceKey) },
+  );
+  if (!adminRes.ok) return currentProfile;
+
+  const admins = (await adminRes.json()) as ProfileForMessage[];
+  const canonicalAdmin = admins[0];
+  if (!canonicalAdmin || canonicalAdmin.type !== "admin" || canonicalAdmin.active === false) {
+    return currentProfile;
+  }
+  return canonicalAdmin;
 }
 
 
@@ -119,7 +142,8 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     if (!serviceKey) throw new Error("Configuração do servidor ausente.");
 
     const currentProfile = await getCurrentProfile(serviceKey);
-    const ids = [currentProfile.id, data.toUserId].map(encodeURIComponent).join(",");
+    const senderProfile = await resolveSenderProfile(serviceKey, currentProfile);
+    const ids = Array.from(new Set([senderProfile.id, data.toUserId])).map(encodeURIComponent).join(",");
     const profilesRes = await fetch(
       `${EXT_SUPABASE_URL}/rest/v1/profiles?id=in.(${ids})&select=id,user_number,type,active`,
       { headers: apiHeaders(serviceKey) },
@@ -129,7 +153,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     }
 
     const profiles = (await profilesRes.json()) as ProfileForMessage[];
-    const from = profiles.find((p) => p.id === currentProfile.id);
+    const from = profiles.find((p) => p.id === senderProfile.id);
     const to = profiles.find((p) => p.id === data.toUserId);
     if (!from) throw new Error("Perfil do remetente não encontrado.");
     if (!to) throw new Error("Destinatário não encontrado.");
