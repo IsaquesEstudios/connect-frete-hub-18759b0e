@@ -773,8 +773,8 @@ class SupabaseRepository implements Repository {
     fromUserId: string;
   }): BroadcastMessage {
     const recipients = this.resolveBroadcastRecipients(audience);
-    const sender = this.getUser(fromUserId);
     const now = Date.now();
+
     const rows = recipients.map((r) => ({
       // Cada par (remetente ↔ destinatário) tem sua própria conversa, usando
       // os IDs (UUIDs) dos usuários para garantir unicidade.
