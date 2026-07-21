@@ -26,9 +26,8 @@ function messageConversationId(from: ProfileForMessage, to: ProfileForMessage): 
   const fromStaff = isStaff(from);
   const toStaff = isStaff(to);
   if (fromStaff && toStaff) return [from.user_number, to.user_number].sort().join("__");
-  const staff = fromStaff ? from : to;
   const nonStaff = fromStaff ? to : from;
-  return `${nonStaff.user_number}__${staff.user_number}`;
+  return `${nonStaff.user_number}__ADM-0001`;
 }
 
 async function readError(res: Response): Promise<string> {
