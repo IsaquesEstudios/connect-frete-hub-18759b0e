@@ -474,7 +474,14 @@ class SupabaseRepository implements Repository {
       }) ?? (parts.length === 0 ? conversationId : "");
     if (!nonStaffNumber) return [conversationId];
     const staffNumbers = this.users.filter((u) => this.isStaff(u)).map((u) => u.number);
-    return Array.from(new Set([nonStaffNumber, ...staffNumbers.map((number) => `${nonStaffNumber}__${number}`)]));
+    return Array.from(
+      new Set([
+        conversationId,
+        nonStaffNumber,
+        `${nonStaffNumber}__ADM-0001`,
+        ...staffNumbers.map((number) => `${nonStaffNumber}__${number}`),
+      ]),
+    );
   }
 
   private conversationLookupIds(conversationId: string, staffInbox?: boolean): string[] {
