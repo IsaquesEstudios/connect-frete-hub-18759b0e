@@ -39,6 +39,7 @@ export function AppHeader({ user, accent }: { user: User; accent: string }) {
             <div className="mt-6 space-y-3 text-sm">
               <Field label="Nome" value={user.name} />
               <Field label="Número de usuário" value={user.number} />
+              <Field label="Email" value={user.email || "Não informado"} />
               <Field label="Tipo" value={user.type} />
               {user.type === "empresa" && <Field label="CNPJ" value={user.cnpj} />}
               {user.type === "motorista" && (
@@ -70,7 +71,7 @@ function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="font-medium capitalize">{value}</div>
+      <div className="font-medium break-all">{value}</div>
     </div>
   );
 }

@@ -131,7 +131,7 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Field label="Nome"><Input value={form.name || ""} onChange={(e) => set("name", e.target.value)} /></Field>
-            <Field label="Email (bloqueado)"><Input value={user.email || ""} disabled /></Field>
+            <Field label="Email (bloqueado)"><Input value={user.email || ""} disabled readOnly className="bg-muted text-muted-foreground cursor-not-allowed" /></Field>
             <Field label="WhatsApp">
               <Input value={form.whatsapp || ""} onChange={(e) => set("whatsapp", formatPhone(e.target.value))} />
             </Field>
