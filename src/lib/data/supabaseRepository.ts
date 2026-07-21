@@ -407,7 +407,8 @@ class SupabaseRepository implements Repository {
     if (fromStaff && toStaff && from && to) return this.staffPairId(from.number, to.number);
     const staff = fromStaff ? from : to;
     const nonStaff = fromStaff ? to : from;
-    return nonStaff?.number ?? this.resolveConversationId(fromUserId, toUserId, "").split("__")[0] ?? "";
+    if (staff && nonStaff) return `${nonStaff.number}__${staff.number}`;
+    return this.resolveConversationId(fromUserId, toUserId, "");
   }
 
   nextNumberFor(_type: UserType): string {
@@ -467,8 +468,26 @@ class SupabaseRepository implements Repository {
     return Array.from(new Set([nonStaffNumber, ...staffNumbers.map((number) => `${nonStaffNumber}__${number}`)]));
   }
 
+  private conversationLookupIds(conversationId: string, staffInbox?: boolean): string[] {
+    if (staffInbox) return this.staffInboxConversationIds(conversationId);
+
+    const ids = [conversationId];
+    const parts = conversationId.split("__").filter(Boolean);
+    if (parts.length === 2) {
+      const [a, b] = parts;
+      const aUser = this.getUser(a);
+      const bUser = this.getUser(b);
+      if (aUser && bUser && this.isStaff(aUser) !== this.isStaff(bUser)) {
+        const nonStaffNumber = this.isStaff(aUser) ? b : a;
+        ids.push(nonStaffNumber);
+      }
+    }
+
+    return Array.from(new Set(ids));
+  }
+
   listMessages(conversationId: string, options?: { staffInbox?: boolean }) {
-    const ids = options?.staffInbox ? this.staffInboxConversationIds(conversationId) : [conversationId];
+    const ids = this.conversationLookupIds(conversationId, options?.staffInbox);
     return this.messages
       .filter((m) => ids.includes(m.conversationId))
       .sort((a, b) => a.createdAt - b.createdAt);
@@ -525,7 +544,7 @@ class SupabaseRepository implements Repository {
         if (error) {
           this.messages = this.messages.filter((m) => m.id !== tempId);
           this.notify();
-          console.error("sendMessage failed", error);
+          reportError("Não foi possível enviar a mensagem", error);
           return;
         }
         const real = this.mapMessage(data as MessageRow);
