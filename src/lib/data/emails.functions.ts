@@ -115,7 +115,7 @@ export const getExternalUserEmailsForIds = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }): Promise<Record<string, string>> => {
     const key = process.env.EXT_SUPABASE_SERVICE_ROLE_KEY;
-    if (!key) throw new Error("Configuração do servidor ausente.");
+    if (!key) throw new Error("Configuração do servidor ausente: EXT_SUPABASE_SERVICE_ROLE_KEY não está definida no ambiente.");
     const currentProfile = await getCurrentProfile(key);
     const ids = Array.from(new Set(data.userIds));
 
