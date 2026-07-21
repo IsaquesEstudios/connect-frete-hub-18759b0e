@@ -528,14 +528,21 @@ class SupabaseRepository implements Repository {
         const { sendChatMessage } = await import("./messages.functions");
         const result = await sendChatMessage({ data: { toUserId, body } });
         const real = this.mapMessage(result.row as MessageRow);
+        // Preserva conversationId/fromUserId do lado do cliente: quando o
+        // servidor canoniza o remetente (ex.: ADM-0001) e usa outro par de
+        // conversa, a mensagem sumia da tela do admin remetente até que a
+        // expansão de pares admin recarregasse. Mantendo o par local, a
+        // mensagem permanece visível de forma contínua.
+        const displayReal: Message = { ...real, conversationId, fromUserId };
         const tempIdx = this.messages.findIndex((m) => m.id === tempId);
         const realIdx = this.messages.findIndex((m) => m.id === real.id);
         if (realIdx >= 0) {
+          this.messages[realIdx] = displayReal;
           if (tempIdx >= 0) this.messages.splice(tempIdx, 1);
         } else if (tempIdx >= 0) {
-          this.messages[tempIdx] = real;
+          this.messages[tempIdx] = displayReal;
         } else {
-          this.messages.push(real);
+          this.messages.push(displayReal);
         }
         this.notify();
       } catch (error) {
