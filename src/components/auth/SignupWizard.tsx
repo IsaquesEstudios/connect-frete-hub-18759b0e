@@ -355,6 +355,8 @@ export function SignupWizard({
                 <Check className="mr-1 h-4 w-4" /> Finalizar cadastro
               </>
             )
+          ) : checking ? (
+            "Verificando..."
           ) : (
             <>
               Próximo <ArrowRight className="ml-1 h-4 w-4" />
