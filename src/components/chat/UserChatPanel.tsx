@@ -31,7 +31,7 @@ export function UserChatPanel({ me }: Props) {
   const staff = useMemo(() => {
     void v;
     const all = repo.listUsers();
-    const admin = all.find((u) => u.type === "admin" || u.id === ADMIN_ID);
+    const admin = all.find((u) => u.number === ADMIN_ID) ?? all.find((u) => u.type === "admin" || u.id === ADMIN_ID);
     const collabs = all
       .filter((u) => u.type === "colaborador" && u.active !== false)
       .sort((a, b) => a.name.localeCompare(b.name));
