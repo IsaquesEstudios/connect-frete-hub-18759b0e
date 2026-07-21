@@ -380,17 +380,10 @@ class SupabaseRepository implements Repository {
     const from = this.getUser(fromUserId);
     const to = this.getUser(toUserId);
     if (!from || !to) return fallback;
-    const fromStaff = this.isStaff(from);
-    const toStaff = this.isStaff(to);
-    if (fromStaff && toStaff) return this.staffPairId(from.number, to.number);
-    if (fromStaff === toStaff) return fallback;
-    // Non-staff <-> staff: canonicalize to the main admin bucket so every
-    // user↔staff message lands on the same id the server writes
-    // (`<user>__ADM-0001`), independentemente de qual admin/colaborador
-    // atendeu. Sem isso, o cliente reescreve o id para o admin específico
-    // e a mensagem "some" da tela do usuário.
-    const nonStaff = fromStaff ? to : from;
-    return `${nonStaff.number}__ADM-0001`;
+    // Cada par (remetente ↔ destinatário) tem sua própria conversa,
+    // então uma mensagem enviada a um colaborador não aparece na conversa
+    // com o admin (ou vice-versa).
+    return this.staffPairId(from.number, to.number);
   }
 
   private mapMessage(row: MessageRow): Message {
@@ -412,11 +405,7 @@ class SupabaseRepository implements Repository {
   private storageConversationId(fromUserId: string, toUserId: string): string {
     const from = this.getUser(fromUserId);
     const to = this.getUser(toUserId);
-    const fromStaff = this.isStaff(from);
-    const toStaff = this.isStaff(to);
-    if (fromStaff && toStaff && from && to) return this.staffPairId(from.number, to.number);
-    const nonStaff = fromStaff ? to : from;
-    if (nonStaff) return `${nonStaff.number}__ADM-0001`;
+    if (from && to) return this.staffPairId(from.number, to.number);
     return this.resolveConversationId(fromUserId, toUserId, "");
   }
 
