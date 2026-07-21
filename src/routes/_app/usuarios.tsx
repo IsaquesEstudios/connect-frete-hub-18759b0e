@@ -105,7 +105,13 @@ function UsuariosPage() {
   useEffect(() => {
     getExternalUserEmails()
       .then((m) => setEmails(m || {}))
-      .catch(() => setEmails({}));
+      .catch((error) => {
+        setEmails({});
+        toast.error("Não foi possível carregar os emails dos usuários", {
+          description: translateAuthError(error),
+          duration: 12000,
+        });
+      });
   }, [v]);
 
   const users = useMemo(() => repo.listUsers(), [v]);
