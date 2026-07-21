@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { PhotoUploader } from "@/components/common/PhotoUploader";
 import { repo } from "@/lib/data";
+import { getExternalUserEmailsForIds } from "@/lib/data/emails.functions";
 import { setExternalUserActive } from "@/lib/data/admin-users.functions";
 import { translateAuthError } from "@/lib/auth/translate-error";
 import { formatPhone } from "@/lib/format-phone";
@@ -31,6 +32,7 @@ interface Props {
 
 export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props) {
   const [form, setForm] = useState<Record<string, string>>({});
+  const [authEmail, setAuthEmail] = useState("");
   const [active, setActive] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -68,6 +70,23 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
     });
     setActive(u.active !== false);
   }, [user]);
+
+  useEffect(() => {
+    if (!open || !user) return;
+    let cancelled = false;
+    setAuthEmail(user.email ?? "");
+    getExternalUserEmailsForIds({ data: { userIds: [user.id] } })
+      .then((map) => {
+        if (cancelled) return;
+        const email = map[user.id] || user.email || "";
+        setAuthEmail(email);
+        setForm((current) => ({ ...current, email }));
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [open, user]);
 
   if (!user) return null;
 
@@ -132,8 +151,10 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Field label="Nome"><Input value={form.name || ""} onChange={(e) => set("name", e.target.value)} /></Field>
-            <Field label="Email">
-              <Input type="email" value={form.email || ""} disabled className="bg-muted text-muted-foreground cursor-not-allowed" />
+            <Field label="Email usado no cadastro">
+              <div className="min-h-10 rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground break-all">
+                {authEmail || form.email || "Email não localizado"}
+              </div>
             </Field>
             <Field label="WhatsApp">
               <Input value={form.whatsapp || ""} onChange={(e) => set("whatsapp", formatPhone(e.target.value))} />

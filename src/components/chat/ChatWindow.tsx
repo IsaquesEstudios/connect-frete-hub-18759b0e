@@ -19,6 +19,7 @@ import { Camera, CheckCheck, Clock, FileText, ImagePlus, Mic, Paperclip, Pencil,
 import { AdminEditUserDialog } from "@/components/admin/AdminEditUserDialog";
 import { AudioMessage } from "./AudioMessage";
 import { isAudioBody, isFileBody, isImageBody, parseFileBody } from "@/lib/chat/messagePreview";
+import { getExternalUserEmailsForIds } from "@/lib/data/emails.functions";
 import { formatPhone } from "@/lib/format-phone";
 import { optimizeImageToDataUrl } from "@/lib/media/optimize";
 import {
@@ -94,6 +95,7 @@ export function ChatWindow({ me, other, viewer }: Props) {
   const [recordSeconds, setRecordSeconds] = useState(0);
   const [editOpen, setEditOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
+  const [otherEmail, setOtherEmail] = useState(other.email ?? "");
 
   // Cada par (eu ↔ outro) tem sua própria conversa, identificada pelos
   // IDs (UUIDs) dos usuários. O admin vê a caixa unificada com todas as
@@ -114,6 +116,19 @@ export function ChatWindow({ me, other, viewer }: Props) {
     [conversationId, useStaffInbox, v],
   );
   const otherOnline = useMemo(() => repo.isOnline(other.id), [other.id, ev, v]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setOtherEmail(other.email ?? "");
+    getExternalUserEmailsForIds({ data: { userIds: [other.id] } })
+      .then((map) => {
+        if (!cancelled) setOtherEmail(map[other.id] || other.email || "");
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [other.id, other.email]);
 
   useEffect(() => {
     repo.markConversationRead(conversationId, viewer, { staffInbox: useStaffInbox });
@@ -352,7 +367,7 @@ export function ChatWindow({ me, other, viewer }: Props) {
           </div>
           <div className="mt-6 space-y-3 text-sm max-h-[65vh] overflow-y-auto pr-1">
             <ProfileField label="Tipo" value={other.type} />
-            <ProfileField label="Email" value={other.email || "Não informado"} />
+            <ProfileField label="Email" value={otherEmail || other.email || "Não informado"} />
             {other.whatsapp && <ProfileField label="WhatsApp" value={formatPhone(other.whatsapp)} />}
             {other.cpf && <ProfileField label="CPF" value={other.cpf} />}
             {other.type === "empresa" && (
