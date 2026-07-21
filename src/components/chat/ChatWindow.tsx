@@ -115,7 +115,7 @@ export function ChatWindow({ me, other, viewer }: Props) {
   useEffect(() => {
     const onVis = () => {
       if (document.visibilityState === "visible") {
-        repo.markConversationRead(conversationId, viewer, { staffInbox: viewer === "admin" });
+        repo.markConversationRead(conversationId, viewer, { staffInbox: useStaffInbox });
       }
     };
     const onFocus = () => repo.markConversationRead(conversationId, viewer, { staffInbox: useStaffInbox });
