@@ -377,13 +377,11 @@ class SupabaseRepository implements Repository {
   }
 
   private resolveConversationId(fromUserId: string, toUserId: string, fallback: string): string {
-    const from = this.getUser(fromUserId);
-    const to = this.getUser(toUserId);
-    if (!from || !to) return fallback;
-    // Cada par (remetente ↔ destinatário) tem sua própria conversa,
-    // então uma mensagem enviada a um colaborador não aparece na conversa
-    // com o admin (ou vice-versa).
-    return this.staffPairId(from.number, to.number);
+    // Cada par (remetente ↔ destinatário) tem sua própria conversa.
+    // Usamos os IDs (UUIDs) dos usuários para garantir unicidade mesmo
+    // quando `user_number` estiver ausente ou duplicado.
+    if (fromUserId && toUserId) return this.staffPairId(fromUserId, toUserId);
+    return fallback;
   }
 
   private mapMessage(row: MessageRow): Message {
@@ -403,11 +401,9 @@ class SupabaseRepository implements Repository {
   }
 
   private storageConversationId(fromUserId: string, toUserId: string): string {
-    const from = this.getUser(fromUserId);
-    const to = this.getUser(toUserId);
-    if (from && to) return this.staffPairId(from.number, to.number);
     return this.resolveConversationId(fromUserId, toUserId, "");
   }
+
 
   nextNumberFor(_type: UserType): string {
     return "";
