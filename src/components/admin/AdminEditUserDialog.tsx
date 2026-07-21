@@ -86,7 +86,7 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
       .catch((err) => {
         if (cancelled) return;
         reportEmailsUnavailable(err);
-        setAuthEmail(user.email || "");
+        setAuthEmail(user.email || EMAIL_UNAVAILABLE_LABEL);
       });
     return () => {
       cancelled = true;

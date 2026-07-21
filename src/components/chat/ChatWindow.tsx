@@ -132,7 +132,7 @@ export function ChatWindow({ me, other, viewer }: Props) {
       .catch((err) => {
         if (cancelled) return;
         reportEmailsUnavailable(err);
-        setOtherEmail(other.email || "");
+        setOtherEmail(other.email || EMAIL_UNAVAILABLE_LABEL);
       });
     return () => {
       cancelled = true;
