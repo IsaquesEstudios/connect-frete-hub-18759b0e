@@ -100,6 +100,12 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
         patch.perfilEmpresa = form.perfilEmpresa || undefined;
       }
       repo.updateUser(user.id, patch);
+      const newEmail = (form.email || "").trim().toLowerCase();
+      const oldEmail = (user.email || "").trim().toLowerCase();
+      if (newEmail && newEmail !== oldEmail) {
+        await setExternalUserEmail({ data: { userId: user.id, email: newEmail } });
+        repo.applyLocalUserPatch(user.id, { email: newEmail });
+      }
       if (active !== (user.active !== false)) {
         await setExternalUserActive({ data: { userId: user.id, active } });
         repo.applyLocalUserPatch(user.id, { active });
@@ -120,7 +126,7 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
         <DialogHeader>
           <DialogTitle>Editar {user.name}</DialogTitle>
           <DialogDescription>
-            Altere os dados do cadastro. O email não pode ser modificado.
+            Altere os dados do cadastro. Alterar o email força o usuário a usar o novo email no próximo login.
           </DialogDescription>
         </DialogHeader>
 
@@ -132,7 +138,7 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Field label="Nome"><Input value={form.name || ""} onChange={(e) => set("name", e.target.value)} /></Field>
-            <Field label="Email (bloqueado)"><Input value={user.email || ""} disabled readOnly className="bg-muted text-muted-foreground cursor-not-allowed" /></Field>
+            <Field label="Email"><Input type="email" value={form.email || ""} onChange={(e) => set("email", e.target.value)} /></Field>
             <Field label="WhatsApp">
               <Input value={form.whatsapp || ""} onChange={(e) => set("whatsapp", formatPhone(e.target.value))} />
             </Field>
