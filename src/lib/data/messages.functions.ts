@@ -10,6 +10,17 @@ type ProfileForMessage = {
   active: boolean | null;
 };
 
+type MessageForClient = {
+  id: string;
+  conversation_id: string;
+  from_user_id: string;
+  to_user_id: string;
+  body: string;
+  created_at: string;
+  read_by_admin: boolean;
+  read_by_user: boolean;
+};
+
 function apiHeaders(key: string, bearer?: string): Record<string, string> {
   const headers: Record<string, string> = { apikey: key };
   const isOpaque = key.startsWith("sb_publishable_") || key.startsWith("sb_secret_");
@@ -43,6 +54,57 @@ async function readError(res: Response): Promise<string> {
   }
 }
 
+async function getCurrentProfile(serviceKey: string): Promise<ProfileForMessage> {
+  const request = getRequest();
+  const authHeader = request?.headers.get("authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) throw new Error("Sessão inválida. Faça login novamente.");
+
+  const userRes = await fetch(`${EXT_SUPABASE_URL}/auth/v1/user`, {
+    headers: apiHeaders(serviceKey, token),
+  });
+  if (!userRes.ok) throw new Error("Sessão inválida. Faça login novamente.");
+  const authUser = (await userRes.json()) as { id?: string };
+  if (!authUser.id) throw new Error("Sessão inválida. Faça login novamente.");
+
+  const profileRes = await fetch(
+    `${EXT_SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(authUser.id)}&select=id,user_number,type,active`,
+    { headers: apiHeaders(serviceKey) },
+  );
+  if (!profileRes.ok) {
+    throw new Error(`Não foi possível validar seu perfil. ${await readError(profileRes)}`.trim());
+  }
+  const profiles = (await profileRes.json()) as ProfileForMessage[];
+  const profile = profiles[0];
+  if (!profile) throw new Error("Perfil do usuário não encontrado.");
+  if (profile.active === false) throw new Error("Sua conta está desativada.");
+  return profile;
+}
+
+export const listVisibleMessages = createServerFn({ method: "GET" }).handler(async () => {
+  const serviceKey = process.env.EXT_SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceKey) throw new Error("Configuração do servidor ausente.");
+
+  const profile = await getCurrentProfile(serviceKey);
+  const params = new URLSearchParams({
+    select: "*",
+    order: "created_at.desc",
+    limit: "2000",
+  });
+  if (!isStaff(profile)) {
+    params.set("or", `(from_user_id.eq.${profile.id},to_user_id.eq.${profile.id})`);
+  }
+
+  const messagesRes = await fetch(`${EXT_SUPABASE_URL}/rest/v1/messages?${params.toString()}`, {
+    headers: apiHeaders(serviceKey),
+  });
+  if (!messagesRes.ok) {
+    throw new Error(`Não foi possível carregar as mensagens. ${await readError(messagesRes)}`.trim());
+  }
+
+  return ((await messagesRes.json()) as MessageForClient[]).reverse();
+});
+
 export const sendChatMessage = createServerFn({ method: "POST" })
   .inputValidator((data) =>
     z
@@ -56,19 +118,8 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     const serviceKey = process.env.EXT_SUPABASE_SERVICE_ROLE_KEY;
     if (!serviceKey) throw new Error("Configuração do servidor ausente.");
 
-    const request = getRequest();
-    const authHeader = request?.headers.get("authorization") ?? "";
-    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-    if (!token) throw new Error("Sessão inválida. Faça login novamente.");
-
-    const userRes = await fetch(`${EXT_SUPABASE_URL}/auth/v1/user`, {
-      headers: apiHeaders(serviceKey, token),
-    });
-    if (!userRes.ok) throw new Error("Sessão inválida. Faça login novamente.");
-    const authUser = (await userRes.json()) as { id?: string };
-    if (!authUser.id) throw new Error("Sessão inválida. Faça login novamente.");
-
-    const ids = [authUser.id, data.toUserId].map(encodeURIComponent).join(",");
+    const currentProfile = await getCurrentProfile(serviceKey);
+    const ids = [currentProfile.id, data.toUserId].map(encodeURIComponent).join(",");
     const profilesRes = await fetch(
       `${EXT_SUPABASE_URL}/rest/v1/profiles?id=in.(${ids})&select=id,user_number,type,active`,
       { headers: apiHeaders(serviceKey) },
@@ -78,7 +129,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     }
 
     const profiles = (await profilesRes.json()) as ProfileForMessage[];
-    const from = profiles.find((p) => p.id === authUser.id);
+    const from = profiles.find((p) => p.id === currentProfile.id);
     const to = profiles.find((p) => p.id === data.toUserId);
     if (!from) throw new Error("Perfil do remetente não encontrado.");
     if (!to) throw new Error("Destinatário não encontrado.");

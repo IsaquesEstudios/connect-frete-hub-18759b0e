@@ -272,16 +272,22 @@ class SupabaseRepository implements Repository {
       }));
   }
   private async loadMessages() {
-    // Carrega as mensagens mais recentes primeiro (limite alto para caber o histórico visível).
-    // Isso acelera a exibição dos previews de conversa na abertura do painel.
-    const { data } = await supabase
-      .from("messages")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(2000);
-    if (data) {
-      const rows = (data as MessageRow[]).slice().reverse();
+    try {
+      const { listVisibleMessages } = await import("./messages.functions");
+      const rows = (await listVisibleMessages()) as MessageRow[];
       this.messages = rows.map((r) => this.mapMessage(r));
+    } catch (error) {
+      console.error("loadMessages via server failed", error);
+      // Fallback para ambientes sem Server Function configurada.
+      const { data } = await supabase
+        .from("messages")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(2000);
+      if (data) {
+        const rows = (data as MessageRow[]).slice().reverse();
+        this.messages = rows.map((r) => this.mapMessage(r));
+      }
     }
   }
   private async loadBroadcasts() {
@@ -468,7 +474,14 @@ class SupabaseRepository implements Repository {
       }) ?? (parts.length === 0 ? conversationId : "");
     if (!nonStaffNumber) return [conversationId];
     const staffNumbers = this.users.filter((u) => this.isStaff(u)).map((u) => u.number);
-    return Array.from(new Set([nonStaffNumber, ...staffNumbers.map((number) => `${nonStaffNumber}__${number}`)]));
+    return Array.from(
+      new Set([
+        conversationId,
+        nonStaffNumber,
+        `${nonStaffNumber}__ADM-0001`,
+        ...staffNumbers.map((number) => `${nonStaffNumber}__${number}`),
+      ]),
+    );
   }
 
   private conversationLookupIds(conversationId: string, staffInbox?: boolean): string[] {
