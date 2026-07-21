@@ -452,22 +452,20 @@ class SupabaseRepository implements Repository {
   // ============ messages ============
   private staffInboxConversationIds(conversationId: string): string[] {
     const parts = conversationId.split("__").filter(Boolean);
-    const nonStaffNumber =
-      parts.find((part) => {
-        const user = this.getUser(part);
-        return user && !this.isStaff(user);
-      }) ?? (parts.length === 0 ? conversationId : "");
-    if (!nonStaffNumber) return [conversationId];
-    const staffNumbers = this.users.filter((u) => this.isStaff(u)).map((u) => u.number);
+    const nonStaffId = parts.find((part) => {
+      const user = this.getUser(part);
+      return user && !this.isStaff(user);
+    });
+    if (!nonStaffId) return [conversationId];
+    const staffIds = this.users.filter((u) => this.isStaff(u)).map((u) => u.id);
     return Array.from(
       new Set([
         conversationId,
-        nonStaffNumber,
-        ...staffNumbers.map((n) => this.staffPairId(nonStaffNumber, n)),
-        ...staffNumbers.map((n) => `${nonStaffNumber}__${n}`),
+        ...staffIds.map((sid) => this.staffPairId(nonStaffId, sid)),
       ]),
     );
   }
+
 
   private conversationLookupIds(conversationId: string, staffInbox?: boolean): string[] {
     if (staffInbox) return this.staffInboxConversationIds(conversationId);
