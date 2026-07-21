@@ -71,7 +71,7 @@ function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="font-medium capitalize">{value}</div>
+      <div className="font-medium break-all">{value}</div>
     </div>
   );
 }
