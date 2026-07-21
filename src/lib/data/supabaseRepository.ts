@@ -454,45 +454,12 @@ class SupabaseRepository implements Repository {
   }
 
   // ============ messages ============
-  private staffInboxConversationIds(conversationId: string): string[] {
-    const parts = conversationId.split("__").filter(Boolean);
-    const nonStaffNumber =
-      parts.find((part) => {
-        const user = this.getUser(part);
-        return user && !this.isStaff(user);
-      }) ?? (parts.length === 0 ? conversationId : "");
-    if (!nonStaffNumber) return [conversationId];
-    const staffNumbers = this.users.filter((u) => this.isStaff(u)).map((u) => u.number);
-    return Array.from(
-      new Set([
-        conversationId,
-        nonStaffNumber,
-        `${nonStaffNumber}__ADM-0001`,
-        ...staffNumbers.map((number) => `${nonStaffNumber}__${number}`),
-      ]),
-    );
+  private conversationLookupIds(conversationId: string): string[] {
+    return [conversationId];
   }
 
-  private conversationLookupIds(conversationId: string, staffInbox?: boolean): string[] {
-    if (staffInbox) return this.staffInboxConversationIds(conversationId);
-
-    const ids = [conversationId];
-    const parts = conversationId.split("__").filter(Boolean);
-    if (parts.length === 2) {
-      const [a, b] = parts;
-      const aUser = this.getUser(a);
-      const bUser = this.getUser(b);
-      if (aUser && bUser && this.isStaff(aUser) !== this.isStaff(bUser)) {
-        const nonStaffNumber = this.isStaff(aUser) ? b : a;
-        ids.push(nonStaffNumber);
-      }
-    }
-
-    return Array.from(new Set(ids));
-  }
-
-  listMessages(conversationId: string, options?: { staffInbox?: boolean }) {
-    const ids = this.conversationLookupIds(conversationId, options?.staffInbox);
+  listMessages(conversationId: string, _options?: { staffInbox?: boolean }) {
+    const ids = this.conversationLookupIds(conversationId);
     return this.messages
       .filter((m) => ids.includes(m.conversationId))
       .sort((a, b) => a.createdAt - b.createdAt);
