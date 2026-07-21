@@ -34,11 +34,8 @@ function isStaff(profile: ProfileForMessage): boolean {
 }
 
 function messageConversationId(from: ProfileForMessage, to: ProfileForMessage): string {
-  const fromStaff = isStaff(from);
-  const toStaff = isStaff(to);
-  if (fromStaff && toStaff) return [from.user_number, to.user_number].sort().join("__");
-  const nonStaff = fromStaff ? to : from;
-  return `${nonStaff.user_number}__ADM-0001`;
+  // Cada par (remetente ↔ destinatário) tem sua própria conversa.
+  return [from.user_number, to.user_number].sort().join("__");
 }
 
 async function readError(res: Response): Promise<string> {

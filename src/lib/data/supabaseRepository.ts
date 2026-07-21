@@ -380,17 +380,10 @@ class SupabaseRepository implements Repository {
     const from = this.getUser(fromUserId);
     const to = this.getUser(toUserId);
     if (!from || !to) return fallback;
-    const fromStaff = this.isStaff(from);
-    const toStaff = this.isStaff(to);
-    if (fromStaff && toStaff) return this.staffPairId(from.number, to.number);
-    if (fromStaff === toStaff) return fallback;
-    // Non-staff <-> staff: canonicalize to the main admin bucket so every
-    // user↔staff message lands on the same id the server writes
-    // (`<user>__ADM-0001`), independentemente de qual admin/colaborador
-    // atendeu. Sem isso, o cliente reescreve o id para o admin específico
-    // e a mensagem "some" da tela do usuário.
-    const nonStaff = fromStaff ? to : from;
-    return `${nonStaff.number}__ADM-0001`;
+    // Cada par (remetente ↔ destinatário) tem sua própria conversa,
+    // então uma mensagem enviada a um colaborador não aparece na conversa
+    // com o admin (ou vice-versa).
+    return this.staffPairId(from.number, to.number);
   }
 
   private mapMessage(row: MessageRow): Message {
@@ -412,11 +405,7 @@ class SupabaseRepository implements Repository {
   private storageConversationId(fromUserId: string, toUserId: string): string {
     const from = this.getUser(fromUserId);
     const to = this.getUser(toUserId);
-    const fromStaff = this.isStaff(from);
-    const toStaff = this.isStaff(to);
-    if (fromStaff && toStaff && from && to) return this.staffPairId(from.number, to.number);
-    const nonStaff = fromStaff ? to : from;
-    if (nonStaff) return `${nonStaff.number}__ADM-0001`;
+    if (from && to) return this.staffPairId(from.number, to.number);
     return this.resolveConversationId(fromUserId, toUserId, "");
   }
 
@@ -465,45 +454,12 @@ class SupabaseRepository implements Repository {
   }
 
   // ============ messages ============
-  private staffInboxConversationIds(conversationId: string): string[] {
-    const parts = conversationId.split("__").filter(Boolean);
-    const nonStaffNumber =
-      parts.find((part) => {
-        const user = this.getUser(part);
-        return user && !this.isStaff(user);
-      }) ?? (parts.length === 0 ? conversationId : "");
-    if (!nonStaffNumber) return [conversationId];
-    const staffNumbers = this.users.filter((u) => this.isStaff(u)).map((u) => u.number);
-    return Array.from(
-      new Set([
-        conversationId,
-        nonStaffNumber,
-        `${nonStaffNumber}__ADM-0001`,
-        ...staffNumbers.map((number) => `${nonStaffNumber}__${number}`),
-      ]),
-    );
+  private conversationLookupIds(conversationId: string): string[] {
+    return [conversationId];
   }
 
-  private conversationLookupIds(conversationId: string, staffInbox?: boolean): string[] {
-    if (staffInbox) return this.staffInboxConversationIds(conversationId);
-
-    const ids = [conversationId];
-    const parts = conversationId.split("__").filter(Boolean);
-    if (parts.length === 2) {
-      const [a, b] = parts;
-      const aUser = this.getUser(a);
-      const bUser = this.getUser(b);
-      if (aUser && bUser && this.isStaff(aUser) !== this.isStaff(bUser)) {
-        const nonStaffNumber = this.isStaff(aUser) ? b : a;
-        ids.push(nonStaffNumber);
-      }
-    }
-
-    return Array.from(new Set(ids));
-  }
-
-  listMessages(conversationId: string, options?: { staffInbox?: boolean }) {
-    const ids = this.conversationLookupIds(conversationId, options?.staffInbox);
+  listMessages(conversationId: string, _options?: { staffInbox?: boolean }) {
+    const ids = this.conversationLookupIds(conversationId);
     return this.messages
       .filter((m) => ids.includes(m.conversationId))
       .sort((a, b) => a.createdAt - b.createdAt);
@@ -521,12 +477,10 @@ class SupabaseRepository implements Repository {
     const from = this.getUser(fromUserId);
     const to = this.getUser(toUserId);
     const fromStaff = this.isStaff(from);
-    const toStaff = this.isStaff(to);
-    const nonStaff = fromStaff ? to : from;
     const conversationId =
-      fromStaff && toStaff && from && to
+      from && to
         ? this.staffPairId(from.number, to.number)
-        : `${nonStaff?.number ?? ""}__ADM-0001`;
+        : "";
     const tempId = `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     const now = Date.now();
     const msg: Message = {
@@ -612,13 +566,12 @@ class SupabaseRepository implements Repository {
     })();
   }
 
-  markConversationRead(conversationId: string, viewer: "admin" | "user", options?: { staffInbox?: boolean }) {
+  markConversationRead(conversationId: string, viewer: "admin" | "user", _options?: { staffInbox?: boolean }) {
     const field = viewer === "admin" ? "read_by_admin" : "read_by_user";
     const idsToUpdate: string[] = [];
     let changed = false;
-    const conversationIds = options?.staffInbox ? this.staffInboxConversationIds(conversationId) : [conversationId];
     for (const m of this.messages) {
-      if (!conversationIds.includes(m.conversationId)) continue;
+      if (m.conversationId !== conversationId) continue;
       if (viewer === "admin" && !m.readByAdmin) {
         m.readByAdmin = true;
         changed = true;
@@ -653,9 +606,8 @@ class SupabaseRepository implements Repository {
     const nonStaff = this.users.filter((u) => u.type !== "admin" && u.id !== this.adminAuthId);
     return nonStaff
       .map((user) => {
-        const convIds = this.staffInboxConversationIds(user.number);
         const conv = this.messages.filter(
-          (m) => convIds.includes(m.conversationId),
+          (m) => m.fromUserId === user.id || m.toUserId === user.id,
         );
         const lastMessage = [...conv].sort((a, b) => b.createdAt - a.createdAt)[0];
         const unreadForAdmin = conv.filter(
