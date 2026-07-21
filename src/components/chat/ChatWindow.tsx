@@ -86,12 +86,11 @@ export function ChatWindow({ me, other, viewer }: Props) {
 
   const otherIsStaff = other.type === "admin" || other.type === "colaborador";
   const meIsStaff = me.type === "admin" || me.type === "colaborador";
-  const staffNumber = otherIsStaff ? other.number : me.number;
   const nonStaffNumber = otherIsStaff ? me.number : other.number;
   const conversationId =
     meIsStaff && otherIsStaff
       ? [me.number, other.number].sort().join("__")
-      : `${nonStaffNumber}__${staffNumber}`;
+      : `${nonStaffNumber}__${ADMIN_ID}`;
   const useStaffInbox =
     viewer === "admin" || (viewer === "user" && otherIsStaff);
 
