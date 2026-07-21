@@ -566,13 +566,12 @@ class SupabaseRepository implements Repository {
     })();
   }
 
-  markConversationRead(conversationId: string, viewer: "admin" | "user", options?: { staffInbox?: boolean }) {
+  markConversationRead(conversationId: string, viewer: "admin" | "user", _options?: { staffInbox?: boolean }) {
     const field = viewer === "admin" ? "read_by_admin" : "read_by_user";
     const idsToUpdate: string[] = [];
     let changed = false;
-    const conversationIds = options?.staffInbox ? this.staffInboxConversationIds(conversationId) : [conversationId];
     for (const m of this.messages) {
-      if (!conversationIds.includes(m.conversationId)) continue;
+      if (m.conversationId !== conversationId) continue;
       if (viewer === "admin" && !m.readByAdmin) {
         m.readByAdmin = true;
         changed = true;
