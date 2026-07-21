@@ -93,7 +93,7 @@ export function ChatWindow({ me, other, viewer }: Props) {
       ? [me.number, other.number].sort().join("__")
       : `${nonStaffNumber}__${staffNumber}`;
   const useStaffInbox =
-    viewer === "admin" || (viewer === "user" && otherIsStaff && (other.number === ADMIN_ID || other.type === "admin"));
+    viewer === "admin" || (viewer === "user" && otherIsStaff);
 
   // Feedback visual ao trocar de conversa
   useEffect(() => {
