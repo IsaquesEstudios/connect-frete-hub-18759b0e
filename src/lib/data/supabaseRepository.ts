@@ -512,7 +512,6 @@ class SupabaseRepository implements Repository {
       fromStaff && toStaff && from && to
         ? this.staffPairId(from.number, to.number)
         : `${nonStaff?.number ?? ""}__${staff?.number ?? ""}`;
-    const dbConversationId = this.storageConversationId(fromUserId, toUserId);
     const tempId = `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     const now = Date.now();
     const msg: Message = {
