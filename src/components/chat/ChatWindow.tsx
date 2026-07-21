@@ -52,6 +52,17 @@ function fmtDay(ts: number) {
   return d.toLocaleDateString();
 }
 
+function isOwnMessage(message: Message, currentUserId: string, otherUserId: string) {
+  // Em uma conversa aberta, a posição da bolha deve seguir o par exibido:
+  // mensagens vindas do contato ficam à esquerda; mensagens enviadas ao
+  // contato ficam à direita. Isso evita inverter tudo quando existem registros
+  // antigos ou IDs de conversa normalizados.
+  if (message.fromUserId === otherUserId) return false;
+  if (message.toUserId === otherUserId) return true;
+  if (message.toUserId === currentUserId) return false;
+  return message.fromUserId === currentUserId;
+}
+
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5MB
 
 function fileToDataUrl(file: File | Blob): Promise<string> {
@@ -398,7 +409,7 @@ export function ChatWindow({ me, other, viewer }: Props) {
               </span>
             </div>
             {g.items.map((m) => {
-              const mine = m.fromUserId === me.id;
+              const mine = isOwnMessage(m, me.id, other.id);
               const isImage = isImageBody(m.body);
               const isAudio = isAudioBody(m.body);
               const isFile = isFileBody(m.body);
