@@ -66,17 +66,21 @@ async function fetchAuthEmail(serviceKey: string, userId: string): Promise<strin
     headers: apiHeaders(serviceKey),
   });
   if (res.status === 404) return undefined;
+  if (res.status === 401 || res.status === 403) {
+    throw new Error(`Chave de serviço rejeitada pelo banco externo (HTTP ${res.status}). Verifique EXT_SUPABASE_SERVICE_ROLE_KEY.`);
+  }
   if (!res.ok) throw new Error(`Não foi possível carregar email. ${await readError(res)}`.trim());
   const body = (await res.json()) as { email?: string | null };
   return body.email ?? undefined;
 }
+
 
 // Busca id -> email diretamente no cadastro de autenticação.
 // O email não fica em profiles; por isso as telas precisam consultar o auth.
 export const getExternalUserEmails = createServerFn({ method: "GET" }).handler(
   async (): Promise<Record<string, string>> => {
     const key = process.env.EXT_SUPABASE_SERVICE_ROLE_KEY;
-    if (!key) throw new Error("Configuração do servidor ausente.");
+    if (!key) throw new Error("Configuração do servidor ausente: EXT_SUPABASE_SERVICE_ROLE_KEY não está definida no ambiente.");
     const profile = await getCurrentProfile(key);
     if (!isStaff(profile)) throw new Error("Apenas equipe administrativa pode listar emails.");
 
@@ -86,6 +90,9 @@ export const getExternalUserEmails = createServerFn({ method: "GET" }).handler(
         `${EXT_SUPABASE_URL}/auth/v1/admin/users?page=${page}&per_page=200`,
         { headers: apiHeaders(key) },
       );
+      if (res.status === 401 || res.status === 403) {
+        throw new Error(`Chave de serviço rejeitada pelo banco externo (HTTP ${res.status}). Verifique EXT_SUPABASE_SERVICE_ROLE_KEY.`);
+      }
       if (!res.ok) throw new Error(`Não foi possível listar emails. ${await readError(res)}`.trim());
       const body = (await res.json()) as { users?: Array<{ id: string; email?: string | null }> };
       const users = body.users ?? [];
@@ -96,6 +103,7 @@ export const getExternalUserEmails = createServerFn({ method: "GET" }).handler(
     return map;
   },
 );
+
 
 export const getExternalUserEmailsForIds = createServerFn({ method: "POST" })
   .inputValidator((data) =>
