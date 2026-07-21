@@ -272,16 +272,22 @@ class SupabaseRepository implements Repository {
       }));
   }
   private async loadMessages() {
-    // Carrega as mensagens mais recentes primeiro (limite alto para caber o histórico visível).
-    // Isso acelera a exibição dos previews de conversa na abertura do painel.
-    const { data } = await supabase
-      .from("messages")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(2000);
-    if (data) {
-      const rows = (data as MessageRow[]).slice().reverse();
+    try {
+      const { listVisibleMessages } = await import("./messages.functions");
+      const rows = (await listVisibleMessages()) as MessageRow[];
       this.messages = rows.map((r) => this.mapMessage(r));
+    } catch (error) {
+      console.error("loadMessages via server failed", error);
+      // Fallback para ambientes sem Server Function configurada.
+      const { data } = await supabase
+        .from("messages")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(2000);
+      if (data) {
+        const rows = (data as MessageRow[]).slice().reverse();
+        this.messages = rows.map((r) => this.mapMessage(r));
+      }
     }
   }
   private async loadBroadcasts() {
