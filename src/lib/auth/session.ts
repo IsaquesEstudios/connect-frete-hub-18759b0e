@@ -81,6 +81,11 @@ async function applySessionProfile(profile: User | null): Promise<User | null> {
   return cachedUser;
 }
 
+function withAuthEmail(profile: User | null, session: Session | null): User | null {
+  if (!profile) return null;
+  return { ...profile, email: session?.user.email ?? profile.email } as User;
+}
+
 export async function refreshCurrentUser(): Promise<User | null> {
   const session = await getSessionSafely();
   if (!session) {
@@ -90,7 +95,7 @@ export async function refreshCurrentUser(): Promise<User | null> {
   }
   let profile: User | null = null;
   try {
-    profile = await loadProfile(session.user.id, { fresh: true });
+    profile = withAuthEmail(await loadProfile(session.user.id, { fresh: true }), session);
   } catch {
     await clearBrokenSession();
     cachedUser = null;
@@ -111,7 +116,7 @@ async function bootstrap() {
     const session = await getSessionSafely();
     if (session) {
       try {
-        const profile = await loadProfile(session.user.id, { fresh: true });
+        const profile = withAuthEmail(await loadProfile(session.user.id, { fresh: true }), session);
         await applySessionProfile(profile);
       } catch {
         await clearBrokenSession();
@@ -127,7 +132,7 @@ async function bootstrap() {
   supabase.auth.onAuthStateChange(async (_event, session) => {
     if (session) {
       try {
-        await applySessionProfile(await loadProfile(session.user.id, { fresh: true }));
+        await applySessionProfile(withAuthEmail(await loadProfile(session.user.id, { fresh: true }), session));
       } catch (error) {
         if (isInvalidRefreshToken(error)) await clearBrokenSession();
         else await clearBrokenSession();
@@ -170,7 +175,7 @@ export async function login(email: string, password: string): Promise<User> {
   });
   if (error) throw new Error(translateAuthError(error));
   if (!data.user) throw new Error("Falha no login. Tente novamente.");
-  const u = await loadProfile(data.user.id);
+  const u = withAuthEmail(await loadProfile(data.user.id), data.session);
   if (!u) throw new Error("Perfil não encontrado. Contate o administrador.");
   if (u.active === false) {
     await supabase.auth.signOut();
@@ -351,7 +356,7 @@ export async function signup(input: SignupInput): Promise<User> {
   }
 
 
-  const u = await loadProfile(data.user.id, { fresh: true });
+  const u = withAuthEmail(await loadProfile(data.user.id, { fresh: true }), data.session);
   if (!u) throw new Error("Perfil criado mas não encontrado.");
   cachedUser = u;
   notify();
