@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { PhotoUploader } from "@/components/common/PhotoUploader";
 import { repo } from "@/lib/data";
-import { setExternalUserActive, setExternalUserEmail } from "@/lib/data/admin-users.functions";
+import { setExternalUserActive } from "@/lib/data/admin-users.functions";
 import { translateAuthError } from "@/lib/auth/translate-error";
 import { formatPhone } from "@/lib/format-phone";
 import { formatDoc } from "@/lib/format-doc";
@@ -99,13 +99,7 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
         patch.peso = form.peso;
         patch.perfilEmpresa = form.perfilEmpresa || undefined;
       }
-      repo.updateUser(user.id, patch);
-      const newEmail = (form.email || "").trim().toLowerCase();
-      const oldEmail = (user.email || "").trim().toLowerCase();
-      if (newEmail && newEmail !== oldEmail) {
-        await setExternalUserEmail({ data: { userId: user.id, email: newEmail } });
-        repo.applyLocalUserPatch(user.id, { email: newEmail });
-      }
+      await repo.updateUser(user.id, patch);
       if (active !== (user.active !== false)) {
         await setExternalUserActive({ data: { userId: user.id, active } });
         repo.applyLocalUserPatch(user.id, { active });
@@ -126,7 +120,7 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
         <DialogHeader>
           <DialogTitle>Editar {user.name}</DialogTitle>
           <DialogDescription>
-            Altere os dados do cadastro. Alterar o email força o usuário a usar o novo email no próximo login.
+            Altere os dados do cadastro. O email é apenas visualização.
           </DialogDescription>
         </DialogHeader>
 
@@ -138,7 +132,9 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Field label="Nome"><Input value={form.name || ""} onChange={(e) => set("name", e.target.value)} /></Field>
-            <Field label="Email"><Input type="email" value={form.email || ""} onChange={(e) => set("email", e.target.value)} /></Field>
+            <Field label="Email">
+              <Input type="email" value={form.email || ""} disabled className="bg-muted text-muted-foreground cursor-not-allowed" />
+            </Field>
             <Field label="WhatsApp">
               <Input value={form.whatsapp || ""} onChange={(e) => set("whatsapp", formatPhone(e.target.value))} />
             </Field>
