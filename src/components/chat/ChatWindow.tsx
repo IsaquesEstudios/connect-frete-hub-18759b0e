@@ -52,10 +52,13 @@ function fmtDay(ts: number) {
   return d.toLocaleDateString();
 }
 
-function isOwnMessage(message: Message, currentUserId: string) {
-  // A mensagem recebida sempre deve ser tratada como recebida quando o
-  // destinatário é o usuário atual, mesmo que algum registro antigo tenha
-  // vindo com remetente inconsistente.
+function isOwnMessage(message: Message, currentUserId: string, otherUserId: string) {
+  // Em uma conversa aberta, a posição da bolha deve seguir o par exibido:
+  // mensagens vindas do contato ficam à esquerda; mensagens enviadas ao
+  // contato ficam à direita. Isso evita inverter tudo quando existem registros
+  // antigos ou IDs de conversa normalizados.
+  if (message.fromUserId === otherUserId) return false;
+  if (message.toUserId === otherUserId) return true;
   if (message.toUserId === currentUserId) return false;
   return message.fromUserId === currentUserId;
 }
@@ -406,7 +409,7 @@ export function ChatWindow({ me, other, viewer }: Props) {
               </span>
             </div>
             {g.items.map((m) => {
-              const mine = isOwnMessage(m, me.id);
+              const mine = isOwnMessage(m, me.id, other.id);
               const isImage = isImageBody(m.body);
               const isAudio = isAudioBody(m.body);
               const isFile = isFileBody(m.body);
