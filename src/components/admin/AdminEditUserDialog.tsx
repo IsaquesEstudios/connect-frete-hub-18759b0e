@@ -192,3 +192,18 @@ function Field({ label, children, className }: { label: string; children: React.
     </div>
   );
 }
+
+function PerfilSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <Select value={value || undefined} onValueChange={onChange}>
+      <SelectTrigger>
+        <SelectValue placeholder="Selecione o perfil" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="transportador">Transportadora</SelectItem>
+        <SelectItem value="embarcador">Empresa</SelectItem>
+        <SelectItem value="agenciador">Agência de carga</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+}
