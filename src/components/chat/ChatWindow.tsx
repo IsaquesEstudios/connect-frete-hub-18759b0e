@@ -52,6 +52,14 @@ function fmtDay(ts: number) {
   return d.toLocaleDateString();
 }
 
+function isOwnMessage(message: Message, currentUserId: string) {
+  // A mensagem recebida sempre deve ser tratada como recebida quando o
+  // destinatário é o usuário atual, mesmo que algum registro antigo tenha
+  // vindo com remetente inconsistente.
+  if (message.toUserId === currentUserId) return false;
+  return message.fromUserId === currentUserId;
+}
+
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5MB
 
 function fileToDataUrl(file: File | Blob): Promise<string> {
@@ -398,7 +406,7 @@ export function ChatWindow({ me, other, viewer }: Props) {
               </span>
             </div>
             {g.items.map((m) => {
-              const mine = m.fromUserId === me.id;
+              const mine = isOwnMessage(m, me.id);
               const isImage = isImageBody(m.body);
               const isAudio = isAudioBody(m.body);
               const isFile = isFileBody(m.body);
