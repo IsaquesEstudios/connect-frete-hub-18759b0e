@@ -606,9 +606,8 @@ class SupabaseRepository implements Repository {
     const nonStaff = this.users.filter((u) => u.type !== "admin" && u.id !== this.adminAuthId);
     return nonStaff
       .map((user) => {
-        const convIds = this.staffInboxConversationIds(user.number);
         const conv = this.messages.filter(
-          (m) => convIds.includes(m.conversationId),
+          (m) => m.fromUserId === user.id || m.toUserId === user.id,
         );
         const lastMessage = [...conv].sort((a, b) => b.createdAt - a.createdAt)[0];
         const unreadForAdmin = conv.filter(
