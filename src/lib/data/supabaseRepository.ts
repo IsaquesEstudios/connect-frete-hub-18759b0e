@@ -443,9 +443,22 @@ class SupabaseRepository implements Repository {
   }
 
   // ============ messages ============
-  listMessages(conversationId: string) {
+  private staffInboxConversationIds(conversationId: string): string[] {
+    const parts = conversationId.split("__").filter(Boolean);
+    const nonStaffNumber =
+      parts.find((part) => {
+        const user = this.getUser(part);
+        return user && !this.isStaff(user);
+      }) ?? (parts.length === 0 ? conversationId : "");
+    if (!nonStaffNumber) return [conversationId];
+    const staffNumbers = this.users.filter((u) => this.isStaff(u)).map((u) => u.number);
+    return Array.from(new Set([nonStaffNumber, ...staffNumbers.map((number) => `${nonStaffNumber}__${number}`)]));
+  }
+
+  listMessages(conversationId: string, options?: { staffInbox?: boolean }) {
+    const ids = options?.staffInbox ? this.staffInboxConversationIds(conversationId) : [conversationId];
     return this.messages
-      .filter((m) => m.conversationId === conversationId)
+      .filter((m) => ids.includes(m.conversationId))
       .sort((a, b) => a.createdAt - b.createdAt);
   }
 
@@ -564,12 +577,13 @@ class SupabaseRepository implements Repository {
     })();
   }
 
-  markConversationRead(conversationId: string, viewer: "admin" | "user") {
+  markConversationRead(conversationId: string, viewer: "admin" | "user", options?: { staffInbox?: boolean }) {
     const field = viewer === "admin" ? "read_by_admin" : "read_by_user";
     const idsToUpdate: string[] = [];
     let changed = false;
+    const conversationIds = options?.staffInbox ? this.staffInboxConversationIds(conversationId) : [conversationId];
     for (const m of this.messages) {
-      if (m.conversationId !== conversationId) continue;
+      if (!conversationIds.includes(m.conversationId)) continue;
       if (viewer === "admin" && !m.readByAdmin) {
         m.readByAdmin = true;
         changed = true;
@@ -602,16 +616,15 @@ class SupabaseRepository implements Repository {
 
   listConversations() {
     const nonStaff = this.users.filter((u) => u.type !== "admin" && u.id !== this.adminAuthId);
-    const adminNumber = this.users.find((u) => u.id === this.adminAuthId)?.number ?? "";
     return nonStaff
       .map((user) => {
-        const convId = `${user.number}__${adminNumber}`;
+        const convIds = this.staffInboxConversationIds(user.number);
         const conv = this.messages.filter(
-          (m) => m.conversationId === convId || m.conversationId === user.number,
+          (m) => convIds.includes(m.conversationId),
         );
         const lastMessage = [...conv].sort((a, b) => b.createdAt - a.createdAt)[0];
         const unreadForAdmin = conv.filter(
-          (m) => m.toUserId === this.adminAuthId && !m.readByAdmin,
+          (m) => this.isStaff(this.getUser(m.toUserId)) && !m.readByAdmin,
         ).length;
         const tagIds = this.convTags
           .filter((c) => c.conversationId === user.number)

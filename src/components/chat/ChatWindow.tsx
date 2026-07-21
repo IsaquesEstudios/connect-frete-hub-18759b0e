@@ -100,20 +100,23 @@ export function ChatWindow({ me, other, viewer }: Props) {
     return () => clearTimeout(t);
   }, [conversationId]);
 
-  const messages = useMemo(() => repo.listMessages(conversationId), [conversationId, v]);
+  const messages = useMemo(
+    () => repo.listMessages(conversationId, { staffInbox: viewer === "admin" }),
+    [conversationId, viewer, v],
+  );
   const otherOnline = useMemo(() => repo.isOnline(other.id), [other.id, ev, v]);
 
   useEffect(() => {
-    repo.markConversationRead(conversationId, viewer);
+    repo.markConversationRead(conversationId, viewer, { staffInbox: viewer === "admin" });
   }, [conversationId, viewer, v, messages.length]);
 
   useEffect(() => {
     const onVis = () => {
       if (document.visibilityState === "visible") {
-        repo.markConversationRead(conversationId, viewer);
+        repo.markConversationRead(conversationId, viewer, { staffInbox: viewer === "admin" });
       }
     };
-    const onFocus = () => repo.markConversationRead(conversationId, viewer);
+    const onFocus = () => repo.markConversationRead(conversationId, viewer, { staffInbox: viewer === "admin" });
     document.addEventListener("visibilitychange", onVis);
     window.addEventListener("focus", onFocus);
     return () => {
