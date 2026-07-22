@@ -32,11 +32,19 @@ export function UserChatPanel({ me }: Props) {
     void v;
     const all = repo.listUsers();
     const admin = all.find((u) => u.number === ADMIN_ID) ?? all.find((u) => u.type === "admin" || u.id === ADMIN_ID);
-    const collabs = all
-      .filter((u) => u.type === "colaborador" && u.active !== false)
-      .sort((a, b) => a.name.localeCompare(b.name));
-    return admin ? [admin, ...collabs] : collabs;
-  }, [v]);
+    const collabs = all.filter((u) => u.type === "colaborador" && u.active !== false);
+    const list = admin ? [admin, ...collabs] : collabs;
+    const lastTs = (uid: string) => {
+      const conversationId = [me.id, uid].sort().join("__");
+      const msgs = repo.listMessages(conversationId, { staffInbox: false });
+      return msgs[msgs.length - 1]?.createdAt ?? 0;
+    };
+    return list.slice().sort((a, b) => {
+      const diff = lastTs(b.id) - lastTs(a.id);
+      if (diff !== 0) return diff;
+      return a.name.localeCompare(b.name);
+    });
+  }, [v, me.id]);
 
   const selected = selectedId ? repo.getUser(selectedId) ?? null : null;
 
