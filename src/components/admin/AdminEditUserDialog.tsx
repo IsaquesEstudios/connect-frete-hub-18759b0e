@@ -23,7 +23,7 @@ import { setExternalUserActive } from "@/lib/data/admin-users.functions";
 import { translateAuthError } from "@/lib/auth/translate-error";
 import { formatPhone } from "@/lib/format-phone";
 import { formatDoc } from "@/lib/format-doc";
-import type { User, UserProfilePatch } from "@/lib/data";
+import type { User, UserProfilePatch, UserType } from "@/lib/data";
 
 function perfilLabel(type: UserType, perfilEmpresa?: string) {
   if (type === "admin") return "Administrador";
