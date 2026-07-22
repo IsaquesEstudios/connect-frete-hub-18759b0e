@@ -153,6 +153,9 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
           <div>
             <Label className="mb-2 block">Foto do perfil</Label>
             <PhotoUploader value={form.fotoUrl || ""} onChange={(v) => set("fotoUrl", v)} />
+            <Badge variant="default" className="mt-2 w-fit">
+              {perfilLabel(user.type, form.perfilEmpresa)}
+            </Badge>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
