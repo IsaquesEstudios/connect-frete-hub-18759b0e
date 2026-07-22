@@ -33,9 +33,10 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-function perfilLabel(type: User["type"], perfilEmpresa?: string) {
-  if (type === "admin") return "Administrador";
-  if (type === "colaborador") return "Colaborador";
+function perfilLabel(user: User) {
+  const perfilEmpresa = (user as { perfilEmpresa?: string }).perfilEmpresa;
+  if (user.type === "admin") return "Administrador";
+  if (user.type === "colaborador") return "Colaborador";
   if (perfilEmpresa) {
     const map: Record<string, string> = {
       transportador: "Transportadora",
@@ -44,9 +45,9 @@ function perfilLabel(type: User["type"], perfilEmpresa?: string) {
     };
     return map[perfilEmpresa] || perfilEmpresa;
   }
-  if (type === "empresa") return "Empresa";
-  if (type === "motorista") return "Motorista";
-  return type;
+  if (user.type === "empresa") return "Empresa";
+  if (user.type === "motorista") return "Motorista";
+  return user.type;
 }
 
 function MessageTicks({ message, viewer }: { message: Message; viewer: "admin" | "user" }) {
