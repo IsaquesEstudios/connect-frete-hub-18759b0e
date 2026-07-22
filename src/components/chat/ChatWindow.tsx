@@ -47,7 +47,7 @@ function perfilLabel(user: User) {
   }
   if (user.type === "empresa") return "Empresa";
   if (user.type === "motorista") return "Motorista";
-  return user.type;
+  return "";
 }
 
 function MessageTicks({ message, viewer }: { message: Message; viewer: "admin" | "user" }) {
