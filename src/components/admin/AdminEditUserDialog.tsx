@@ -252,6 +252,7 @@ function PerfilSelect({ value, onChange }: { value: string; onChange: (v: string
         <SelectItem value="transportador">Transportadora</SelectItem>
         <SelectItem value="embarcador">Empresa</SelectItem>
         <SelectItem value="agenciador">Agência de carga</SelectItem>
+        <SelectItem value="motorista">Motorista</SelectItem>
       </SelectContent>
     </Select>
   );
