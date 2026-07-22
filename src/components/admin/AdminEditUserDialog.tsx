@@ -25,6 +25,22 @@ import { formatPhone } from "@/lib/format-phone";
 import { formatDoc } from "@/lib/format-doc";
 import type { User, UserProfilePatch } from "@/lib/data";
 
+function perfilLabel(type: UserType, perfilEmpresa?: string) {
+  if (type === "admin") return "Administrador";
+  if (type === "colaborador") return "Colaborador";
+  if (perfilEmpresa) {
+    const map: Record<string, string> = {
+      transportador: "Transportadora",
+      embarcador: "Empresa",
+      agenciador: "Agência de carga",
+    };
+    return map[perfilEmpresa] || perfilEmpresa;
+  }
+  if (type === "empresa") return "Empresa";
+  if (type === "motorista") return "Motorista";
+  return type;
+}
+
 interface Props {
   user: User | null;
   open: boolean;
