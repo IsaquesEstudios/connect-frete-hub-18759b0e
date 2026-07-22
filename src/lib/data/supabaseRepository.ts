@@ -272,6 +272,12 @@ class SupabaseRepository implements Repository {
       }));
   }
   private async loadMessages() {
+    // Skip authenticated server call when there's no session (e.g. /auth route).
+    const { data: sessionData } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
+    if (!sessionData?.session) {
+      this.messages = [];
+      return;
+    }
     try {
       const { listVisibleMessages } = await import("./messages.functions");
       const rows = (await listVisibleMessages()) as MessageRow[];
