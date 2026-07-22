@@ -87,7 +87,7 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
       siteRedeSocial: u.siteRedeSocial ?? "",
     });
     setActive(u.active !== false);
-  }, [user]);
+  }, [user?.id]);
 
   useEffect(() => {
     if (!open || !user) return;
