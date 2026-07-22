@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { PhotoUploader } from "@/components/common/PhotoUploader";
 import { repo } from "@/lib/data";
 import { getExternalUserEmailsForIds } from "@/lib/data/emails.functions";
@@ -22,7 +23,23 @@ import { setExternalUserActive } from "@/lib/data/admin-users.functions";
 import { translateAuthError } from "@/lib/auth/translate-error";
 import { formatPhone } from "@/lib/format-phone";
 import { formatDoc } from "@/lib/format-doc";
-import type { User, UserProfilePatch } from "@/lib/data";
+import type { User, UserProfilePatch, UserType } from "@/lib/data";
+
+function perfilLabel(type: UserType, perfilEmpresa?: string) {
+  if (type === "admin") return "Administrador";
+  if (type === "colaborador") return "Colaborador";
+  if (perfilEmpresa) {
+    const map: Record<string, string> = {
+      transportador: "Transportadora",
+      embarcador: "Empresa",
+      agenciador: "Agência de carga",
+    };
+    return map[perfilEmpresa] || perfilEmpresa;
+  }
+  if (type === "empresa") return "Empresa";
+  if (type === "motorista") return "Motorista";
+  return type;
+}
 
 interface Props {
   user: User | null;
@@ -152,6 +169,9 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
           <div>
             <Label className="mb-2 block">Foto do perfil</Label>
             <PhotoUploader value={form.fotoUrl || ""} onChange={(v) => set("fotoUrl", v)} />
+            <Badge variant="default" className="mt-2 w-fit">
+              {perfilLabel(user.type, form.perfilEmpresa)}
+            </Badge>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

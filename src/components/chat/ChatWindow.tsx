@@ -23,6 +23,7 @@ import { getExternalUserEmailsForIds } from "@/lib/data/emails.functions";
 import { reportEmailsUnavailable, EMAIL_UNAVAILABLE_LABEL } from "@/lib/data/emails-client";
 import { formatPhone } from "@/lib/format-phone";
 import { optimizeImageToDataUrl } from "@/lib/media/optimize";
+import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
   SheetContent,
@@ -31,6 +32,23 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+
+function perfilLabel(user: User) {
+  const perfilEmpresa = (user as { perfilEmpresa?: string }).perfilEmpresa;
+  if (user.type === "admin") return "Administrador";
+  if (user.type === "colaborador") return "Colaborador";
+  if (perfilEmpresa) {
+    const map: Record<string, string> = {
+      transportador: "Transportadora",
+      embarcador: "Empresa",
+      agenciador: "Agência de carga",
+    };
+    return map[perfilEmpresa] || perfilEmpresa;
+  }
+  if (user.type === "empresa") return "Empresa";
+  if (user.type === "motorista") return "Motorista";
+  return "";
+}
 
 function MessageTicks({ message, viewer }: { message: Message; viewer: "admin" | "user" }) {
   if (message.id.startsWith("tmp_")) return <Clock className="h-3 w-3 opacity-80" aria-label="Enviando" />;
@@ -380,6 +398,9 @@ export function ChatWindow({ me, other, viewer }: Props) {
               </div>
             </div>
           </div>
+          <Badge variant="default" className="mt-3 w-fit">
+            {perfilLabel(other)}
+          </Badge>
           <div className="mt-6 space-y-3 text-sm max-h-[65vh] overflow-y-auto pr-1">
             <ProfileField label="Tipo" value={other.type} />
             <ProfileField
