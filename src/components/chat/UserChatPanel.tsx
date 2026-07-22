@@ -5,6 +5,7 @@ import { FullscreenLoading } from "@/components/ui/loading";
 import { ChatWindow } from "./ChatWindow";
 import { ADMIN_ID, repo, type User } from "@/lib/data";
 import { messagePreview } from "@/lib/chat/messagePreview";
+import { formatConversationTime } from "@/lib/chat/formatConversationTime";
 import { useEphemeralVersion, useRepoVersion } from "@/lib/hooks/useRepo";
 
 interface Props {
