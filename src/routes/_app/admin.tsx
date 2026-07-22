@@ -79,10 +79,15 @@ function AdminPanel() {
       }
       if (query) {
         const q = query.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const qDigits = query.replace(/\D/g, "");
         const name = c.user.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         const number = c.user.number.toLowerCase();
-        const doc = ((c.user as { cnpj?: string; cpf?: string }).cnpj || (c.user as { cpf?: string }).cpf || "").toLowerCase();
-        return name.includes(q) || number.includes(q) || doc.includes(q);
+        const docRaw = ((c.user as { cnpj?: string; cpf?: string }).cnpj || (c.user as { cpf?: string }).cpf || "");
+        const doc = docRaw.toLowerCase();
+        const docDigits = docRaw.replace(/\D/g, "");
+        if (name.includes(q) || number.includes(q) || doc.includes(q)) return true;
+        if (qDigits && (docDigits.includes(qDigits) || number.replace(/\D/g, "").includes(qDigits))) return true;
+        return false;
       }
       return true;
     });
