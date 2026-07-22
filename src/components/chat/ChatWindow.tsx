@@ -33,6 +33,22 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
+function perfilLabel(type: User["type"], perfilEmpresa?: string) {
+  if (type === "admin") return "Administrador";
+  if (type === "colaborador") return "Colaborador";
+  if (perfilEmpresa) {
+    const map: Record<string, string> = {
+      transportador: "Transportadora",
+      embarcador: "Empresa",
+      agenciador: "Agência de carga",
+    };
+    return map[perfilEmpresa] || perfilEmpresa;
+  }
+  if (type === "empresa") return "Empresa";
+  if (type === "motorista") return "Motorista";
+  return type;
+}
+
 function MessageTicks({ message, viewer }: { message: Message; viewer: "admin" | "user" }) {
   if (message.id.startsWith("tmp_")) return <Clock className="h-3 w-3 opacity-80" aria-label="Enviando" />;
   const read = viewer === "admin" ? message.readByUser : message.readByAdmin;
