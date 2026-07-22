@@ -482,6 +482,11 @@ export function ChatWindow({ me, other, viewer }: Props) {
                         : "bg-card border rounded-bl-sm"
                     }`}
                   >
+                    <div
+                      className={`text-[11px] font-semibold mb-1 ${mine ? "text-primary-foreground/90" : "text-primary"} ${isMedia ? "px-2 pt-1" : ""}`}
+                    >
+                      {mine ? me.name : other.name}
+                    </div>
                     {isImage ? (
                       <ImagePreview src={m.body} />
                     ) : isAudio ? (
