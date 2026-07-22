@@ -104,14 +104,22 @@ export function UserChatPanel({ me }: Props) {
                     isActive ? "bg-accent" : ""
                   }`}
                 >
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold text-white shrink-0 ${color}`}
-                  >
-                    {s.name
-                      .split(" ")
-                      .slice(0, 2)
-                      .map((x) => x[0])
-                      .join("")}
+                  <div className="relative shrink-0">
+                    <div
+                      className={`flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold text-white ${color}`}
+                    >
+                      {s.name
+                        .split(" ")
+                        .slice(0, 2)
+                        .map((x) => x[0])
+                        .join("")}
+                    </div>
+                    {online && (
+                      <span
+                        className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-card"
+                        aria-label="online"
+                      />
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
@@ -123,17 +131,8 @@ export function UserChatPanel({ me }: Props) {
                           {s.type === "admin" ? "Admin" : "Colaborador"}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        {online ? (
-                          <>
-                            <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
-                            <span className="text-[10px] text-emerald-600 font-medium">online</span>
-                          </>
-                        ) : (
-                          <span className="text-[10px] text-muted-foreground">
-                            {lastSeenLabel(lastSeen)}
-                          </span>
-                        )}
+                      <div className="text-[10px] text-muted-foreground shrink-0">
+                        {last ? formatConversationTime(last.createdAt) : (online ? "online" : lastSeenLabel(lastSeen))}
                       </div>
                     </div>
                     <div className="flex items-center justify-between gap-2">
