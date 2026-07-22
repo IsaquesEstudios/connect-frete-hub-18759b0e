@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { repo } from "@/lib/data";
 import { messagePreview } from "@/lib/chat/messagePreview";
+import { formatConversationTime } from "@/lib/chat/formatConversationTime";
 import { homeFor } from "@/lib/auth/session";
 import { useAuth } from "@/lib/auth/useAuth";
 import { useRepoVersion } from "@/lib/hooks/useRepo";
@@ -233,17 +234,25 @@ function AdminPanel() {
                     isActive ? "bg-accent" : ""
                   }`}
                 >
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold text-white shrink-0 overflow-hidden ${color}`}
-                  >
-                    {c.user.fotoUrl ? (
-                      <img src={c.user.fotoUrl} alt={c.user.name} className="h-full w-full object-cover" />
-                    ) : (
-                      c.user.name
-                        .split(" ")
-                        .slice(0, 2)
-                        .map((s) => s[0])
-                        .join("")
+                  <div className="relative shrink-0">
+                    <div
+                      className={`flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold text-white overflow-hidden ${color}`}
+                    >
+                      {c.user.fotoUrl ? (
+                        <img src={c.user.fotoUrl} alt={c.user.name} className="h-full w-full object-cover" />
+                      ) : (
+                        c.user.name
+                          .split(" ")
+                          .slice(0, 2)
+                          .map((s) => s[0])
+                          .join("")
+                      )}
+                    </div>
+                    {repo.isOnline(c.user.id) && (
+                      <span
+                        className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-card"
+                        aria-label="online"
+                      />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -266,24 +275,11 @@ function AdminPanel() {
                             : "Motorista"}
                         </span>
                       </div>
-                      {(() => {
-                        const online = repo.isOnline(c.user.id);
-                        const last = repo.getLastSeen(c.user.id);
-                        return (
-                          <div className="flex items-center gap-1 shrink-0">
-                            {online ? (
-                              <>
-                                <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
-                                <span className="text-[10px] text-emerald-600 font-medium">online</span>
-                              </>
-                            ) : (
-                              <span className="text-[10px] text-muted-foreground">
-                                {lastSeenLabel(last)}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })()}
+                      <div className="text-[10px] text-muted-foreground shrink-0">
+                        {c.lastMessage
+                          ? formatConversationTime(c.lastMessage.createdAt)
+                          : (repo.isOnline(c.user.id) ? "online" : lastSeenLabel(repo.getLastSeen(c.user.id)))}
+                      </div>
                     </div>
                     <div className="flex items-center justify-between gap-2">
                       <div className="text-xs text-muted-foreground truncate">
