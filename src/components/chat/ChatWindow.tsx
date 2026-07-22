@@ -23,6 +23,7 @@ import { getExternalUserEmailsForIds } from "@/lib/data/emails.functions";
 import { reportEmailsUnavailable, EMAIL_UNAVAILABLE_LABEL } from "@/lib/data/emails-client";
 import { formatPhone } from "@/lib/format-phone";
 import { optimizeImageToDataUrl } from "@/lib/media/optimize";
+import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
   SheetContent,
