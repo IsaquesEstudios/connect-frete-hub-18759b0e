@@ -399,7 +399,7 @@ export function ChatWindow({ me, other, viewer }: Props) {
             </div>
           </div>
           <Badge variant="default" className="mt-3 w-fit">
-            {perfilLabel(other.type, other.perfilEmpresa)}
+            {perfilLabel(other)}
           </Badge>
           <div className="mt-6 space-y-3 text-sm max-h-[65vh] overflow-y-auto pr-1">
             <ProfileField label="Tipo" value={other.type} />
