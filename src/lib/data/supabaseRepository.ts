@@ -173,6 +173,7 @@ function profilePatchToRow(patch: UserProfilePatch): Record<string, string | boo
   put("perfil_empresa", patch.perfilEmpresa);
   put("site_rede_social", patch.siteRedeSocial);
   put("active", patch.active);
+  put("type", patch.type);
 
   return row;
 }
