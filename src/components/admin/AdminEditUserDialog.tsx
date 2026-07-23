@@ -145,12 +145,18 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
       }
       if (targetType !== user.type) patch.type = targetType;
 
+      const setIf = <K extends keyof UserProfilePatch>(key: K, value: UserProfilePatch[K] | undefined) => {
+        if (value === undefined) return;
+        if (typeof value === "string" && value.trim() === "") return;
+        patch[key] = value;
+      };
+
       if (targetType === "empresa") {
-        patch.cnpj = form.cnpj;
-        patch.cpf = form.cpf || undefined;
-        patch.nomeFantasia = form.nomeFantasia;
-        patch.perfilEmpresa = perfil;
-        patch.siteRedeSocial = form.siteRedeSocial;
+        setIf("cnpj", form.cnpj);
+        setIf("cpf", form.cpf);
+        setIf("nomeFantasia", form.nomeFantasia);
+        setIf("perfilEmpresa", perfil);
+        setIf("siteRedeSocial", form.siteRedeSocial);
       }
       if (targetType === "motorista") {
         const joinObs = (base: string, obs: string) => {
@@ -159,13 +165,13 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
           if (!b) return "";
           return o ? `${b} | Obs: ${o}` : b;
         };
-        patch.cpf = form.cpf;
-        patch.placa = form.placa;
-        patch.tipoVeiculo = joinObs(form.tipoVeiculo, form.tipoVeiculoObs);
-        patch.rntrc = form.rntrc;
-        patch.carroceria = joinObs(form.carroceria, form.carroceriaObs);
-        patch.peso = form.peso;
-        patch.perfilEmpresa = perfil || undefined;
+        setIf("cpf", form.cpf);
+        setIf("placa", form.placa);
+        setIf("tipoVeiculo", joinObs(form.tipoVeiculo, form.tipoVeiculoObs));
+        setIf("rntrc", form.rntrc);
+        setIf("carroceria", joinObs(form.carroceria, form.carroceriaObs));
+        setIf("peso", form.peso);
+        setIf("perfilEmpresa", perfil);
       }
       await repo.updateUser(user.id, patch);
       if (active !== (user.active !== false)) {
