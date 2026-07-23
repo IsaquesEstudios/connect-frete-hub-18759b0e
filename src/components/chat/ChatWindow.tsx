@@ -338,34 +338,47 @@ export function ChatWindow({ me, other, viewer }: Props) {
             className="flex items-center gap-3 border-b bg-card px-4 py-3 text-left w-full hover:bg-accent transition-colors"
             aria-label={`Ver perfil de ${other.name}`}
           >
-            {other.fotoUrl ? (
-              <img
-                src={other.fotoUrl}
-                alt={other.name}
-                className="h-10 w-10 rounded-full object-cover"
-              />
-            ) : (
-              <div
-                className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold text-white ${otherColor}`}
-              >
-                {other.name
-                  .split(" ")
-                  .slice(0, 2)
-                  .map((s) => s[0])
-                  .join("")}
-              </div>
-            )}
+            <div className="relative shrink-0">
+              {other.fotoUrl ? (
+                <img
+                  src={other.fotoUrl}
+                  alt={other.name}
+                  className="h-10 w-10 rounded-full object-cover"
+                />
+              ) : (
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold text-white ${otherColor}`}
+                >
+                  {other.name
+                    .split(" ")
+                    .slice(0, 2)
+                    .map((s) => s[0])
+                    .join("")}
+                </div>
+              )}
+              {otherOnline && (
+                <span
+                  className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-card"
+                  aria-label="online"
+                />
+              )}
+            </div>
             <div className="flex-1 min-w-0">
               <div className="font-medium truncate">{other.name}</div>
-              <div className="text-xs text-muted-foreground">
-                {other.number} ·{" "}
+              <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <span>{other.number}</span>
+                <span>·</span>
                 {otherOnline ? (
-                  <span className="text-emerald-600">online</span>
+                  <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    online
+                  </span>
                 ) : (
                   <span>offline</span>
                 )}
               </div>
             </div>
+
           </button>
         </SheetTrigger>
         <SheetContent>
