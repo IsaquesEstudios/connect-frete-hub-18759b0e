@@ -255,7 +255,7 @@ export function SignupWizard({
         carroceria: carroceriaFinal,
         peso: pesoFinal,
         nomeFantasia: isEmpresa && data.documentoTipo === "cnpj" ? data.nomeFantasia.trim() : undefined,
-        perfilEmpresa: isEmpresa && data.perfilEmpresa ? data.perfilEmpresa : undefined,
+        perfilEmpresa: isEmpresa ? (data.perfilEmpresa || undefined) : "motorista",
         siteRedeSocial: redesStr,
       });
       toast.success(`Cadastro criado: ${u.number}`);

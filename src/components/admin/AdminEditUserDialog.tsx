@@ -68,6 +68,14 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
       perfilEmpresa?: string;
       siteRedeSocial?: string;
     };
+    const splitObs = (v?: string): [string, string] => {
+      if (!v) return ["", ""];
+      const idx = v.indexOf(" | Obs: ");
+      if (idx === -1) return [v, ""];
+      return [v.slice(0, idx), v.slice(idx + " | Obs: ".length)];
+    };
+    const [tipoVeiculoBase, tipoVeiculoObs] = splitObs(u.tipoVeiculo);
+    const [carroceriaBase, carroceriaObs] = splitObs(u.carroceria);
     setForm({
       name: u.name ?? "",
       email: u.email ?? "",
@@ -78,9 +86,11 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
       estado: u.estado ?? "",
       fotoUrl: u.fotoUrl ?? "",
       placa: u.placa ?? "",
-      tipoVeiculo: u.tipoVeiculo ?? "",
+      tipoVeiculo: tipoVeiculoBase,
+      tipoVeiculoObs,
       rntrc: u.rntrc ?? "",
-      carroceria: u.carroceria ?? "",
+      carroceria: carroceriaBase,
+      carroceriaObs,
       peso: u.peso ?? "",
       nomeFantasia: u.nomeFantasia ?? "",
       perfilEmpresa: u.perfilEmpresa ?? "",
@@ -143,11 +153,17 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
         patch.siteRedeSocial = form.siteRedeSocial;
       }
       if (targetType === "motorista") {
+        const joinObs = (base: string, obs: string) => {
+          const b = (base || "").trim();
+          const o = (obs || "").trim();
+          if (!b) return "";
+          return o ? `${b} | Obs: ${o}` : b;
+        };
         patch.cpf = form.cpf;
         patch.placa = form.placa;
-        patch.tipoVeiculo = form.tipoVeiculo;
+        patch.tipoVeiculo = joinObs(form.tipoVeiculo, form.tipoVeiculoObs);
         patch.rntrc = form.rntrc;
-        patch.carroceria = form.carroceria;
+        patch.carroceria = joinObs(form.carroceria, form.carroceriaObs);
         patch.peso = form.peso;
         patch.perfilEmpresa = perfil || undefined;
       }
@@ -219,8 +235,10 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
                 </Field>
                 <Field label="Placa"><Input value={form.placa || ""} onChange={(e) => set("placa", e.target.value)} /></Field>
                 <Field label="Tipo de veículo"><Input value={form.tipoVeiculo || ""} onChange={(e) => set("tipoVeiculo", e.target.value)} /></Field>
+                <Field label="Observação do veículo"><Input value={form.tipoVeiculoObs || ""} onChange={(e) => set("tipoVeiculoObs", e.target.value)} placeholder="Ex.: 2 eixos, ano 2020" /></Field>
                 <Field label="RNTRC"><Input value={form.rntrc || ""} onChange={(e) => set("rntrc", e.target.value)} /></Field>
                 <Field label="Carroceria"><Input value={form.carroceria || ""} onChange={(e) => set("carroceria", e.target.value)} /></Field>
+                <Field label="Observação da carroceria"><Input value={form.carroceriaObs || ""} onChange={(e) => set("carroceriaObs", e.target.value)} /></Field>
                 <Field label="Peso (kg)"><Input value={form.peso || ""} onChange={(e) => set("peso", e.target.value)} /></Field>
               </>
             )}
