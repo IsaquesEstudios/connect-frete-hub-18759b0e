@@ -139,12 +139,40 @@ function RootComponent() {
     void runCacheBuster();
   }, []);
 
-  return (
-    <QueryClientProvider client={queryClient}>
+  const persister = useMemo(
+    () =>
+      typeof window !== "undefined"
+        ? createSyncStoragePersister({
+            storage: window.localStorage,
+            key: "svlogistica:rq-cache",
+          })
+        : undefined,
+    [],
+  );
+
+  const content = (
+    <>
       <meta name="app-version" content={APP_VERSION} />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <Toaster richColors position="top-right" />
-    </QueryClientProvider>
+    </>
   );
+
+  if (persister) {
+    return (
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{
+          persister,
+          maxAge: 1000 * 60 * 60 * 24, // 24h
+          buster: APP_VERSION,
+        }}
+      >
+        {content}
+      </PersistQueryClientProvider>
+    );
+  }
+
+  return <QueryClientProvider client={queryClient}>{content}</QueryClientProvider>;
 }
