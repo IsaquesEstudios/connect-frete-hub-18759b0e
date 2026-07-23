@@ -120,7 +120,7 @@ export const listVisibleMessages = createServerFn({ method: "GET" }).handler(asy
 
   async function fetchPage(extra: string, limit: number): Promise<MessageForClient[]> {
     const url = `${EXT_SUPABASE_URL}/rest/v1/messages?${baseSelect}&limit=${limit}&${extra}`;
-    const res = await fetch(url, { headers: apiHeaders(serviceKey) });
+    const res = await fetch(url, { headers: apiHeaders(serviceKey!) });
     if (!res.ok) {
       throw new Error(`Não foi possível carregar as mensagens. ${await readError(res)}`.trim());
     }
