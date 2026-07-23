@@ -114,6 +114,7 @@ export const listVisibleMessages = createServerFn({ method: "GET" }).handler(asy
   if (!serviceKey) throw new Error("Configuração do servidor ausente.");
 
   const profile = await getCurrentProfile(serviceKey);
+  if (!profile) return [];
   const params = new URLSearchParams({
     select: "*",
     order: "created_at.desc",
