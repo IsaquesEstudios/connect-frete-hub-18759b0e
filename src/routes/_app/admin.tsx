@@ -225,10 +225,31 @@ function AdminPanel() {
             )}
             {filtered.map((c) => {
               const isActive = selected === c.user.id;
+              const perfil = (c.user as { perfilEmpresa?: string }).perfilEmpresa;
+              const displayType: "empresa" | "motorista" | "colaborador" | "admin" =
+                c.user.type === "colaborador" || c.user.type === "admin"
+                  ? c.user.type
+                  : perfil === "motorista"
+                    ? "motorista"
+                    : perfil === "transportador" || perfil === "embarcador" || perfil === "agenciador"
+                      ? "empresa"
+                      : c.user.type;
+              const displayLabel =
+                displayType === "empresa"
+                  ? perfil === "transportador"
+                    ? "Transportadora"
+                    : perfil === "agenciador"
+                      ? "Agência de carga"
+                      : "Empresa"
+                  : displayType === "colaborador"
+                    ? "Colaborador"
+                    : displayType === "admin"
+                      ? "Admin"
+                      : "Motorista";
               const color =
-                c.user.type === "empresa"
+                displayType === "empresa"
                   ? "bg-[hsl(var(--company))]"
-                  : c.user.type === "colaborador"
+                  : displayType === "colaborador"
                   ? "bg-[hsl(var(--collaborator))]"
                   : "bg-[hsl(var(--driver))]";
               const convTags = c.tagIds
@@ -271,21 +292,12 @@ function AdminPanel() {
                       <div className="flex items-center gap-1.5 min-w-0">
                         <div className="font-medium truncate text-sm">{c.user.name}</div>
                         <span
-                          className={`text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0 text-white ${
-                            c.user.type === "empresa"
-                              ? "bg-[hsl(var(--company))]"
-                              : c.user.type === "colaborador"
-                              ? "bg-[hsl(var(--collaborator))]"
-                              : "bg-[hsl(var(--driver))]"
-                          }`}
+                          className={`text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0 text-white ${color}`}
                         >
-                          {c.user.type === "empresa"
-                            ? "Empresa"
-                            : c.user.type === "colaborador"
-                            ? "Colaborador"
-                            : "Motorista"}
+                          {displayLabel}
                         </span>
                       </div>
+
                       <div className="text-[10px] text-muted-foreground shrink-0">
                         {c.lastMessage
                           ? formatConversationTime(c.lastMessage.createdAt)
