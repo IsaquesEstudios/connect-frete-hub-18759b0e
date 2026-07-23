@@ -153,11 +153,17 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
         patch.siteRedeSocial = form.siteRedeSocial;
       }
       if (targetType === "motorista") {
+        const joinObs = (base: string, obs: string) => {
+          const b = (base || "").trim();
+          const o = (obs || "").trim();
+          if (!b) return "";
+          return o ? `${b} | Obs: ${o}` : b;
+        };
         patch.cpf = form.cpf;
         patch.placa = form.placa;
-        patch.tipoVeiculo = form.tipoVeiculo;
+        patch.tipoVeiculo = joinObs(form.tipoVeiculo, form.tipoVeiculoObs);
         patch.rntrc = form.rntrc;
-        patch.carroceria = form.carroceria;
+        patch.carroceria = joinObs(form.carroceria, form.carroceriaObs);
         patch.peso = form.peso;
         patch.perfilEmpresa = perfil || undefined;
       }
