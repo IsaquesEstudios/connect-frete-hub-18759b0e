@@ -119,6 +119,9 @@ function UsuariosPage() {
 
   const filtered = useMemo(() => {
     const list = users.filter((u) => {
+      // Oculta admin secundário — mantém apenas o admin principal na listagem.
+      const emailForUser = (u.email || emails[u.id] || "").toLowerCase();
+      if (u.type === "admin" && emailForUser === "sharlysongomes@gmail.com") return false;
       if (tab !== "todos" && u.type !== tab) return false;
       if (query) {
         const q = query
