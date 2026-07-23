@@ -115,23 +115,39 @@ export const listVisibleMessages = createServerFn({ method: "GET" }).handler(asy
 
   const profile = await getCurrentProfile(serviceKey);
   if (!profile) return [];
-  const params = new URLSearchParams({
-    select: "*",
-    order: "created_at.desc",
-    limit: "2000",
-  });
-  if (!isStaff(profile)) {
-    params.set("or", `(from_user_id.eq.${profile.id},to_user_id.eq.${profile.id})`);
+
+  const baseSelect = "select=*&order=created_at.desc";
+
+  async function fetchPage(extra: string, limit: number): Promise<MessageForClient[]> {
+    const url = `${EXT_SUPABASE_URL}/rest/v1/messages?${baseSelect}&limit=${limit}&${extra}`;
+    const res = await fetch(url, { headers: apiHeaders(serviceKey) });
+    if (!res.ok) {
+      throw new Error(`Não foi possível carregar as mensagens. ${await readError(res)}`.trim());
+    }
+    return (await res.json()) as MessageForClient[];
   }
 
-  const messagesRes = await fetch(`${EXT_SUPABASE_URL}/rest/v1/messages?${params.toString()}`, {
-    headers: apiHeaders(serviceKey),
-  });
-  if (!messagesRes.ok) {
-    throw new Error(`Não foi possível carregar as mensagens. ${await readError(messagesRes)}`.trim());
+  let rows: MessageForClient[];
+  if (isStaff(profile)) {
+    rows = await fetchPage("", 500);
+  } else {
+    // Split OR into two indexed equality queries — the planner picks a
+    // per-column index instead of doing an OR-scan over the whole table.
+    const uid = encodeURIComponent(profile.id);
+    const [outgoing, incoming] = await Promise.all([
+      fetchPage(`from_user_id=eq.${uid}`, 300),
+      fetchPage(`to_user_id=eq.${uid}`, 300),
+    ]);
+    const seen = new Set<string>();
+    rows = [...outgoing, ...incoming].filter((m) => {
+      if (seen.has(m.id)) return false;
+      seen.add(m.id);
+      return true;
+    });
+    rows.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
   }
 
-  return ((await messagesRes.json()) as MessageForClient[]).reverse();
+  return rows.reverse();
 });
 
 export const sendChatMessage = createServerFn({ method: "POST" })
