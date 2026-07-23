@@ -278,7 +278,7 @@ export interface SignupInput {
   peso?: string;
   // empresa
   nomeFantasia?: string;
-  perfilEmpresa?: "transportador" | "embarcador" | "agenciador";
+  perfilEmpresa?: "transportador" | "embarcador" | "agenciador" | "motorista";
   siteRedeSocial?: string;
 }
 
