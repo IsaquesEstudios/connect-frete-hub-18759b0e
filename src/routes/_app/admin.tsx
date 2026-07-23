@@ -78,15 +78,21 @@ function AdminPanel() {
         for (const id of tagFilter) if (!c.tagIds.includes(id)) return false;
       }
       if (query) {
-        const q = query.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const q = norm(query.trim());
         const qDigits = query.replace(/\D/g, "");
-        const name = c.user.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const number = c.user.number.toLowerCase();
-        const docRaw = ((c.user as { cnpj?: string; cpf?: string }).cnpj || (c.user as { cpf?: string }).cpf || "");
-        const doc = docRaw.toLowerCase();
-        const docDigits = docRaw.replace(/\D/g, "");
-        if (name.includes(q) || number.includes(q) || doc.includes(q)) return true;
-        if (qDigits && (docDigits.includes(qDigits) || number.replace(/\D/g, "").includes(qDigits))) return true;
+        const u = c.user as { cnpj?: string; cpf?: string; whatsapp?: string; email?: string };
+        const name = norm(c.user.name || "");
+        const number = (c.user.number || "").toLowerCase();
+        const cnpj = (u.cnpj || "").toLowerCase();
+        const cpf = (u.cpf || "").toLowerCase();
+        const email = (u.email || "").toLowerCase();
+        const textHit = q && (name.includes(q) || number.includes(q) || cnpj.includes(q) || cpf.includes(q) || email.includes(q));
+        if (textHit) return true;
+        if (qDigits) {
+          const digitsPool = [cnpj, cpf, number, u.whatsapp || ""].map((s) => s.replace(/\D/g, ""));
+          if (digitsPool.some((d) => d && d.includes(qDigits))) return true;
+        }
         return false;
       }
       return true;
