@@ -62,6 +62,7 @@ export type UserProfilePatch = Partial<{
   perfilEmpresa: string;
   siteRedeSocial: string;
   active: boolean;
+  type: UserType;
 }>;
 
 
