@@ -68,6 +68,14 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
       perfilEmpresa?: string;
       siteRedeSocial?: string;
     };
+    const splitObs = (v?: string): [string, string] => {
+      if (!v) return ["", ""];
+      const idx = v.indexOf(" | Obs: ");
+      if (idx === -1) return [v, ""];
+      return [v.slice(0, idx), v.slice(idx + " | Obs: ".length)];
+    };
+    const [tipoVeiculoBase, tipoVeiculoObs] = splitObs(u.tipoVeiculo);
+    const [carroceriaBase, carroceriaObs] = splitObs(u.carroceria);
     setForm({
       name: u.name ?? "",
       email: u.email ?? "",
@@ -78,9 +86,11 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
       estado: u.estado ?? "",
       fotoUrl: u.fotoUrl ?? "",
       placa: u.placa ?? "",
-      tipoVeiculo: u.tipoVeiculo ?? "",
+      tipoVeiculo: tipoVeiculoBase,
+      tipoVeiculoObs,
       rntrc: u.rntrc ?? "",
-      carroceria: u.carroceria ?? "",
+      carroceria: carroceriaBase,
+      carroceriaObs,
       peso: u.peso ?? "",
       nomeFantasia: u.nomeFantasia ?? "",
       perfilEmpresa: u.perfilEmpresa ?? "",
