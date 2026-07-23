@@ -147,7 +147,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     const serviceKey = process.env.EXT_SUPABASE_SERVICE_ROLE_KEY;
     if (!serviceKey) throw new Error("Configuração do servidor ausente.");
 
-    const currentProfile = await getCurrentProfile(serviceKey);
+    const currentProfile = requireProfile(await getCurrentProfile(serviceKey));
     const senderProfile = await resolveSenderProfile(serviceKey, currentProfile);
     const ids = Array.from(new Set([senderProfile.id, data.toUserId])).map(encodeURIComponent).join(",");
     const profilesRes = await fetch(
