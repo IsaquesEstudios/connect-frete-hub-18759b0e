@@ -124,21 +124,32 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
         estado: form.estado,
         fotoUrl: form.fotoUrl,
       };
-      if (user.type === "empresa") {
+
+      // Derive target type from the perfil selection so the visible label
+      // (chip in conversations / users table) updates too.
+      let targetType: UserType = user.type;
+      const perfil = form.perfilEmpresa || "";
+      if (user.type === "empresa" || user.type === "motorista") {
+        if (perfil === "motorista") targetType = "motorista";
+        else if (["transportador", "embarcador", "agenciador"].includes(perfil)) targetType = "empresa";
+      }
+      if (targetType !== user.type) patch.type = targetType;
+
+      if (targetType === "empresa") {
         patch.cnpj = form.cnpj;
         patch.cpf = form.cpf || undefined;
         patch.nomeFantasia = form.nomeFantasia;
-        patch.perfilEmpresa = form.perfilEmpresa;
+        patch.perfilEmpresa = perfil;
         patch.siteRedeSocial = form.siteRedeSocial;
       }
-      if (user.type === "motorista") {
+      if (targetType === "motorista") {
         patch.cpf = form.cpf;
         patch.placa = form.placa;
         patch.tipoVeiculo = form.tipoVeiculo;
         patch.rntrc = form.rntrc;
         patch.carroceria = form.carroceria;
         patch.peso = form.peso;
-        patch.perfilEmpresa = form.perfilEmpresa || undefined;
+        patch.perfilEmpresa = perfil || undefined;
       }
       await repo.updateUser(user.id, patch);
       if (active !== (user.active !== false)) {
