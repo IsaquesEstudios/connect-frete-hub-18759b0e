@@ -1,11 +1,10 @@
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowRight, MessageCircle, Radio, ShieldCheck, Truck } from "lucide-react";
-import { useAuth } from "@/lib/auth/useAuth";
-import { homeFor } from "@/lib/auth/session";
 import { Logo } from "@/components/brand/Logo";
 import { WHATSAPP_MOTORISTAS, WHATSAPP_EMPRESAS } from "@/lib/whatsapp-groups";
 import { getWhatsappLinks } from "@/lib/data/app-settings.functions";
+
 
 
 export const Route = createFileRoute("/")({
