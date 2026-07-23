@@ -99,6 +99,7 @@ export function profileToUser(p: ProfileRow): User {
     estado: p.estado ?? undefined,
     fotoUrl: p.foto_url ?? undefined,
     cpf: p.cpf ?? undefined,
+    cnpj: p.cnpj ?? undefined,
   };
   if (p.type === "empresa")
     return {

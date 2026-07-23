@@ -73,6 +73,18 @@ function typeColorClass(t: string) {
   }
 }
 
+function normalizeSearchText(value: unknown): string {
+  return String(value ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+function onlyDigits(value: unknown): string {
+  return String(value ?? "").replace(/\D/g, "");
+}
+
 function UsuariosPage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -124,24 +136,21 @@ function UsuariosPage() {
       if (u.type === "admin" && emailForUser === "sharlysongomes@gmail.com") return false;
       if (tab !== "todos" && u.type !== tab) return false;
       if (query) {
-        const q = query
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "");
-        const name = u.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const number = u.number.toLowerCase();
-        const doc = (
-          (u as { cnpj?: string; cpf?: string }).cnpj ||
-          (u as { cpf?: string }).cpf ||
-          ""
-        ).toLowerCase();
+        const q = normalizeSearchText(query);
+        const qDigits = onlyDigits(query);
+        const docUser = u as { cnpj?: string; cpf?: string; whatsapp?: string };
         const email = (u.email || emails[u.id] || "").toLowerCase();
-        return (
-          name.includes(q) ||
-          number.includes(q) ||
-          doc.includes(q) ||
-          email.includes(q)
-        );
+        const searchableText = [u.name, u.number, docUser.cnpj, docUser.cpf, docUser.whatsapp, email]
+          .map(normalizeSearchText)
+          .filter(Boolean);
+        if (q && searchableText.some((value) => value.includes(q))) return true;
+        if (qDigits) {
+          const searchableDigits = [u.number, docUser.cnpj, docUser.cpf, docUser.whatsapp]
+            .map(onlyDigits)
+            .filter(Boolean);
+          if (searchableDigits.some((value) => value.includes(qDigits))) return true;
+        }
+        return false;
       }
       return true;
     });
