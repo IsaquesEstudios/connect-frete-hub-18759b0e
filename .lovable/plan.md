@@ -1,44 +1,67 @@
-## Diagnóstico
+## Problema
 
-O email não fica em `profiles` — vive em `auth.users` do banco externo (blyx). As telas de perfil (ChatWindow, AdminEditUserDialog, tabela de Usuários) buscam via server function `getExternalUserEmailsForIds`/`getExternalUserEmails`, que usa `process.env.EXT_SUPABASE_SERVICE_ROLE_KEY` no servidor.
+Toda navegação/retorno à aba dispara `SupabaseRepository.bootstrap()`, que baixa **usuários, tags, tags de conversa, mensagens e broadcasts** antes de renderizar qualquer tela. Como `_app` usa `ssr: false` e o gate espera `repo.isBootstrapped()`, o usuário vê o loading fullscreen a cada visita.
 
-Hoje o `ChatWindow` faz:
+O TanStack Query já está configurado no projeto (`QueryClientProvider` no root, `queryClient` no contexto do router), mas o repo em memória não é integrado a ele — nada é cacheado entre navegações.
 
-```ts
-getExternalUserEmailsForIds(...).then(...).catch(() => undefined);
+## Objetivo
+
+Tornar a navegação instantânea usando cache do TanStack Query, mantendo o chat sempre atualizado via realtime (comportamento atual preservado).
+
+## Estratégia
+
+Envolver as leituras do repositório em queries do TanStack Query com `staleTime` alto para dados frios (usuários, tags, broadcasts, links da landing) e `staleTime: 0` para o chat (mensagens/presença), sem reescrever o repositório.
+
+### 1. Bootstrap incremental (mudança pequena e cirúrgica em `supabaseRepository.ts`)
+
+- Separar `bootstrap()` em `bootstrapCore()` (só sessão + realtime, muito rápido) e loaders individuais idempotentes (`ensureUsers`, `ensureTags`, `ensureConvTags`, `ensureMessages`, `ensureBroadcasts`) que retornam promessas cacheadas — se já carregou, resolvem imediatamente.
+- `isBootstrapped()` passa a refletir apenas o core (sessão + realtime pronto), não os dados. Assim `_app/route.tsx` não trava mais na tela cheia esperando datasets.
+- Manter `subscribe()` intacto para realtime continuar invalidando.
+
+### 2. Camada de queries (novo arquivo `src/lib/data/queries.ts`)
+
+Expor `queryOptions` para cada dataset, chamando os `ensure*` do repo:
+
+```
+usersQuery       -> staleTime 5min, gcTime 30min
+tagsQuery        -> staleTime 5min
+convTagsQuery    -> staleTime 5min
+broadcastsQuery  -> staleTime 5min
+appSettingsQuery -> staleTime 10min (landing)
+messagesQuery(conversationId) -> staleTime 0 (chat sempre fresco)
 ```
 
-Ou seja: se a chamada falhar (por qualquer motivo), o erro é engolido e o campo mostra "Não informado". Como acontece em **todos os lugares que você clica**, a hipótese mais provável é que a server function esteja falhando de forma sistemática no ambiente publicado (Coolify) — normalmente porque a env var `EXT_SUPABASE_SERVICE_ROLE_KEY` não está setada no container, ou a chave está inválida/rotacionada, ou o bearer do usuário não chega.
+Um pequeno hook `useRepoInvalidator()` assina `repo.subscribe()` uma vez no root e chama `queryClient.invalidateQueries()` nos keys afetados quando o realtime dispara — mantendo o fluxo atual de atualização automática, mas agora o React Query decide o refetch e serve cache instantâneo enquanto isso.
 
-## Passos do plano
+### 3. Consumo nas telas (mínimo invasivo)
 
-1. **Instrumentar a causa real (rápido, não invasivo).**
-   - Em `src/components/chat/ChatWindow.tsx`, `src/components/admin/AdminEditUserDialog.tsx` e `src/routes/_app/usuarios.tsx`: trocar `.catch(() => undefined)` por um `.catch(err => console.warn("[emails]", err))` que também exibe um `toast` discreto na primeira falha por sessão, mostrando a mensagem retornada pelo servidor (ex.: "Configuração do servidor ausente", "Sessão inválida", etc.). Isso resolve a regra do projeto de sempre mostrar o motivo real do erro.
+- `_app/route.tsx`: remover o gate de `repo.isBootstrapped()` para dados; manter só o gate de auth. A UI aparece imediatamente com dados cacheados; loaders locais (skeleton) cobrem o primeiro fetch.
+- `UserChatPanel`, `admin.tsx`, `usuarios.tsx`, `metricas.tsx`, landing: trocar `useRepoVersion()` por `useSuspenseQuery(usersQuery)` / `useQuery(...)` conforme o dado.
+- `ChatWindow` continua usando `useRepoVersion` + realtime (mensagens são realtime puro, cache não ajuda aqui — mas o histórico inicial da conversa passa por `messagesQuery` para reidratar entre navegações).
 
-2. **Melhorar as mensagens do servidor** em `src/lib/data/emails.functions.ts` para distinguir:
-   - `EXT_SUPABASE_SERVICE_ROLE_KEY` ausente → "Configuração do servidor ausente: EXT_SUPABASE_SERVICE_ROLE_KEY".
-   - Falha 401/403 do Admin API → mensagem explícita (ex.: "Chave de serviço rejeitada pelo banco externo").
-   - Assim, o toast do passo 1 vira acionável.
+### 4. Cache entre sessões (opcional, ligado por padrão)
 
-3. **Fallback quando o servidor não pode fornecer email.**
-   - Para o próprio usuário logado, já temos o email na sessão — garantir que `other.email` já venha preenchido quando `other.id === me.id` (não passar pela server function).
-   - Nos demais casos, se a server function falhar, exibir "Email indisponível (verifique EXT_SUPABASE_SERVICE_ROLE_KEY no servidor)" em vez de "Não informado", para deixar claro que o problema é de configuração e não de dado faltante.
+Adicionar `persistQueryClient` do `@tanstack/react-query-persist-client` com `localStorage` (chave versionada com `APP_VERSION` do cache-buster existente). Assim, ao voltar depois de horas, a UI aparece com o snapshot anterior enquanto revalida em background — comportamento tipo WhatsApp Web.
 
-4. **Checagem operacional (a ser feita por você, sem alterar código):**
-   - Confirmar no Coolify que a env var `EXT_SUPABASE_SERVICE_ROLE_KEY` está setada no serviço em produção (o valor no painel de Secrets do Lovable Cloud não é propagado automaticamente para a VPS).
-   - Se estiver ausente/desatualizada, adicionar/atualizar e redeploy.
+## Fora de escopo
 
-## Escopo
+- Não altero a lógica de envio de mensagem, realtime, RLS, nem o `AdminEditUserDialog`.
+- Não mudo endpoints server-side nem o schema do banco.
+- Não mexo em `client.ts` (auto-gerado).
 
-Somente:
-- `src/components/chat/ChatWindow.tsx`
-- `src/components/admin/AdminEditUserDialog.tsx`
-- `src/routes/_app/usuarios.tsx`
-- `src/lib/data/emails.functions.ts`
+## Arquivos afetados
 
-Nenhuma mudança em regras de negócio, RLS, schema ou fluxo de auth.
+- `src/lib/data/supabaseRepository.ts` (refactor bootstrap → ensure\*)
+- `src/lib/data/queries.ts` (novo)
+- `src/lib/hooks/useRepo.ts` (adiciona `useRepoInvalidator`)
+- `src/routes/__root.tsx` (montar invalidator + persister)
+- `src/routes/_app/route.tsx` (remover gate de dados)
+- `src/components/chat/UserChatPanel.tsx`, `src/routes/_app/admin.tsx`, `usuarios.tsx`, `metricas.tsx`, `src/routes/index.tsx` (trocar `useRepoVersion` por queries onde faz sentido)
+- `package.json`: adicionar `@tanstack/react-query-persist-client` se aprovar a etapa 4
 
 ## Resultado esperado
 
-- Você passa a ver, no primeiro clique em um perfil, um toast com o motivo real do "Não informado" (ex.: "Configuração do servidor ausente: EXT_SUPABASE_SERVICE_ROLE_KEY").
-- Após corrigir a env var no Coolify e redeploy, os emails passam a aparecer em todos os perfis (chat, edição admin, tabela de usuários).
+- Primeira visita: igual à atual.
+- Navegação entre telas: **instantânea** (cache).
+- Voltar à aba depois de minutos: UI aparece na hora, com revalidação silenciosa.
+- Chat: mensagens continuam chegando em tempo real (sem regressão).
