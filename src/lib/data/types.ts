@@ -8,6 +8,7 @@ export interface BaseUser {
   password: string; // mock only
   createdAt: number;
   cpf?: string;
+  cnpj?: string;
   active?: boolean;
   email?: string;
   whatsapp?: string;

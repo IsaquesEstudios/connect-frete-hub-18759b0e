@@ -46,6 +46,18 @@ function lastSeenLabel(ts: number | null): string {
   return `há ${Math.floor(h / 24)}d`;
 }
 
+function normalizeSearchText(value: unknown): string {
+  return String(value ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+function onlyDigits(value: unknown): string {
+  return String(value ?? "").replace(/\D/g, "");
+}
+
 function AdminPanel() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -78,20 +90,18 @@ function AdminPanel() {
         for (const id of tagFilter) if (!c.tagIds.includes(id)) return false;
       }
       if (query) {
-        const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const q = norm(query.trim());
-        const qDigits = query.replace(/\D/g, "");
+        const q = normalizeSearchText(query);
+        const qDigits = onlyDigits(query);
         const u = c.user as { cnpj?: string; cpf?: string; whatsapp?: string; email?: string };
-        const name = norm(c.user.name || "");
-        const number = (c.user.number || "").toLowerCase();
-        const cnpj = (u.cnpj || "").toLowerCase();
-        const cpf = (u.cpf || "").toLowerCase();
-        const email = (u.email || "").toLowerCase();
-        const textHit = q && (name.includes(q) || number.includes(q) || cnpj.includes(q) || cpf.includes(q) || email.includes(q));
-        if (textHit) return true;
+        const searchableText = [c.user.name, c.user.number, u.cnpj, u.cpf, u.email, u.whatsapp]
+          .map(normalizeSearchText)
+          .filter(Boolean);
+        if (q && searchableText.some((value) => value.includes(q))) return true;
         if (qDigits) {
-          const digitsPool = [cnpj, cpf, number, u.whatsapp || ""].map((s) => s.replace(/\D/g, ""));
-          if (digitsPool.some((d) => d && d.includes(qDigits))) return true;
+          const searchableDigits = [u.cnpj, u.cpf, c.user.number, u.whatsapp]
+            .map(onlyDigits)
+            .filter(Boolean);
+          if (searchableDigits.some((value) => value.includes(qDigits))) return true;
         }
         return false;
       }
