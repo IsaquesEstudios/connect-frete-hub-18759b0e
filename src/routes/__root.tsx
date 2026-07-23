@@ -1,4 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import {
   Outlet,
   Link,
@@ -7,7 +9,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { Toaster } from "../components/ui/sonner";
@@ -137,12 +139,40 @@ function RootComponent() {
     void runCacheBuster();
   }, []);
 
-  return (
-    <QueryClientProvider client={queryClient}>
+  const persister = useMemo(
+    () =>
+      typeof window !== "undefined"
+        ? createSyncStoragePersister({
+            storage: window.localStorage,
+            key: "svlogistica:rq-cache",
+          })
+        : undefined,
+    [],
+  );
+
+  const content = (
+    <>
       <meta name="app-version" content={APP_VERSION} />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <Toaster richColors position="top-right" />
-    </QueryClientProvider>
+    </>
   );
+
+  if (persister) {
+    return (
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{
+          persister,
+          maxAge: 1000 * 60 * 60 * 24, // 24h
+          buster: APP_VERSION,
+        }}
+      >
+        {content}
+      </PersistQueryClientProvider>
+    );
+  }
+
+  return <QueryClientProvider client={queryClient}>{content}</QueryClientProvider>;
 }
