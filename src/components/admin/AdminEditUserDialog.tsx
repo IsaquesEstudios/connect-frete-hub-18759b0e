@@ -93,7 +93,7 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
       carroceriaObs,
       peso: u.peso ?? "",
       nomeFantasia: u.nomeFantasia ?? "",
-      perfilEmpresa: u.perfilEmpresa ?? "",
+      perfilEmpresa: u.perfilEmpresa || (u.type === "motorista" ? "motorista" : ""),
       siteRedeSocial: u.siteRedeSocial ?? "",
     });
     setActive(u.active !== false);
