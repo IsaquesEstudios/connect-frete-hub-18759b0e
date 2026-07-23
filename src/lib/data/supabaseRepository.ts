@@ -197,9 +197,12 @@ class SupabaseRepository implements Repository {
 
   constructor() {
     if (typeof window !== "undefined") {
-      // Kick off boot; also reload when auth changes (RLS lets user see own rows).
+      // Kick off boot; also reload when auth actually changes identity.
       void this.bootstrap();
-      supabase.auth.onAuthStateChange(() => {
+      supabase.auth.onAuthStateChange((event) => {
+        // Ignore TOKEN_REFRESHED / INITIAL_SESSION — they fire on every
+        // tab focus and hourly, and shouldn't blank the UI.
+        if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
         void this.bootstrap();
       });
     }
@@ -214,8 +217,12 @@ class SupabaseRepository implements Repository {
   }
 
   private async bootstrap() {
-    this.bootstrapped = false;
-    this.notify();
+    // Only blank the UI on the very first boot. Subsequent reboots refresh
+    // silently in the background so the user keeps seeing cached data.
+    const isFirstBoot = !this.bootstrapped;
+    if (isFirstBoot) {
+      this.notify();
+    }
     try {
       await Promise.all([
         this.loadUsers(),
