@@ -179,6 +179,20 @@ function profilePatchToRow(patch: UserProfilePatch): Record<string, string | boo
   return row;
 }
 
+const CACHE_PREFIX = "svlogistica:repo-cache:v1:";
+
+type SyncPhase = "idle" | "syncing";
+export type SyncState = { phase: SyncPhase; done: number; total: number };
+
+type CacheBlob = {
+  users: User[];
+  messages: Message[];
+  tags: Tag[];
+  convTags: { conversationId: string; tagId: string }[];
+  broadcasts: BroadcastMessage[];
+  lastSeen: [string, number][];
+};
+
 class SupabaseRepository implements Repository {
   private users: User[] = [];
   private messages: Message[] = [];
@@ -186,6 +200,8 @@ class SupabaseRepository implements Repository {
   private convTags: { conversationId: string; tagId: string }[] = [];
   private broadcasts: BroadcastMessage[] = [];
   private subs = new Set<() => void>();
+  private syncSubs = new Set<(s: SyncState) => void>();
+  private sync: SyncState = { phase: "idle", done: 0, total: 0 };
   private adminAuthId: string | null = null;
   private realtimeStarted = false;
   private onlineIds = new Set<string>();
@@ -194,14 +210,13 @@ class SupabaseRepository implements Repository {
   private presenceChannel: ReturnType<typeof supabase.channel> | null = null;
   private pendingTagSaves = new Map<string, Promise<boolean>>();
   private bootstrapped = false;
+  private cacheKey: string | null = null;
+  private cachePersistTimer: number | null = null;
 
   constructor() {
     if (typeof window !== "undefined") {
-      // Kick off boot; also reload when auth actually changes identity.
       void this.bootstrap();
       supabase.auth.onAuthStateChange((event) => {
-        // Ignore TOKEN_REFRESHED / INITIAL_SESSION — they fire on every
-        // tab focus and hourly, and shouldn't blank the UI.
         if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
         void this.bootstrap();
       });
@@ -210,6 +225,63 @@ class SupabaseRepository implements Repository {
 
   isBootstrapped(): boolean {
     return this.bootstrapped;
+  }
+
+  getSyncState(): SyncState {
+    return this.sync;
+  }
+
+  subscribeSync(cb: (s: SyncState) => void): () => void {
+    this.syncSubs.add(cb);
+    return () => {
+      this.syncSubs.delete(cb);
+    };
+  }
+
+  private setSync(next: SyncState) {
+    this.sync = next;
+    this.syncSubs.forEach((cb) => cb(next));
+  }
+
+  private hydrateFromCache(uid: string): boolean {
+    if (typeof window === "undefined") return false;
+    this.cacheKey = CACHE_PREFIX + uid;
+    try {
+      const raw = window.localStorage.getItem(this.cacheKey);
+      if (!raw) return false;
+      const blob = JSON.parse(raw) as CacheBlob;
+      this.users = blob.users ?? [];
+      this.messages = blob.messages ?? [];
+      this.tags = blob.tags ?? [];
+      this.convTags = blob.convTags ?? [];
+      this.broadcasts = blob.broadcasts ?? [];
+      this.lastSeen = new Map(blob.lastSeen ?? []);
+      return this.messages.length > 0 || this.users.length > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  private persistCache() {
+    if (!this.cacheKey || typeof window === "undefined") return;
+    if (this.cachePersistTimer) window.clearTimeout(this.cachePersistTimer);
+    this.cachePersistTimer = window.setTimeout(() => {
+      if (!this.cacheKey) return;
+      try {
+        const blob: CacheBlob = {
+          users: this.users,
+          messages: this.messages,
+          tags: this.tags,
+          convTags: this.convTags,
+          broadcasts: this.broadcasts,
+          lastSeen: Array.from(this.lastSeen.entries()),
+        };
+        window.localStorage.setItem(this.cacheKey, JSON.stringify(blob));
+      } catch (err) {
+        // Quota exceeded etc. — drop cache silently.
+        console.warn("repo cache persist failed", err);
+      }
+    }, 400);
   }
 
   private notify() {
