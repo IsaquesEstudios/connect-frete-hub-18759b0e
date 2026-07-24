@@ -36,9 +36,6 @@ function isStaff(profile: ProfileForMessage): boolean {
 }
 
 function messageConversationId(from: ProfileForMessage, to: ProfileForMessage): string {
-  // Cada par (remetente ↔ destinatário) tem sua própria conversa. Usamos os
-  // IDs (UUIDs) dos perfis para garantir unicidade mesmo quando
-  // `user_number` estiver ausente.
   return [from.id, to.id].sort().join("__");
 }
 
@@ -109,46 +106,76 @@ function requireProfile(profile: ProfileForMessage | null): ProfileForMessage {
   return profile;
 }
 
-export const listVisibleMessages = createServerFn({ method: "GET" }).handler(async () => {
-  const serviceKey = process.env.EXT_SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceKey) throw new Error("Configuração do servidor ausente.");
+function parseTotal(res: Response, fallback: number): number {
+  // Content-Range: "0-99/1234" — the value after "/" is total.
+  const range = res.headers.get("content-range");
+  if (!range) return fallback;
+  const slash = range.lastIndexOf("/");
+  if (slash < 0) return fallback;
+  const totalStr = range.slice(slash + 1);
+  const n = Number(totalStr);
+  return Number.isFinite(n) ? n : fallback;
+}
 
-  const profile = await getCurrentProfile(serviceKey);
-  if (!profile) return [];
+export const listVisibleMessages = createServerFn({ method: "POST" })
+  .inputValidator((data) =>
+    z
+      .object({
+        since: z.string().optional(),
+        offset: z.number().int().min(0).optional(),
+        limit: z.number().int().min(1).max(500).optional(),
+      })
+      .optional()
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    const serviceKey = process.env.EXT_SUPABASE_SERVICE_ROLE_KEY;
+    if (!serviceKey) throw new Error("Configuração do servidor ausente.");
 
-  const baseSelect = "select=*&order=created_at.desc";
+    const profile = await getCurrentProfile(serviceKey);
+    if (!profile) return { rows: [] as MessageForClient[], total: 0 };
 
-  async function fetchPage(extra: string, limit: number): Promise<MessageForClient[]> {
-    const url = `${EXT_SUPABASE_URL}/rest/v1/messages?${baseSelect}&limit=${limit}&${extra}`;
-    const res = await fetch(url, { headers: apiHeaders(serviceKey!) });
-    if (!res.ok) {
-      throw new Error(`Não foi possível carregar as mensagens. ${await readError(res)}`.trim());
+    const since = data?.since;
+    const limit = data?.limit ?? (since ? 200 : 500);
+    const offset = data?.offset ?? 0;
+    // With `since` we paginate ascending (oldest new first). Cold load stays
+    // descending so the latest messages appear immediately.
+    const order = since ? "created_at.asc" : "created_at.desc";
+    const sinceFilter = since ? `&created_at=gt.${encodeURIComponent(since)}` : "";
+
+    async function fetchPage(extra: string): Promise<{ rows: MessageForClient[]; total: number }> {
+      const url =
+        `${EXT_SUPABASE_URL}/rest/v1/messages` +
+        `?select=*&order=${order}&limit=${limit}&offset=${offset}${sinceFilter}&${extra}`;
+      const res = await fetch(url, {
+        headers: { ...apiHeaders(serviceKey!), Prefer: "count=exact" },
+      });
+      if (!res.ok) {
+        throw new Error(`Não foi possível carregar as mensagens. ${await readError(res)}`.trim());
+      }
+      const rows = (await res.json()) as MessageForClient[];
+      return { rows, total: parseTotal(res, rows.length + offset) };
     }
-    return (await res.json()) as MessageForClient[];
-  }
 
-  let rows: MessageForClient[];
-  if (isStaff(profile)) {
-    rows = await fetchPage("", 500);
-  } else {
-    // Split OR into two indexed equality queries — the planner picks a
-    // per-column index instead of doing an OR-scan over the whole table.
+    if (isStaff(profile)) {
+      const { rows, total } = await fetchPage("");
+      return { rows: since ? rows : rows.slice().reverse(), total };
+    }
+
     const uid = encodeURIComponent(profile.id);
     const [outgoing, incoming] = await Promise.all([
-      fetchPage(`from_user_id=eq.${uid}`, 300),
-      fetchPage(`to_user_id=eq.${uid}`, 300),
+      fetchPage(`from_user_id=eq.${uid}`),
+      fetchPage(`to_user_id=eq.${uid}`),
     ]);
     const seen = new Set<string>();
-    rows = [...outgoing, ...incoming].filter((m) => {
+    const merged = [...outgoing.rows, ...incoming.rows].filter((m) => {
       if (seen.has(m.id)) return false;
       seen.add(m.id);
       return true;
     });
-    rows.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
-  }
-
-  return rows.reverse();
-});
+    merged.sort((a, b) => (a.created_at < b.created_at ? (since ? -1 : 1) : since ? 1 : -1));
+    return { rows: since ? merged : merged.reverse(), total: outgoing.total + incoming.total };
+  });
 
 export const sendChatMessage = createServerFn({ method: "POST" })
   .inputValidator((data) =>

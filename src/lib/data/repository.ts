@@ -55,6 +55,8 @@ export interface Repository {
   subscribeEphemeral(cb: (e: { type: string; payload: unknown }) => void): () => void;
   // loading
   isBootstrapped(): boolean;
+  getSyncState(): { phase: "idle" | "syncing"; done: number; total: number };
+  subscribeSync(cb: (s: { phase: "idle" | "syncing"; done: number; total: number }) => void): () => void;
   // utils
   nextNumberFor(type: UserType): string;
 }

@@ -44,6 +44,12 @@ class LocalRepository implements Repository {
   isBootstrapped(): boolean {
     return true;
   }
+  getSyncState() {
+    return { phase: "idle" as const, done: 0, total: 0 };
+  }
+  subscribeSync(): () => void {
+    return () => {};
+  }
 
   listUsers(): User[] {
     return readJSON<User[]>(K_USERS, []);

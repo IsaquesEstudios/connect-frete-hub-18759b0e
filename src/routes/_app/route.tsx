@@ -2,6 +2,7 @@ import { Outlet, createFileRoute, useNavigate, useLocation, useRouter, Link } fr
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { AppSidebar } from "@/components/layout/AppSidebar";
+import { SyncProgressBar } from "@/components/chat/SyncProgressBar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { FullscreenLoading } from "@/components/ui/loading";
 import { useAuth } from "@/lib/auth/useAuth";
@@ -122,6 +123,7 @@ function AppGate() {
       <div className="min-h-screen flex w-full">
         <AppSidebar user={user} />
         <div className="flex-1 min-w-0 flex flex-col relative">
+          <SyncProgressBar />
           <Outlet />
         </div>
       </div>
