@@ -130,11 +130,11 @@ function UsuariosPage() {
   const users = useMemo(() => repo.listUsers(), [v]);
 
   const resolveDisplayType = (u: User): "empresa" | "motorista" | "colaborador" | "admin" => {
-    const perfil = (u as { perfilEmpresa?: string }).perfilEmpresa;
     if (u.type === "colaborador" || u.type === "admin") return u.type;
-    if (perfil === "motorista") return "motorista";
-    if (perfil === "transportador" || perfil === "embarcador" || perfil === "agenciador") return "empresa";
-    return u.type as "empresa" | "motorista";
+    // Motorista é isolado: só é motorista quem tem type === "motorista".
+    if (u.type === "motorista") return "motorista";
+    // Todo o restante (transportador, embarcador, agenciador, empresa) entra como empresa.
+    return "empresa";
   };
 
   const filtered = useMemo(() => {
