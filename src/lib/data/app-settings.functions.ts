@@ -85,11 +85,18 @@ export const updateWhatsappLinks = createServerFn({ method: "POST" })
       { key: "whatsapp_empresas", value: data.empresas },
     ];
 
-    // Upsert using the admin's user token so RLS policies apply
+    // Upsert with service role (RLS on app_settings blocks direct writes even for admins).
+    // Admin was already verified above via the user token.
+    const serviceKey = process.env.EXT_SUPABASE_SERVICE_ROLE_KEY;
+    if (!serviceKey) {
+      throw new Error(
+        "Configuração do servidor incompleta: EXT_SUPABASE_SERVICE_ROLE_KEY não definida.",
+      );
+    }
     const upsertRes = await fetch(`${EXT_SUPABASE_URL}/rest/v1/app_settings?on_conflict=key`, {
       method: "POST",
       headers: {
-        ...apiHeaders(apiKey, token),
+        ...apiHeaders(serviceKey),
         "Content-Type": "application/json",
         Prefer: "resolution=merge-duplicates,return=minimal",
       },
