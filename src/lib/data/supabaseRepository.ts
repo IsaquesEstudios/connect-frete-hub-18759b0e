@@ -458,7 +458,23 @@ class SupabaseRepository implements Repository {
         (payload) => {
           if (payload.eventType === "INSERT") {
             const m = this.mapMessage(payload.new as MessageRow);
-            if (!this.messages.find((x) => x.id === m.id)) this.messages.push(m);
+            // Se já temos essa mensagem (id), ignora.
+            const existingIdx = this.messages.findIndex((x) => x.id === m.id);
+            if (existingIdx >= 0) {
+              this.messages[existingIdx] = { ...m, conversationId: this.messages[existingIdx].conversationId, fromUserId: this.messages[existingIdx].fromUserId };
+            } else {
+              // Se há um temp pendente equivalente, substitui em vez de adicionar.
+              const key = this.pendingKey(m.fromUserId, m.toUserId, m.body);
+              const tempId = this.pendingSendKeys.get(key);
+              const tempIdx = tempId ? this.messages.findIndex((x) => x.id === tempId) : -1;
+              if (tempIdx >= 0) {
+                const prev = this.messages[tempIdx];
+                this.messages[tempIdx] = { ...m, conversationId: prev.conversationId, fromUserId: prev.fromUserId, createdAt: prev.createdAt };
+                this.pendingSendKeys.delete(key);
+              } else {
+                this.messages.push(m);
+              }
+            }
             // If the message references a user we haven't loaded yet
             // (fresh signup after admin logged in), refresh profiles so
             // the conversation shows up in the sidebar.
