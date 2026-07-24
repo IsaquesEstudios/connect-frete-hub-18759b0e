@@ -111,8 +111,8 @@ function AppGate() {
     return () => repo.setPresence(user.id, false);
   }, [user]);
 
-  if (loading || !repo.isBootstrapped()) {
-    void repoVersion;
+  void repoVersion;
+  if (loading) {
     return <FullscreenLoading label="Carregando..." />;
   }
   if (!user) return null;
