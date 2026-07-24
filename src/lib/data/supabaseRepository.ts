@@ -639,7 +639,7 @@ class SupabaseRepository implements Repository {
   }
 
   async refreshMessages(): Promise<void> {
-    await this.loadMessages();
+    await this.syncMessages();
     this.normalizeMessageConversationIds();
     this.notify();
   }
