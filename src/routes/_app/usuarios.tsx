@@ -129,12 +129,20 @@ function UsuariosPage() {
 
   const users = useMemo(() => repo.listUsers(), [v]);
 
+  const resolveDisplayType = (u: User): "empresa" | "motorista" | "colaborador" | "admin" => {
+    const perfil = (u as { perfilEmpresa?: string }).perfilEmpresa;
+    if (u.type === "colaborador" || u.type === "admin") return u.type;
+    if (perfil === "motorista") return "motorista";
+    if (perfil === "transportador" || perfil === "embarcador" || perfil === "agenciador") return "empresa";
+    return u.type as "empresa" | "motorista";
+  };
+
   const filtered = useMemo(() => {
     const list = users.filter((u) => {
       // Oculta admin secundário — mantém apenas o admin principal na listagem.
       const emailForUser = (u.email || emails[u.id] || "").toLowerCase();
       if (u.type === "admin" && emailForUser === "sharlysongomes@gmail.com") return false;
-      if (tab !== "todos" && u.type !== tab) return false;
+      if (tab !== "todos" && resolveDisplayType(u) !== tab) return false;
       if (query) {
         const q = normalizeSearchText(query);
         const qDigits = onlyDigits(query);
@@ -263,13 +271,16 @@ function UsuariosPage() {
                     <tr key={u.id} className="border-b last:border-0 hover:bg-accent/40">
                       <td className="px-4 py-3 font-medium">{u.name}</td>
                       <td className="px-4 py-3">
-                        <span
-                          className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded text-white ${typeColorClass(
-                            u.type,
-                          )}`}
-                        >
-                          {typeLabel(u.type)}
-                        </span>
+                        {(() => {
+                          const dt = resolveDisplayType(u);
+                          return (
+                            <span
+                              className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded text-white ${typeColorClass(dt)}`}
+                            >
+                              {typeLabel(dt)}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-4 py-3 uppercase text-xs text-muted-foreground">
                         {u.number}
