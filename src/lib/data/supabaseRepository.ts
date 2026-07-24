@@ -212,6 +212,8 @@ class SupabaseRepository implements Repository {
   private bootstrapped = false;
   private cacheKey: string | null = null;
   private cachePersistTimer: number | null = null;
+  private pendingSendKeys = new Map<string, string>(); // key -> tempId
+  private lastSendAt = 0;
 
   constructor() {
     if (typeof window !== "undefined") {
