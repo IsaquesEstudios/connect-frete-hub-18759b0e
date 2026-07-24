@@ -122,6 +122,7 @@ function AppGate() {
       <div className="min-h-screen flex w-full">
         <AppSidebar user={user} />
         <div className="flex-1 min-w-0 flex flex-col relative">
+          <SyncProgressBar />
           <Outlet />
         </div>
       </div>
