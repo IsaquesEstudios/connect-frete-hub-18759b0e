@@ -218,8 +218,10 @@ export function ChatWindow({ me, other, viewer }: Props) {
   }
 
   function sendText() {
-    sendBody(text);
+    const current = text;
+    if (!current.trim()) return;
     setText("");
+    sendBody(current);
   }
 
   async function handleFile(file: File | undefined | null) {
