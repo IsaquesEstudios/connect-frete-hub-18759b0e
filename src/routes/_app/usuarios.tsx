@@ -129,12 +129,20 @@ function UsuariosPage() {
 
   const users = useMemo(() => repo.listUsers(), [v]);
 
+  const resolveDisplayType = (u: User): "empresa" | "motorista" | "colaborador" | "admin" => {
+    const perfil = (u as { perfilEmpresa?: string }).perfilEmpresa;
+    if (u.type === "colaborador" || u.type === "admin") return u.type;
+    if (perfil === "motorista") return "motorista";
+    if (perfil === "transportador" || perfil === "embarcador" || perfil === "agenciador") return "empresa";
+    return u.type as "empresa" | "motorista";
+  };
+
   const filtered = useMemo(() => {
     const list = users.filter((u) => {
       // Oculta admin secundário — mantém apenas o admin principal na listagem.
       const emailForUser = (u.email || emails[u.id] || "").toLowerCase();
       if (u.type === "admin" && emailForUser === "sharlysongomes@gmail.com") return false;
-      if (tab !== "todos" && u.type !== tab) return false;
+      if (tab !== "todos" && resolveDisplayType(u) !== tab) return false;
       if (query) {
         const q = normalizeSearchText(query);
         const qDigits = onlyDigits(query);
