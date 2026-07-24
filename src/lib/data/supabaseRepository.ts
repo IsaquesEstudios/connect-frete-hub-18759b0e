@@ -653,13 +653,24 @@ class SupabaseRepository implements Repository {
     const ids = this.conversationLookupIds(conversationId, options?.staffInbox);
     return this.messages
       .filter((m) => ids.includes(m.conversationId))
-      .sort((a, b) => a.createdAt - b.createdAt);
+      .sort((a, b) => {
+        if (a.createdAt !== b.createdAt) return a.createdAt - b.createdAt;
+        // Ordem estável: mensagens já persistidas antes de temporárias com mesmo ts.
+        const aTemp = a.id.startsWith("tmp_");
+        const bTemp = b.id.startsWith("tmp_");
+        if (aTemp !== bTemp) return aTemp ? 1 : -1;
+        return a.id < b.id ? -1 : 1;
+      });
   }
 
   async refreshMessages(): Promise<void> {
     await this.syncMessages();
     this.normalizeMessageConversationIds();
     this.notify();
+  }
+
+  private pendingKey(fromUserId: string, toUserId: string, body: string): string {
+    return `${fromUserId}\u0000${toUserId}\u0000${body}`;
   }
 
   sendMessage({
@@ -675,8 +686,12 @@ class SupabaseRepository implements Repository {
     const fromStaff = this.isStaff(from);
     const conversationId = this.staffPairId(fromUserId, toUserId);
 
-    const tempId = `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-    const now = Date.now();
+    // Timestamp monotônico crescente para preservar ordem em envios rápidos
+    // dentro do mesmo milissegundo.
+    const now = Math.max(Date.now(), this.lastSendAt + 1);
+    this.lastSendAt = now;
+
+    const tempId = `tmp_${now}_${Math.random().toString(36).slice(2, 7)}`;
     const msg: Message = {
       id: tempId,
       conversationId,
@@ -688,6 +703,8 @@ class SupabaseRepository implements Repository {
       readByUser: !fromStaff,
     };
     this.messages.push(msg);
+    const pendKey = this.pendingKey(fromUserId, toUserId, body);
+    this.pendingSendKeys.set(pendKey, tempId);
     this.notify();
 
     void (async () => {
@@ -695,15 +712,13 @@ class SupabaseRepository implements Repository {
         const { sendChatMessage } = await import("./messages.functions");
         const result = await sendChatMessage({ data: { toUserId, body } });
         const real = this.mapMessage(result.row as MessageRow);
-        // Preserva conversationId/fromUserId do lado do cliente: quando o
-        // servidor canoniza o remetente (ex.: ADM-0001) e usa outro par de
-        // conversa, a mensagem sumia da tela do admin remetente até que a
-        // expansão de pares admin recarregasse. Mantendo o par local, a
-        // mensagem permanece visível de forma contínua.
-        const displayReal: Message = { ...real, conversationId, fromUserId };
-        const tempIdx = this.messages.findIndex((m) => m.id === tempId);
+        // Preserva conversationId/fromUserId do lado do cliente (o servidor
+        // pode canonizar o remetente para ADM-0001).
+        const displayReal: Message = { ...real, conversationId, fromUserId, createdAt: msg.createdAt };
         const realIdx = this.messages.findIndex((m) => m.id === real.id);
+        const tempIdx = this.messages.findIndex((m) => m.id === tempId);
         if (realIdx >= 0) {
+          // Realtime chegou primeiro. Mantém a real e remove o temp.
           this.messages[realIdx] = displayReal;
           if (tempIdx >= 0) this.messages.splice(tempIdx, 1);
         } else if (tempIdx >= 0) {
@@ -711,9 +726,15 @@ class SupabaseRepository implements Repository {
         } else {
           this.messages.push(displayReal);
         }
+        if (this.pendingSendKeys.get(pendKey) === tempId) {
+          this.pendingSendKeys.delete(pendKey);
+        }
         this.notify();
       } catch (error) {
         this.messages = this.messages.filter((m) => m.id !== tempId);
+        if (this.pendingSendKeys.get(pendKey) === tempId) {
+          this.pendingSendKeys.delete(pendKey);
+        }
         this.notify();
         reportError("Não foi possível enviar a mensagem", error);
       }
