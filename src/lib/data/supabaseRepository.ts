@@ -289,31 +289,39 @@ class SupabaseRepository implements Repository {
   }
 
   private async bootstrap() {
-    // Only blank the UI on the very first boot. Subsequent reboots refresh
-    // silently in the background so the user keeps seeing cached data.
-    const isFirstBoot = !this.bootstrapped;
-    if (isFirstBoot) {
+    // 1. Resolve session first so we know whose cache to hydrate.
+    const { data: sessionData } = await supabase.auth.getSession().catch(async (error) => {
+      const message = String(error instanceof Error ? error.message : error ?? "");
+      if (/refresh_token_not_found|invalid refresh token/i.test(message)) {
+        window.localStorage.removeItem("ext-sb-auth-token");
+        await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+        return { data: { session: null } };
+      }
+      throw error;
+    });
+    const sessionUserId = sessionData?.session?.user.id ?? null;
+
+    // 2. Hydrate from cache immediately — UI shows conversations right away.
+    const hadCache = sessionUserId ? this.hydrateFromCache(sessionUserId) : false;
+    if (hadCache) {
+      this.bootstrapped = true;
+      this.normalizeMessageConversationIds();
       this.notify();
     }
+
     try {
-      await Promise.all([
+      // 3. Cold datasets fetch in parallel with the delta sync.
+      const coldLoads = Promise.all([
         this.loadUsers(),
         this.loadTags(),
         this.loadConvTags(),
-        this.loadMessages(),
         this.loadBroadcasts(),
       ]);
+      const msgSync = sessionUserId ? this.syncMessages() : (this.messages = [], Promise.resolve());
+      await Promise.all([coldLoads, msgSync]);
       this.normalizeMessageConversationIds();
-      const { data } = await supabase.auth.getSession().catch(async (error) => {
-        const message = String(error instanceof Error ? error.message : error ?? "");
-        if (/refresh_token_not_found|invalid refresh token/i.test(message)) {
-          window.localStorage.removeItem("ext-sb-auth-token");
-          await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
-          return { data: { session: null } };
-        }
-        throw error;
-      });
-      const current = data.session?.user.id ? this.getUser(data.session.user.id) : null;
+
+      const current = sessionUserId ? this.getUser(sessionUserId) : null;
       const admin = this.users.find((u) => u.type === "admin");
       this.adminAuthId = current?.type === "admin" || current?.type === "colaborador" ? current.id : admin?.id ?? null;
 
@@ -321,6 +329,7 @@ class SupabaseRepository implements Repository {
         this.realtimeStarted = true;
         this.subscribeRealtime();
       }
+      this.persistCache();
     } catch (error) {
       console.error("bootstrap failed", error);
     } finally {
@@ -338,43 +347,92 @@ class SupabaseRepository implements Repository {
         if (r.last_seen_at) this.lastSeen.set(r.id, new Date(r.last_seen_at).getTime());
       }
       this.normalizeMessageConversationIds();
+      this.persistCache();
     }
   }
   private async loadTags() {
     const { data } = await supabase.from("tags").select("*").order("label");
-    if (data) this.tags = (data as Tag[]).map((t) => ({ id: t.id, label: t.label, color: t.color }));
+    if (data) {
+      this.tags = (data as Tag[]).map((t) => ({ id: t.id, label: t.label, color: t.color }));
+      this.persistCache();
+    }
   }
   private async loadConvTags() {
     const { data } = await supabase.from("conversation_tags").select("*");
-    if (data)
+    if (data) {
       this.convTags = (data as { conversation_id: string; tag_id: string }[]).map((c) => ({
         conversationId: c.conversation_id,
         tagId: c.tag_id,
       }));
+      this.persistCache();
+    }
   }
-  private async loadMessages() {
+  private async syncMessages() {
     // Skip authenticated server call when there's no session (e.g. /auth route).
     const { data: sessionData } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
     if (!sessionData?.session) {
       this.messages = [];
       return;
     }
+
+    const { listVisibleMessages } = await import("./messages.functions");
+    const cachedLastCreatedAt = this.messages.reduce(
+      (max, m) => (m.createdAt > max ? m.createdAt : max),
+      0,
+    );
+
     try {
-      const { listVisibleMessages } = await import("./messages.functions");
-      const rows = (await listVisibleMessages()) as MessageRow[];
-      this.messages = rows.map((r) => this.mapMessage(r));
-    } catch (error) {
-      console.error("loadMessages via server failed", error);
-      // Fallback para ambientes sem Server Function configurada.
-      const { data } = await supabase
-        .from("messages")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(2000);
-      if (data) {
-        const rows = (data as MessageRow[]).slice().reverse();
-        this.messages = rows.map((r) => this.mapMessage(r));
+      if (cachedLastCreatedAt > 0) {
+        // Delta sync: fetch only messages newer than what we already have.
+        const sinceIso = new Date(cachedLastCreatedAt).toISOString();
+        const pageSize = 100;
+        let offset = 0;
+        let total = 0;
+        const seenIds = new Set(this.messages.map((m) => m.id));
+        while (true) {
+          const result = await listVisibleMessages({
+            data: { since: sinceIso, offset, limit: pageSize },
+          });
+          total = result.total || result.rows.length;
+          if (offset === 0 && total > 20) {
+            this.setSync({ phase: "syncing", done: 0, total });
+          }
+          for (const row of result.rows) {
+            if (seenIds.has(row.id)) continue;
+            seenIds.add(row.id);
+            this.messages.push(this.mapMessage(row as MessageRow));
+          }
+          offset += result.rows.length;
+          if (this.sync.phase === "syncing") {
+            this.setSync({ phase: "syncing", done: Math.min(offset, total), total });
+          }
+          this.notify();
+          if (result.rows.length < pageSize || offset >= total) break;
+        }
+      } else {
+        // Cold load — one shot, the server returns the latest window.
+        const result = await listVisibleMessages({ data: {} });
+        this.messages = (result.rows as MessageRow[]).map((r) => this.mapMessage(r));
       }
+    } catch (error) {
+      console.error("syncMessages failed", error);
+      if (cachedLastCreatedAt === 0) {
+        // No cache and server failed — fall back to public REST read.
+        const { data } = await supabase
+          .from("messages")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(500);
+        if (data) {
+          const rows = (data as MessageRow[]).slice().reverse();
+          this.messages = rows.map((r) => this.mapMessage(r));
+        }
+      }
+    } finally {
+      if (this.sync.phase === "syncing") {
+        this.setSync({ phase: "idle", done: 0, total: 0 });
+      }
+      this.persistCache();
     }
   }
   private async loadBroadcasts() {
@@ -382,8 +440,12 @@ class SupabaseRepository implements Repository {
       .from("broadcast_messages")
       .select("*")
       .order("sent_at", { ascending: false });
-    if (data) this.broadcasts = (data as BroadcastRow[]).map(mapBroadcast);
+    if (data) {
+      this.broadcasts = (data as BroadcastRow[]).map(mapBroadcast);
+      this.persistCache();
+    }
   }
+
 
   private subscribeRealtime() {
     supabase
