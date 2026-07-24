@@ -175,7 +175,7 @@ export async function login(email: string, password: string): Promise<User> {
   });
   if (error) throw new Error(translateAuthError(error));
   if (!data.user) throw new Error("Falha no login. Tente novamente.");
-  const u = withAuthEmail(await loadProfile(data.user.id), data.session);
+  const u = withAuthEmail(await loadProfile(data.user.id, { fresh: true }), data.session);
   if (!u) throw new Error("Perfil não encontrado. Contate o administrador.");
   if (u.active === false) {
     await supabase.auth.signOut();
