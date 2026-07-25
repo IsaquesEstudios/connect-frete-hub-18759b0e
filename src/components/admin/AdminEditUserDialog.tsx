@@ -219,7 +219,11 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
             </Field>
             <Field label="Cidade"><Input value={form.cidade || ""} onChange={(e) => set("cidade", e.target.value)} /></Field>
             <Field label="Estado (UF)"><Input value={form.estado || ""} onChange={(e) => set("estado", e.target.value.toUpperCase().slice(0, 2))} /></Field>
-            <Field label="CPF"><Input value={form.cpf || ""} onChange={(e) => set("cpf", formatDoc(e.target.value, "cpf"))} /></Field>
+            <Field label="CPF">
+              <div className="min-h-10 rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground break-all">
+                {form.cpf ? formatDoc(form.cpf, "cpf") : "Não informado"}
+              </div>
+            </Field>
 
             {user.type === "empresa" && (
               <>
