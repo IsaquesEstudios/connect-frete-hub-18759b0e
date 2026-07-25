@@ -142,19 +142,26 @@ export const listVisibleMessages = createServerFn({ method: "POST" })
     // descending so the latest messages appear immediately.
     const order = since ? "created_at.asc" : "created_at.desc";
     const sinceFilter = since ? `&created_at=gt.${encodeURIComponent(since)}` : "";
+    // `count=exact` triggers a full COUNT on messages — very expensive on the
+    // DB. Only request it on the first delta page (so the sync progress bar
+    // can size itself). All other reads infer total from the page contents.
+    const wantCount = Boolean(since) && offset === 0;
 
     async function fetchPage(extra: string): Promise<{ rows: MessageForClient[]; total: number }> {
       const url =
         `${EXT_SUPABASE_URL}/rest/v1/messages` +
-        `?select=*&order=${order}&limit=${limit}&offset=${offset}${sinceFilter}&${extra}`;
-      const res = await fetch(url, {
-        headers: { ...apiHeaders(serviceKey!), Prefer: "count=exact" },
-      });
+        `?select=*&order=${order}&limit=${limit}&offset=${offset}${sinceFilter}${extra ? `&${extra}` : ""}`;
+      const headers: Record<string, string> = { ...apiHeaders(serviceKey!) };
+      if (wantCount) headers.Prefer = "count=exact";
+      const res = await fetch(url, { headers });
       if (!res.ok) {
         throw new Error(`Não foi possível carregar as mensagens. ${await readError(res)}`.trim());
       }
       const rows = (await res.json()) as MessageForClient[];
-      return { rows, total: parseTotal(res, rows.length + offset) };
+      const total = wantCount
+        ? parseTotal(res, rows.length + offset)
+        : rows.length + offset;
+      return { rows, total };
     }
 
     if (isStaff(profile)) {
@@ -162,20 +169,15 @@ export const listVisibleMessages = createServerFn({ method: "POST" })
       return { rows: since ? rows : rows.slice().reverse(), total };
     }
 
+    // Non-staff: a single OR query is far cheaper than two round-trips with
+    // separate count=exact scans.
     const uid = encodeURIComponent(profile.id);
-    const [outgoing, incoming] = await Promise.all([
-      fetchPage(`from_user_id=eq.${uid}`),
-      fetchPage(`to_user_id=eq.${uid}`),
-    ]);
-    const seen = new Set<string>();
-    const merged = [...outgoing.rows, ...incoming.rows].filter((m) => {
-      if (seen.has(m.id)) return false;
-      seen.add(m.id);
-      return true;
-    });
-    merged.sort((a, b) => (a.created_at < b.created_at ? (since ? -1 : 1) : since ? 1 : -1));
-    return { rows: since ? merged : merged.reverse(), total: outgoing.total + incoming.total };
+    const { rows, total } = await fetchPage(
+      `or=(from_user_id.eq.${uid},to_user_id.eq.${uid})`,
+    );
+    return { rows: since ? rows : rows.slice().reverse(), total };
   });
+
 
 export const sendChatMessage = createServerFn({ method: "POST" })
   .inputValidator((data) =>
