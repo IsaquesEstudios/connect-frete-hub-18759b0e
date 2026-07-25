@@ -215,15 +215,23 @@ class SupabaseRepository implements Repository {
   private pendingSendKeys = new Map<string, string>(); // key -> tempId
   private lastSendAt = 0;
 
+  private authUserId: string | null | undefined = undefined;
+
   constructor() {
     if (typeof window !== "undefined") {
       void this.bootstrap();
-      supabase.auth.onAuthStateChange((event) => {
+      supabase.auth.onAuthStateChange((event, session) => {
         if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+        // Ignore token refreshes / duplicate events that don't actually change
+        // the logged-in identity — each bootstrap re-hits the DB heavily.
+        const nextId = session?.user.id ?? null;
+        if (this.authUserId !== undefined && this.authUserId === nextId) return;
+        this.authUserId = nextId;
         void this.bootstrap();
       });
     }
   }
+
 
   isBootstrapped(): boolean {
     return this.bootstrapped;
