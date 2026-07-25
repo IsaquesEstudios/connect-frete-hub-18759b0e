@@ -20,6 +20,7 @@ import { Route as AppMetricasRouteImport } from './routes/_app/metricas'
 import { Route as AppEmpresaRouteImport } from './routes/_app/empresa'
 import { Route as AppConfiguracoesRouteImport } from './routes/_app/configuracoes'
 import { Route as AppAdminRouteImport } from './routes/_app/admin'
+import { Route as ApiPublic_cleanup_joseRouteImport } from './routes/api/public/__cleanup_jose'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -75,6 +76,11 @@ const AppAdminRoute = AppAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const ApiPublic_cleanup_joseRoute = ApiPublic_cleanup_joseRouteImport.update({
+  id: '/api/public/__cleanup_jose',
+  path: '/api/public',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/motorista': typeof AppMotoristaRoute
   '/perfil': typeof AppPerfilRoute
   '/usuarios': typeof AppUsuariosRoute
+  '/api/public': typeof ApiPublic_cleanup_joseRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByTo {
   '/motorista': typeof AppMotoristaRoute
   '/perfil': typeof AppPerfilRoute
   '/usuarios': typeof AppUsuariosRoute
+  '/api/public': typeof ApiPublic_cleanup_joseRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -113,6 +121,7 @@ export interface FileRoutesById {
   '/_app/motorista': typeof AppMotoristaRoute
   '/_app/perfil': typeof AppPerfilRoute
   '/_app/usuarios': typeof AppUsuariosRoute
+  '/api/public/__cleanup_jose': typeof ApiPublic_cleanup_joseRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -127,6 +136,7 @@ export interface FileRouteTypes {
     | '/motorista'
     | '/perfil'
     | '/usuarios'
+    | '/api/public'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/motorista'
     | '/perfil'
     | '/usuarios'
+    | '/api/public'
   id:
     | '__root__'
     | '/'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/_app/motorista'
     | '/_app/perfil'
     | '/_app/usuarios'
+    | '/api/public/__cleanup_jose'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -159,6 +171,7 @@ export interface RootRouteChildren {
   AppRouteRoute: typeof AppRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiPublic_cleanup_joseRoute: typeof ApiPublic_cleanup_joseRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -240,6 +253,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/api/public/__cleanup_jose': {
+      id: '/api/public/__cleanup_jose'
+      path: '/api/public'
+      fullPath: '/api/public'
+      preLoaderRoute: typeof ApiPublic_cleanup_joseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -272,6 +292,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRouteRoute: AppRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiPublic_cleanup_joseRoute: ApiPublic_cleanup_joseRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
