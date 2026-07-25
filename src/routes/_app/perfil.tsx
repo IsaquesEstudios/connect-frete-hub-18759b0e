@@ -253,8 +253,8 @@ function ProfilePage() {
               <h2 className="text-lg font-semibold text-foreground">Dados do motorista</h2>
               <div className="grid gap-4 md:grid-cols-2">
                 <Editable label="Placa" value={form.placa} onChange={(value) => update("placa", value)} />
-                <Editable label="Tipo de veículo" value={form.tipoVeiculo} onChange={(value) => update("tipoVeiculo", value)} />
                 <Editable label="RNTRC" value={form.rntrc} onChange={(value) => update("rntrc", value)} />
+                <Editable label="Tipo de veículo" value={form.tipoVeiculo} onChange={(value) => update("tipoVeiculo", value)} />
                 <Editable label="Tipo de carroceria" value={form.carroceria} onChange={(value) => update("carroceria", value)} />
                 <Editable label="Peso (kg)" value={form.peso} onChange={(value) => update("peso", value)} />
                 <div className="space-y-2 md:col-span-2">
