@@ -282,10 +282,30 @@ class SupabaseRepository implements Repository {
   }
 
   private applyPhotoCache() {
-    const map = this.loadPhotoCache();
+    const map = { ...this.loadPhotoCache(), ...this.serverPhotos };
     if (!Object.keys(map).length) return;
     this.users = this.users.map((u) => (u.fotoUrl ? u : map[u.id] ? { ...u, fotoUrl: map[u.id] } : u));
   }
+
+  // Fotos vêm do banco (profiles.foto_url) via servidor, então todos veem
+  // exatamente a mesma imagem do perfil — e a troca aparece para todo mundo.
+  private async loadPhotos() {
+    try {
+      const { getProfilePhotos } = await import("./photos.functions");
+      const map = await getProfilePhotos();
+      this.serverPhotos = map;
+      this.users = this.users.map((u) => {
+        const photo = map[u.id];
+        if (photo) return u.fotoUrl === photo ? u : { ...u, fotoUrl: photo };
+        return u.fotoUrl ? { ...u, fotoUrl: undefined } : u;
+      });
+      this.persistCache();
+      this.notify();
+    } catch (error) {
+      console.warn("[photos] falha ao carregar fotos dos perfis", error);
+    }
+  }
+
 
   private hydrateFromCache(uid: string): boolean {
     if (typeof window === "undefined") return false;
