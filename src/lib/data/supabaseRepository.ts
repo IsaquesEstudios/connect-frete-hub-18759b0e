@@ -405,7 +405,10 @@ class SupabaseRepository implements Repository {
           const result = await listVisibleMessages({
             data: { since: sinceIso, offset, limit: pageSize },
           });
-          total = result.total || result.rows.length;
+          // Only the first page returns an exact count; keep it so the
+          // progress bar doesn't shrink as later pages come in.
+          if (offset === 0) total = result.total || result.rows.length;
+
           if (offset === 0 && total > 20) {
             this.setSync({ phase: "syncing", done: 0, total });
           }
