@@ -13,6 +13,8 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CadastrarEmpresaRouteImport } from './routes/cadastrar.empresa'
+import { Route as CadastrarCaminhoneiroRouteImport } from './routes/cadastrar.caminhoneiro'
 import { Route as AppUsuariosRouteImport } from './routes/_app/usuarios'
 import { Route as AppPerfilRouteImport } from './routes/_app/perfil'
 import { Route as AppMotoristaRouteImport } from './routes/_app/motorista'
@@ -38,6 +40,16 @@ const AppRouteRoute = AppRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CadastrarEmpresaRoute = CadastrarEmpresaRouteImport.update({
+  id: '/cadastrar/empresa',
+  path: '/cadastrar/empresa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CadastrarCaminhoneiroRoute = CadastrarCaminhoneiroRouteImport.update({
+  id: '/cadastrar/caminhoneiro',
+  path: '/cadastrar/caminhoneiro',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppUsuariosRoute = AppUsuariosRouteImport.update({
@@ -87,6 +99,8 @@ export interface FileRoutesByFullPath {
   '/motorista': typeof AppMotoristaRoute
   '/perfil': typeof AppPerfilRoute
   '/usuarios': typeof AppUsuariosRoute
+  '/cadastrar/caminhoneiro': typeof CadastrarCaminhoneiroRoute
+  '/cadastrar/empresa': typeof CadastrarEmpresaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -99,6 +113,8 @@ export interface FileRoutesByTo {
   '/motorista': typeof AppMotoristaRoute
   '/perfil': typeof AppPerfilRoute
   '/usuarios': typeof AppUsuariosRoute
+  '/cadastrar/caminhoneiro': typeof CadastrarCaminhoneiroRoute
+  '/cadastrar/empresa': typeof CadastrarEmpresaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -113,6 +129,8 @@ export interface FileRoutesById {
   '/_app/motorista': typeof AppMotoristaRoute
   '/_app/perfil': typeof AppPerfilRoute
   '/_app/usuarios': typeof AppUsuariosRoute
+  '/cadastrar/caminhoneiro': typeof CadastrarCaminhoneiroRoute
+  '/cadastrar/empresa': typeof CadastrarEmpresaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -127,6 +145,8 @@ export interface FileRouteTypes {
     | '/motorista'
     | '/perfil'
     | '/usuarios'
+    | '/cadastrar/caminhoneiro'
+    | '/cadastrar/empresa'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -139,6 +159,8 @@ export interface FileRouteTypes {
     | '/motorista'
     | '/perfil'
     | '/usuarios'
+    | '/cadastrar/caminhoneiro'
+    | '/cadastrar/empresa'
   id:
     | '__root__'
     | '/'
@@ -152,6 +174,8 @@ export interface FileRouteTypes {
     | '/_app/motorista'
     | '/_app/perfil'
     | '/_app/usuarios'
+    | '/cadastrar/caminhoneiro'
+    | '/cadastrar/empresa'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -159,6 +183,8 @@ export interface RootRouteChildren {
   AppRouteRoute: typeof AppRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  CadastrarCaminhoneiroRoute: typeof CadastrarCaminhoneiroRoute
+  CadastrarEmpresaRoute: typeof CadastrarEmpresaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -189,6 +215,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cadastrar/empresa': {
+      id: '/cadastrar/empresa'
+      path: '/cadastrar/empresa'
+      fullPath: '/cadastrar/empresa'
+      preLoaderRoute: typeof CadastrarEmpresaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cadastrar/caminhoneiro': {
+      id: '/cadastrar/caminhoneiro'
+      path: '/cadastrar/caminhoneiro'
+      fullPath: '/cadastrar/caminhoneiro'
+      preLoaderRoute: typeof CadastrarCaminhoneiroRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/usuarios': {
@@ -272,6 +312,8 @@ const rootRouteChildren: RootRouteChildren = {
   AppRouteRoute: AppRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  CadastrarCaminhoneiroRoute: CadastrarCaminhoneiroRoute,
+  CadastrarEmpresaRoute: CadastrarEmpresaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
