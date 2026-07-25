@@ -215,7 +215,7 @@ class SupabaseRepository implements Repository {
   private bootstrapped = false;
   private cacheKey: string | null = null;
   private cachePersistTimer: number | null = null;
-  private pendingSendKeys = new Map<string, string>(); // key -> tempId
+  private pendingSendKeys = new Map<string, string[]>(); // key -> fila de tempIds
   private lastSendAt = 0;
 
   private authUserId: string | null | undefined = undefined;
@@ -358,7 +358,25 @@ class SupabaseRepository implements Repository {
 
 
   private notify() {
+    this.dedupeMessages();
     this.subs.forEach((cb) => cb());
+  }
+
+  /** Remove mensagens repetidas pelo mesmo id (mantém a última versão). */
+  private dedupeMessages() {
+    const seen = new Set<string>();
+    let dup = false;
+    for (const m of this.messages) {
+      if (seen.has(m.id)) {
+        dup = true;
+        break;
+      }
+      seen.add(m.id);
+    }
+    if (!dup) return;
+    const byId = new Map<string, Message>();
+    for (const m of this.messages) byId.set(m.id, { ...(byId.get(m.id) ?? {}), ...m });
+    this.messages = Array.from(byId.values());
   }
 
   private async bootstrap() {
@@ -543,14 +561,19 @@ class SupabaseRepository implements Repository {
             if (existingIdx >= 0) {
               this.messages[existingIdx] = { ...m, conversationId: this.messages[existingIdx].conversationId, fromUserId: this.messages[existingIdx].fromUserId };
             } else {
-              // Se há um temp pendente equivalente, substitui em vez de adicionar.
+              // Se há um temp pendente equivalente, substitui em vez de adicionar
+              // (consome apenas UM da fila — envios idênticos seguidos).
               const key = this.pendingKey(m.fromUserId, m.toUserId, m.body);
-              const tempId = this.pendingSendKeys.get(key);
-              const tempIdx = tempId ? this.messages.findIndex((x) => x.id === tempId) : -1;
+              const queue = this.pendingSendKeys.get(key) ?? [];
+              let tempIdx = -1;
+              while (queue.length > 0 && tempIdx < 0) {
+                const tempId = queue.shift() as string;
+                tempIdx = this.messages.findIndex((x) => x.id === tempId);
+              }
+              if (queue.length === 0) this.pendingSendKeys.delete(key);
               if (tempIdx >= 0) {
                 const prev = this.messages[tempIdx];
                 this.messages[tempIdx] = { ...m, conversationId: prev.conversationId, fromUserId: prev.fromUserId, createdAt: prev.createdAt };
-                this.pendingSendKeys.delete(key);
               } else {
                 this.messages.push(m);
               }
@@ -827,6 +850,15 @@ class SupabaseRepository implements Repository {
     return `${fromUserId}\u0000${toUserId}\u0000${body}`;
   }
 
+  /** Remove um tempId específico da fila de pendentes dessa chave. */
+  private dropPending(key: string, tempId: string) {
+    const queue = (this.pendingSendKeys.get(key) ?? []).filter((id) => id !== tempId);
+    if (queue.length === 0) this.pendingSendKeys.delete(key);
+    else this.pendingSendKeys.set(key, queue);
+  }
+
+
+
   sendMessage({
     fromUserId,
     toUserId,
@@ -858,7 +890,7 @@ class SupabaseRepository implements Repository {
     };
     this.messages.push(msg);
     const pendKey = this.pendingKey(fromUserId, toUserId, body);
-    this.pendingSendKeys.set(pendKey, tempId);
+    this.pendingSendKeys.set(pendKey, [...(this.pendingSendKeys.get(pendKey) ?? []), tempId]);
     this.notify();
 
     void (async () => {
@@ -880,15 +912,11 @@ class SupabaseRepository implements Repository {
         } else {
           this.messages.push(displayReal);
         }
-        if (this.pendingSendKeys.get(pendKey) === tempId) {
-          this.pendingSendKeys.delete(pendKey);
-        }
+        this.dropPending(pendKey, tempId);
         this.notify();
       } catch (error) {
         this.messages = this.messages.filter((m) => m.id !== tempId);
-        if (this.pendingSendKeys.get(pendKey) === tempId) {
-          this.pendingSendKeys.delete(pendKey);
-        }
+        this.dropPending(pendKey, tempId);
         this.notify();
         reportError("Não foi possível enviar a mensagem", error);
       }
