@@ -561,14 +561,19 @@ class SupabaseRepository implements Repository {
             if (existingIdx >= 0) {
               this.messages[existingIdx] = { ...m, conversationId: this.messages[existingIdx].conversationId, fromUserId: this.messages[existingIdx].fromUserId };
             } else {
-              // Se há um temp pendente equivalente, substitui em vez de adicionar.
+              // Se há um temp pendente equivalente, substitui em vez de adicionar
+              // (consome apenas UM da fila — envios idênticos seguidos).
               const key = this.pendingKey(m.fromUserId, m.toUserId, m.body);
-              const tempId = this.pendingSendKeys.get(key);
-              const tempIdx = tempId ? this.messages.findIndex((x) => x.id === tempId) : -1;
+              const queue = this.pendingSendKeys.get(key) ?? [];
+              let tempIdx = -1;
+              while (queue.length > 0 && tempIdx < 0) {
+                const tempId = queue.shift() as string;
+                tempIdx = this.messages.findIndex((x) => x.id === tempId);
+              }
+              if (queue.length === 0) this.pendingSendKeys.delete(key);
               if (tempIdx >= 0) {
                 const prev = this.messages[tempIdx];
                 this.messages[tempIdx] = { ...m, conversationId: prev.conversationId, fromUserId: prev.fromUserId, createdAt: prev.createdAt };
-                this.pendingSendKeys.delete(key);
               } else {
                 this.messages.push(m);
               }
