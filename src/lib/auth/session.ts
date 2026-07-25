@@ -341,6 +341,17 @@ export async function signup(input: SignupInput): Promise<User> {
     site_rede_social: input.siteRedeSocial ?? null,
   });
   if (insErr) {
+    // Rollback: remove the just-created auth user so the email doesn't stay orphaned.
+    let rollbackNote = "";
+    try {
+      const { deleteAuthUser } = await import("@/lib/data/auth-cleanup.functions");
+      await deleteAuthUser({ data: { userId: data.user.id } });
+      rollbackNote = "A conta foi removida — tente novamente.";
+    } catch (rollbackErr) {
+      console.error("Falha ao reverter conta órfã", rollbackErr);
+      rollbackNote =
+        "Atenção: a conta de autenticação foi criada mas o perfil falhou. Contate o administrador para liberar o email.";
+    }
     await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
     cachedUser = null;
     notify();
@@ -352,8 +363,9 @@ export async function signup(input: SignupInput): Promise<User> {
       raw.hint ? `Dica: ${raw.hint}` : "",
       raw.code ? `Código: ${raw.code}` : "",
     ].filter(Boolean);
-    throw new Error(`A conta foi criada, mas o perfil não pôde ser salvo. ${parts.join(" ")}`.trim());
+    throw new Error(`Não foi possível salvar o perfil. ${parts.join(" ")} ${rollbackNote}`.trim());
   }
+
 
 
   const u = withAuthEmail(await loadProfile(data.user.id, { fresh: true }), data.session);
