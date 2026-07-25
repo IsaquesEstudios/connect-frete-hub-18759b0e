@@ -907,9 +907,7 @@ class SupabaseRepository implements Repository {
         this.notify();
       } catch (error) {
         this.messages = this.messages.filter((m) => m.id !== tempId);
-        if (this.pendingSendKeys.get(pendKey) === tempId) {
-          this.pendingSendKeys.delete(pendKey);
-        }
+        this.dropPending(pendKey, tempId);
         this.notify();
         reportError("Não foi possível enviar a mensagem", error);
       }
