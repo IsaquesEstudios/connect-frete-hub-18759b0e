@@ -106,13 +106,17 @@ export function UserChatPanel({ me }: Props) {
                 >
                   <div className="relative shrink-0">
                     <div
-                      className={`flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold text-white ${color}`}
+                      className={`flex h-10 w-10 items-center justify-center overflow-hidden rounded-full text-xs font-semibold text-white ${color}`}
                     >
-                      {s.name
-                        .split(" ")
-                        .slice(0, 2)
-                        .map((x) => x[0])
-                        .join("")}
+                      {s.fotoUrl ? (
+                        <img src={s.fotoUrl} alt={s.name} className="h-full w-full object-cover" />
+                      ) : (
+                        s.name
+                          .split(" ")
+                          .slice(0, 2)
+                          .map((x) => x[0])
+                          .join("")
+                      )}
                     </div>
                     {online && (
                       <span
