@@ -310,6 +310,8 @@ class SupabaseRepository implements Repository {
       throw error;
     });
     const sessionUserId = sessionData?.session?.user.id ?? null;
+    this.authUserId = sessionUserId;
+
 
     // 2. Hydrate from cache immediately — UI shows conversations right away.
     const hadCache = sessionUserId ? this.hydrateFromCache(sessionUserId) : false;
