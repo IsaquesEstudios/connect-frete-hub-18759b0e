@@ -196,6 +196,8 @@ type CacheBlob = {
 
 class SupabaseRepository implements Repository {
   private users: User[] = [];
+  private serverPhotos: Record<string, string> = {};
+
   private messages: Message[] = [];
   private tags: Tag[] = [];
   private convTags: { conversationId: string; tagId: string }[] = [];
