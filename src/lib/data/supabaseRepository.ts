@@ -180,6 +180,7 @@ function profilePatchToRow(patch: UserProfilePatch): Record<string, string | boo
 }
 
 const CACHE_PREFIX = "svlogistica:repo-cache:v1:";
+const PHOTO_CACHE_KEY = "svlogistica:photo-cache:v1";
 
 type SyncPhase = "idle" | "syncing";
 export type SyncState = { phase: SyncPhase; done: number; total: number };
