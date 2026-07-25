@@ -196,6 +196,8 @@ type CacheBlob = {
 
 class SupabaseRepository implements Repository {
   private users: User[] = [];
+  private serverPhotos: Record<string, string> = {};
+
   private messages: Message[] = [];
   private tags: Tag[] = [];
   private convTags: { conversationId: string; tagId: string }[] = [];
@@ -282,10 +284,30 @@ class SupabaseRepository implements Repository {
   }
 
   private applyPhotoCache() {
-    const map = this.loadPhotoCache();
+    const map = { ...this.loadPhotoCache(), ...this.serverPhotos };
     if (!Object.keys(map).length) return;
     this.users = this.users.map((u) => (u.fotoUrl ? u : map[u.id] ? { ...u, fotoUrl: map[u.id] } : u));
   }
+
+  // Fotos vêm do banco (profiles.foto_url) via servidor, então todos veem
+  // exatamente a mesma imagem do perfil — e a troca aparece para todo mundo.
+  private async loadPhotos() {
+    try {
+      const { getProfilePhotos } = await import("./photos.functions");
+      const map = await getProfilePhotos();
+      this.serverPhotos = map;
+      this.users = this.users.map((u) => {
+        const photo = map[u.id];
+        if (photo) return u.fotoUrl === photo ? u : { ...u, fotoUrl: photo };
+        return u.fotoUrl ? { ...u, fotoUrl: undefined } : u;
+      });
+      this.persistCache();
+      this.notify();
+    } catch (error) {
+      console.warn("[photos] falha ao carregar fotos dos perfis", error);
+    }
+  }
+
 
   private hydrateFromCache(uid: string): boolean {
     if (typeof window === "undefined") return false;
@@ -365,11 +387,12 @@ class SupabaseRepository implements Repository {
     try {
       // 3. Cold datasets fetch in parallel with the delta sync.
       const coldLoads = Promise.all([
-        this.loadUsers(),
+        this.loadUsers().then(() => (sessionUserId ? this.loadPhotos() : undefined)),
         this.loadTags(),
         this.loadConvTags(),
         this.loadBroadcasts(),
       ]);
+
       const msgSync = sessionUserId ? this.syncMessages() : (this.messages = [], Promise.resolve());
       await Promise.all([coldLoads, msgSync]);
       this.normalizeMessageConversationIds();
@@ -579,9 +602,17 @@ class SupabaseRepository implements Repository {
           const row = payload.new as ProfileRow | undefined;
           if (!row?.id) return;
           const nextUser = profileToUser(row);
+          // Mantém o mapa compartilhado de fotos em sincronia: a foto do
+          // perfil é a mesma para todos os usuários do sistema.
+          if (row.foto_url) this.serverPhotos[row.id] = row.foto_url;
+          else if (row.name !== undefined) delete this.serverPhotos[row.id];
+          else if (this.serverPhotos[row.id]) nextUser.fotoUrl = this.serverPhotos[row.id];
+
+
           const i = this.users.findIndex((u) => u.id === row.id);
           if (i >= 0) this.users[i] = nextUser;
           else this.users.push(nextUser);
+
           if (row.last_seen_at) {
             this.lastSeen.set(row.id, new Date(row.last_seen_at).getTime());
           }
@@ -709,8 +740,16 @@ class SupabaseRepository implements Repository {
           const result = await adminUpdateProfile({ data: { userId: user.id, patch: row } });
           if (result?.row) {
             Object.assign(user, profileToUser(result.row as ProfileRow));
+            // A foto salva no banco vale para todos: atualiza o mapa
+            // compartilhado para admin, colaboradores e o próprio usuário.
+            if (patch.fotoUrl !== undefined) {
+              if (user.fotoUrl) this.serverPhotos[user.id] = user.fotoUrl;
+              else delete this.serverPhotos[user.id];
+            }
+            this.persistCache();
             this.notify();
           }
+
         } catch (error) {
           Object.assign(user, previous);
           this.notify();
