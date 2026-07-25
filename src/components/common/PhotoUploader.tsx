@@ -9,8 +9,8 @@ import { optimizeImageToDataUrl } from "@/lib/media/optimize";
 async function fileToDataUrl(file: File): Promise<string> {
   try {
     return await optimizeImageToDataUrl(file, {
-      maxDimension: 512,
-      targetBytes: 120_000,
+      maxDimension: 384,
+      targetBytes: 60_000,
     });
   } catch (err) {
     throw new Error((err as Error).message || "Falha ao processar imagem.");
