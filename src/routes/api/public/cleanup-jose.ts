@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { EXT_SUPABASE_URL } from "@/integrations/supabase/external-config";
 
 // One-shot cleanup for orphan auth user jose05091917@gmail.com
-export const Route = createFileRoute("/api/public/__cleanup_jose")({
+export const Route = createFileRoute("/api/public/cleanup-jose")({
   server: {
     handlers: {
       GET: async () => {
