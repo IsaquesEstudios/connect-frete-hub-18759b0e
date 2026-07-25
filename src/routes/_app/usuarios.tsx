@@ -269,7 +269,23 @@ function UsuariosPage() {
                   const cidade = [u.cidade, u.estado].filter(Boolean).join(" / ") || "—";
                   return (
                     <tr key={u.id} className="border-b last:border-0 hover:bg-accent/40">
-                      <td className="px-4 py-3 font-medium">{u.name}</td>
+                      <td className="px-4 py-3 font-medium">
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-[10px] font-semibold text-white">
+                            {u.fotoUrl ? (
+                              <img src={u.fotoUrl} alt={u.name} className="h-full w-full object-cover" />
+                            ) : (
+                              u.name
+                                .split(" ")
+                                .slice(0, 2)
+                                .map((s) => s[0])
+                                .join("")
+                                .toUpperCase()
+                            )}
+                          </div>
+                          <span className="truncate">{u.name}</span>
+                        </div>
+                      </td>
                       <td className="px-4 py-3">
                         {(() => {
                           const dt = resolveDisplayType(u);
