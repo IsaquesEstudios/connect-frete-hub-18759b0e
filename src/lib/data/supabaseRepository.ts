@@ -850,6 +850,15 @@ class SupabaseRepository implements Repository {
     return `${fromUserId}\u0000${toUserId}\u0000${body}`;
   }
 
+  /** Remove um tempId específico da fila de pendentes dessa chave. */
+  private dropPending(key: string, tempId: string) {
+    const queue = (this.pendingSendKeys.get(key) ?? []).filter((id) => id !== tempId);
+    if (queue.length === 0) this.pendingSendKeys.delete(key);
+    else this.pendingSendKeys.set(key, queue);
+  }
+
+
+
   sendMessage({
     fromUserId,
     toUserId,
