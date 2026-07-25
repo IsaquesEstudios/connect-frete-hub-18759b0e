@@ -881,7 +881,7 @@ class SupabaseRepository implements Repository {
     };
     this.messages.push(msg);
     const pendKey = this.pendingKey(fromUserId, toUserId, body);
-    this.pendingSendKeys.set(pendKey, tempId);
+    this.pendingSendKeys.set(pendKey, [...(this.pendingSendKeys.get(pendKey) ?? []), tempId]);
     this.notify();
 
     void (async () => {
