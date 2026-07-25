@@ -282,12 +282,15 @@ function MetricsPage() {
 
     const userParas: InstanceType<typeof Paragraph>[] = [];
     for (const c of conversations) {
-      const u = c.user as { whatsapp?: string; email?: string; estado?: string; cidade?: string };
+      const u = c.user as { whatsapp?: string; email?: string; estado?: string; cidade?: string; cpf?: string; cnpj?: string };
       const email = u.email || emailMap[c.user.id] || "";
+      const d = docsOf(u);
       const tagLabels = c.tagIds.map((id) => tagsById[id] || id).join(", ");
       userParas.push(
         new Paragraph({ children: [new TextRun({ text: `${c.user.name} `, bold: true }), new TextRun({ text: `[${c.user.type}]` })] }),
         new Paragraph(`  Código: ${c.user.number}`),
+        new Paragraph(`  CPF: ${d.cpf || "—"}`),
+        new Paragraph(`  CNPJ: ${d.cnpj || "—"}`),
         new Paragraph(`  WhatsApp: ${u.whatsapp ? formatPhone(u.whatsapp) : "—"}`),
         new Paragraph(`  Email: ${email || "—"}`),
         new Paragraph(`  Local: ${[u.cidade, u.estado].filter(Boolean).join(" / ") || "—"}`),
