@@ -136,7 +136,7 @@ export const listVisibleMessages = createServerFn({ method: "POST" })
     if (!profile) return { rows: [] as MessageForClient[], total: 0 };
 
     const since = data?.since;
-    const limit = data?.limit ?? (since ? 200 : 500);
+    const limit = data?.limit ?? (since ? 200 : 150);
     const offset = data?.offset ?? 0;
     // With `since` we paginate ascending (oldest new first). Cold load stays
     // descending so the latest messages appear immediately.
