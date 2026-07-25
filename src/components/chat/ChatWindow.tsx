@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Camera, CheckCheck, Clock, FileText, ImagePlus, Mic, Paperclip, Pencil, Send, Square, Trash2 } from "lucide-react";
+import { Camera, CheckCheck, Clock, Download, ExternalLink, FileText, ImagePlus, Mic, Paperclip, Pencil, Send, Square, Trash2, X } from "lucide-react";
 import { AdminEditUserDialog } from "@/components/admin/AdminEditUserDialog";
 import { AudioMessage } from "./AudioMessage";
 import { isAudioBody, isFileBody, isImageBody, parseFileBody } from "@/lib/chat/messagePreview";
@@ -724,6 +724,12 @@ function DeleteMessageButton({ onConfirm }: { onConfirm: () => void }) {
 
 function ImagePreview({ src }: { src: string }) {
   const [open, setOpen] = useState(false);
+  const [zoom, setZoom] = useState(false);
+
+  useEffect(() => {
+    if (!open) setZoom(false);
+  }, [open]);
+
   return (
     <>
       <button
@@ -734,27 +740,57 @@ function ImagePreview({ src }: { src: string }) {
         <img
           src={src}
           alt="anexo"
-          className="max-h-64 rounded-xl object-cover cursor-zoom-in"
+          loading="lazy"
+          className="max-h-64 max-w-full w-auto h-auto rounded-xl object-contain cursor-zoom-in"
         />
       </button>
       {open && (
         <div
           onClick={() => setOpen(false)}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in overflow-auto"
         >
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            aria-label="Fechar"
-            className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/10 text-white hover:bg-white/20 flex items-center justify-center"
+          <div
+            className="absolute top-4 right-4 flex items-center gap-2"
+            onClick={(e) => e.stopPropagation()}
           >
-            ✕
-          </button>
+            <a
+              href={src}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Abrir em nova aba"
+              className="h-10 w-10 rounded-full bg-white/10 text-white hover:bg-white/20 flex items-center justify-center"
+            >
+              <ExternalLink className="h-5 w-5" />
+            </a>
+            <a
+              href={src}
+              download="imagem"
+              aria-label="Baixar imagem"
+              className="h-10 w-10 rounded-full bg-white/10 text-white hover:bg-white/20 flex items-center justify-center"
+            >
+              <Download className="h-5 w-5" />
+            </a>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              aria-label="Fechar"
+              className="h-10 w-10 rounded-full bg-white/10 text-white hover:bg-white/20 flex items-center justify-center"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
           <img
             src={src}
             alt="anexo ampliado"
-            onClick={(e) => e.stopPropagation()}
-            className="max-h-[92vh] max-w-[92vw] rounded-lg object-contain shadow-2xl"
+            onClick={(e) => {
+              e.stopPropagation();
+              setZoom((z) => !z);
+            }}
+            className={
+              zoom
+                ? "max-w-none rounded-lg object-contain shadow-2xl cursor-zoom-out"
+                : "max-h-[92vh] max-w-[92vw] w-auto h-auto rounded-lg object-contain shadow-2xl cursor-zoom-in"
+            }
           />
         </div>
       )}
