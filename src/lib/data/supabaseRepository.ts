@@ -358,7 +358,25 @@ class SupabaseRepository implements Repository {
 
 
   private notify() {
+    this.dedupeMessages();
     this.subs.forEach((cb) => cb());
+  }
+
+  /** Remove mensagens repetidas pelo mesmo id (mantém a última versão). */
+  private dedupeMessages() {
+    const seen = new Set<string>();
+    let dup = false;
+    for (const m of this.messages) {
+      if (seen.has(m.id)) {
+        dup = true;
+        break;
+      }
+      seen.add(m.id);
+    }
+    if (!dup) return;
+    const byId = new Map<string, Message>();
+    for (const m of this.messages) byId.set(m.id, { ...(byId.get(m.id) ?? {}), ...m });
+    this.messages = Array.from(byId.values());
   }
 
   private async bootstrap() {
