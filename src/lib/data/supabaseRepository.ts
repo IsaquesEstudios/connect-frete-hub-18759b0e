@@ -215,15 +215,23 @@ class SupabaseRepository implements Repository {
   private pendingSendKeys = new Map<string, string>(); // key -> tempId
   private lastSendAt = 0;
 
+  private authUserId: string | null | undefined = undefined;
+
   constructor() {
     if (typeof window !== "undefined") {
       void this.bootstrap();
-      supabase.auth.onAuthStateChange((event) => {
+      supabase.auth.onAuthStateChange((event, session) => {
         if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+        // Ignore token refreshes / duplicate events that don't actually change
+        // the logged-in identity — each bootstrap re-hits the DB heavily.
+        const nextId = session?.user.id ?? null;
+        if (this.authUserId !== undefined && this.authUserId === nextId) return;
+        this.authUserId = nextId;
         void this.bootstrap();
       });
     }
   }
+
 
   isBootstrapped(): boolean {
     return this.bootstrapped;
@@ -302,6 +310,8 @@ class SupabaseRepository implements Repository {
       throw error;
     });
     const sessionUserId = sessionData?.session?.user.id ?? null;
+    this.authUserId = sessionUserId;
+
 
     // 2. Hydrate from cache immediately — UI shows conversations right away.
     const hadCache = sessionUserId ? this.hydrateFromCache(sessionUserId) : false;
@@ -395,7 +405,10 @@ class SupabaseRepository implements Repository {
           const result = await listVisibleMessages({
             data: { since: sinceIso, offset, limit: pageSize },
           });
-          total = result.total || result.rows.length;
+          // Only the first page returns an exact count; keep it so the
+          // progress bar doesn't shrink as later pages come in.
+          if (offset === 0) total = result.total || result.rows.length;
+
           if (offset === 0 && total > 20) {
             this.setSync({ phase: "syncing", done: 0, total });
           }
@@ -499,32 +512,90 @@ class SupabaseRepository implements Repository {
       .subscribe();
 
     // Watch profiles so new signups appear in the admin conversation list
-    // without requiring a page reload.
+    // without requiring a page reload. We apply the payload row directly
+    // instead of re-fetching every profile — that keeps the DB idle even
+    // when presence/last_seen updates fire frequently.
     supabase
       .channel("cf-profiles")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "profiles" },
-        () => {
-          void this.loadUsers().then(() => this.notify());
+        (payload) => {
+          if (payload.eventType === "DELETE") {
+            const oldId = (payload.old as { id?: string })?.id;
+            if (!oldId) return;
+            const before = this.users.length;
+            this.users = this.users.filter((u) => u.id !== oldId);
+            if (this.users.length !== before) {
+              this.persistCache();
+              this.notify();
+            }
+            return;
+          }
+          const row = payload.new as ProfileRow | undefined;
+          if (!row?.id) return;
+          const nextUser = profileToUser(row);
+          const i = this.users.findIndex((u) => u.id === row.id);
+          if (i >= 0) this.users[i] = nextUser;
+          else this.users.push(nextUser);
+          if (row.last_seen_at) {
+            this.lastSeen.set(row.id, new Date(row.last_seen_at).getTime());
+          }
+          this.persistCache();
+          this.notify();
         },
       )
       .subscribe();
 
     supabase
       .channel("cf-tags")
-      .on("postgres_changes", { event: "*", schema: "public", table: "tags" }, () => {
-        void this.loadTags().then(() => this.notify());
-      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tags" },
+        (payload) => {
+          if (payload.eventType === "DELETE") {
+            const oldId = (payload.old as { id?: string })?.id;
+            if (!oldId) return;
+            this.tags = this.tags.filter((t) => t.id !== oldId);
+          } else {
+            const row = payload.new as Tag | undefined;
+            if (!row?.id) return;
+            const i = this.tags.findIndex((t) => t.id === row.id);
+            const next = { id: row.id, label: row.label, color: row.color };
+            if (i >= 0) this.tags[i] = next;
+            else this.tags.push(next);
+          }
+          this.persistCache();
+          this.notify();
+        },
+      )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "conversation_tags" },
-        () => {
-          void this.loadConvTags().then(() => this.notify());
+        (payload) => {
+          const row = (payload.eventType === "DELETE" ? payload.old : payload.new) as
+            | { conversation_id?: string; tag_id?: string }
+            | undefined;
+          const conversationId = row?.conversation_id;
+          const tagId = row?.tag_id;
+          if (!conversationId || !tagId) return;
+          if (payload.eventType === "DELETE") {
+            this.convTags = this.convTags.filter(
+              (c) => !(c.conversationId === conversationId && c.tagId === tagId),
+            );
+          } else {
+            const exists = this.convTags.some(
+              (c) => c.conversationId === conversationId && c.tagId === tagId,
+            );
+            if (!exists) this.convTags.push({ conversationId, tagId });
+          }
+          this.persistCache();
+          this.notify();
         },
       )
       .subscribe();
   }
+
 
   // ============ users ============
   listUsers() {
