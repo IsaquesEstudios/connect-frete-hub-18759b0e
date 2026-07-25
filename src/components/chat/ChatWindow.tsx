@@ -445,7 +445,7 @@ export function ChatWindow({ me, other, viewer }: Props) {
                   <ProfileField label="Tipo de veículo" value={other.tipoVeiculo} />
                 )}
                 {other.carroceria && (
-                  <ProfileField label="Carroceria" value={other.carroceria} />
+                  <ProfileField label="Tipo de carroceria" value={other.carroceria} />
                 )}
                 {other.peso && <ProfileField label="Peso" value={other.peso} />}
                 {other.rntrc && <ProfileField label="RNTRC" value={other.rntrc} />}
