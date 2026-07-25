@@ -348,7 +348,7 @@ export function BroadcastDialog({
                   <img
                     src={attachment}
                     alt="prévia"
-                    className="max-h-48 rounded object-contain mx-auto"
+                    className="max-h-40 sm:max-h-48 w-auto rounded object-contain mx-auto"
                   />
                 )}
                 {attachIsAudio && <AudioMessage src={attachment} mine={false} />}
