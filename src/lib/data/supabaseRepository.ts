@@ -396,6 +396,9 @@ class SupabaseRepository implements Repository {
     if (data) {
       const rows = data as ProfileRow[];
       this.users = rows.map(profileToUser);
+      // Mantém a foto já conhecida caso a linha volte sem ela (RLS/coluna nula),
+      // evitando a foto aparecer e sumir a cada recarga.
+      this.applyPhotoCache();
       for (const r of rows) {
         if (r.last_seen_at) this.lastSeen.set(r.id, new Date(r.last_seen_at).getTime());
       }
