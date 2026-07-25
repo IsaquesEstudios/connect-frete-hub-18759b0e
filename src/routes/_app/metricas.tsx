@@ -15,6 +15,16 @@ import { homeFor } from "@/lib/auth/session";
 import { useAuth } from "@/lib/auth/useAuth";
 import { useRepoVersion } from "@/lib/hooks/useRepo";
 import { formatPhone } from "@/lib/format-phone";
+import { formatDoc } from "@/lib/format-doc";
+
+function docsOf(u: { cpf?: string; cnpj?: string }) {
+  const cpf = (u.cpf || "").replace(/\D/g, "");
+  const cnpj = (u.cnpj || "").replace(/\D/g, "");
+  return {
+    cpf: cpf ? formatDoc(cpf, "cpf") : "",
+    cnpj: cnpj ? formatDoc(cnpj, "cnpj") : "",
+  };
+}
 
 export const Route = createFileRoute("/_app/metricas")({
   head: () => ({ meta: [{ title: "Métricas — SV Logística" }] }),
@@ -108,15 +118,16 @@ function MetricsPage() {
     }
     lines.push("");
     lines.push("Conversas");
-    lines.push("Nome;Código;Telefone;Email;Tipo;Não lidas admin;Última mensagem;Tags");
+    lines.push("Nome;Código;CPF;CNPJ;Telefone;Email;Tipo;Não lidas admin;Última mensagem;Tags");
     const tagsById = Object.fromEntries(tags.map((t) => [t.id, t.label] as const));
     for (const c of conversations) {
-      const u = c.user as { whatsapp?: string; email?: string };
+      const u = c.user as { whatsapp?: string; email?: string; cpf?: string; cnpj?: string };
       const email = u.email || emailMap[c.user.id] || "";
+      const d = docsOf(u);
       const tagLabels = c.tagIds.map((id) => tagsById[id] || id).join("|");
       const last = c.lastMessage ? new Date(c.lastMessage.createdAt).toLocaleString() : "";
       lines.push(
-        [c.user.name, c.user.number, formatPhone(u.whatsapp || ""), email, c.user.type, c.unreadForAdmin, last, tagLabels]
+        [c.user.name, c.user.number, d.cpf, d.cnpj, formatPhone(u.whatsapp || ""), email, c.user.type, c.unreadForAdmin, last, tagLabels]
           .map(csvEscape)
           .join(";"),
       );
@@ -177,13 +188,16 @@ function MetricsPage() {
 
     const emailMap = await getExternalUserEmails().catch(() => ({}) as Record<string, string>);
     autoTable(doc, {
-      head: [["Nome", "Código", "Telefone", "Email", "Tipo", "Não lidas", "Tags"]],
+      head: [["Nome", "Código", "CPF", "CNPJ", "Telefone", "Email", "Tipo", "Não lidas", "Tags"]],
       body: conversations.map((c) => {
-        const u = c.user as { whatsapp?: string; email?: string };
+        const u = c.user as { whatsapp?: string; email?: string; cpf?: string; cnpj?: string };
         const email = u.email || emailMap[c.user.id] || "";
+        const d = docsOf(u);
         return [
           clean(c.user.name),
           c.user.number,
+          d.cpf,
+          d.cnpj,
           formatPhone(u.whatsapp || ""),
           email,
           c.user.type,
@@ -215,11 +229,14 @@ function MetricsPage() {
     L.push("");
     L.push("USUÁRIOS");
     for (const c of conversations) {
-      const u = c.user as { whatsapp?: string; email?: string; estado?: string; cidade?: string };
+      const u = c.user as { whatsapp?: string; email?: string; estado?: string; cidade?: string; cpf?: string; cnpj?: string };
       const email = u.email || emailMap[c.user.id] || "";
+      const d = docsOf(u);
       const tagLabels = c.tagIds.map((id) => tagsById[id] || id).join(", ");
       L.push(`• ${c.user.name} [${c.user.type}]`);
       L.push(`  Código: ${c.user.number}`);
+      if (d.cpf) L.push(`  CPF: ${d.cpf}`);
+      if (d.cnpj) L.push(`  CNPJ: ${d.cnpj}`);
       if (u.whatsapp) L.push(`  WhatsApp: ${formatPhone(u.whatsapp)}`);
       if (email) L.push(`  Email: ${email}`);
       if (u.cidade || u.estado) L.push(`  Local: ${[u.cidade, u.estado].filter(Boolean).join(" / ")}`);
@@ -265,12 +282,15 @@ function MetricsPage() {
 
     const userParas: InstanceType<typeof Paragraph>[] = [];
     for (const c of conversations) {
-      const u = c.user as { whatsapp?: string; email?: string; estado?: string; cidade?: string };
+      const u = c.user as { whatsapp?: string; email?: string; estado?: string; cidade?: string; cpf?: string; cnpj?: string };
       const email = u.email || emailMap[c.user.id] || "";
+      const d = docsOf(u);
       const tagLabels = c.tagIds.map((id) => tagsById[id] || id).join(", ");
       userParas.push(
         new Paragraph({ children: [new TextRun({ text: `${c.user.name} `, bold: true }), new TextRun({ text: `[${c.user.type}]` })] }),
         new Paragraph(`  Código: ${c.user.number}`),
+        new Paragraph(`  CPF: ${d.cpf || "—"}`),
+        new Paragraph(`  CNPJ: ${d.cnpj || "—"}`),
         new Paragraph(`  WhatsApp: ${u.whatsapp ? formatPhone(u.whatsapp) : "—"}`),
         new Paragraph(`  Email: ${email || "—"}`),
         new Paragraph(`  Local: ${[u.cidade, u.estado].filter(Boolean).join(" / ") || "—"}`),
