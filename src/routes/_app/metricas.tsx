@@ -229,11 +229,14 @@ function MetricsPage() {
     L.push("");
     L.push("USUÁRIOS");
     for (const c of conversations) {
-      const u = c.user as { whatsapp?: string; email?: string; estado?: string; cidade?: string };
+      const u = c.user as { whatsapp?: string; email?: string; estado?: string; cidade?: string; cpf?: string; cnpj?: string };
       const email = u.email || emailMap[c.user.id] || "";
+      const d = docsOf(u);
       const tagLabels = c.tagIds.map((id) => tagsById[id] || id).join(", ");
       L.push(`• ${c.user.name} [${c.user.type}]`);
       L.push(`  Código: ${c.user.number}`);
+      if (d.cpf) L.push(`  CPF: ${d.cpf}`);
+      if (d.cnpj) L.push(`  CNPJ: ${d.cnpj}`);
       if (u.whatsapp) L.push(`  WhatsApp: ${formatPhone(u.whatsapp)}`);
       if (email) L.push(`  Email: ${email}`);
       if (u.cidade || u.estado) L.push(`  Local: ${[u.cidade, u.estado].filter(Boolean).join(" / ")}`);
