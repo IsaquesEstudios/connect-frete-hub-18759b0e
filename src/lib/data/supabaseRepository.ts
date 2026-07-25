@@ -180,6 +180,7 @@ function profilePatchToRow(patch: UserProfilePatch): Record<string, string | boo
 }
 
 const CACHE_PREFIX = "svlogistica:repo-cache:v1:";
+const PHOTO_CACHE_KEY = "svlogistica:photo-cache:v1";
 
 type SyncPhase = "idle" | "syncing";
 export type SyncState = { phase: SyncPhase; done: number; total: number };
@@ -253,6 +254,39 @@ class SupabaseRepository implements Repository {
     this.syncSubs.forEach((cb) => cb(next));
   }
 
+  // As fotos ficam em um cache próprio: elas são pesadas (dataURL) e não podem
+  // fazer o cache principal estourar a quota — assim a foto aparece na hora
+  // (pré-carregada) e nunca "pisca" enquanto o perfil recarrega do banco.
+  private loadPhotoCache(): Record<string, string> {
+    if (typeof window === "undefined") return {};
+    try {
+      return JSON.parse(window.localStorage.getItem(PHOTO_CACHE_KEY) || "{}") as Record<string, string>;
+    } catch {
+      return {};
+    }
+  }
+
+  private persistPhotoCache() {
+    if (typeof window === "undefined") return;
+    const map: Record<string, string> = {};
+    for (const u of this.users) if (u.fotoUrl) map[u.id] = u.fotoUrl;
+    try {
+      window.localStorage.setItem(PHOTO_CACHE_KEY, JSON.stringify(map));
+    } catch {
+      try {
+        window.localStorage.removeItem(PHOTO_CACHE_KEY);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  private applyPhotoCache() {
+    const map = this.loadPhotoCache();
+    if (!Object.keys(map).length) return;
+    this.users = this.users.map((u) => (u.fotoUrl ? u : map[u.id] ? { ...u, fotoUrl: map[u.id] } : u));
+  }
+
   private hydrateFromCache(uid: string): boolean {
     if (typeof window === "undefined") return false;
     this.cacheKey = CACHE_PREFIX + uid;
@@ -266,6 +300,7 @@ class SupabaseRepository implements Repository {
       this.convTags = blob.convTags ?? [];
       this.broadcasts = blob.broadcasts ?? [];
       this.lastSeen = new Map(blob.lastSeen ?? []);
+      this.applyPhotoCache();
       return this.messages.length > 0 || this.users.length > 0;
     } catch {
       return false;
@@ -277,22 +312,28 @@ class SupabaseRepository implements Repository {
     if (this.cachePersistTimer) window.clearTimeout(this.cachePersistTimer);
     this.cachePersistTimer = window.setTimeout(() => {
       if (!this.cacheKey) return;
-      try {
-        const blob: CacheBlob = {
-          users: this.users,
-          messages: this.messages,
-          tags: this.tags,
-          convTags: this.convTags,
-          broadcasts: this.broadcasts,
-          lastSeen: Array.from(this.lastSeen.entries()),
-        };
-        window.localStorage.setItem(this.cacheKey, JSON.stringify(blob));
-      } catch (err) {
-        // Quota exceeded etc. — drop cache silently.
-        console.warn("repo cache persist failed", err);
+      this.persistPhotoCache();
+      const build = (messageLimit?: number): CacheBlob => ({
+        // Sem as fotos: elas vivem no cache dedicado acima.
+        users: this.users.map((u) => (u.fotoUrl ? { ...u, fotoUrl: undefined } : u)),
+        messages: messageLimit ? this.messages.slice(-messageLimit) : this.messages,
+        tags: this.tags,
+        convTags: this.convTags,
+        broadcasts: this.broadcasts,
+        lastSeen: Array.from(this.lastSeen.entries()),
+      });
+      const attempts: (number | undefined)[] = [undefined, 2000, 500];
+      for (const limit of attempts) {
+        try {
+          window.localStorage.setItem(this.cacheKey, JSON.stringify(build(limit)));
+          return;
+        } catch (err) {
+          console.warn("repo cache persist retry", limit, err);
+        }
       }
     }, 400);
   }
+
 
   private notify() {
     this.subs.forEach((cb) => cb());
@@ -355,6 +396,9 @@ class SupabaseRepository implements Repository {
     if (data) {
       const rows = data as ProfileRow[];
       this.users = rows.map(profileToUser);
+      // Mantém a foto já conhecida caso a linha volte sem ela (RLS/coluna nula),
+      // evitando a foto aparecer e sumir a cada recarga.
+      this.applyPhotoCache();
       for (const r of rows) {
         if (r.last_seen_at) this.lastSeen.set(r.id, new Date(r.last_seen_at).getTime());
       }
