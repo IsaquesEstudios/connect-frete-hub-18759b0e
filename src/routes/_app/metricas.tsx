@@ -188,13 +188,16 @@ function MetricsPage() {
 
     const emailMap = await getExternalUserEmails().catch(() => ({}) as Record<string, string>);
     autoTable(doc, {
-      head: [["Nome", "Código", "Telefone", "Email", "Tipo", "Não lidas", "Tags"]],
+      head: [["Nome", "Código", "CPF", "CNPJ", "Telefone", "Email", "Tipo", "Não lidas", "Tags"]],
       body: conversations.map((c) => {
-        const u = c.user as { whatsapp?: string; email?: string };
+        const u = c.user as { whatsapp?: string; email?: string; cpf?: string; cnpj?: string };
         const email = u.email || emailMap[c.user.id] || "";
+        const d = docsOf(u);
         return [
           clean(c.user.name),
           c.user.number,
+          d.cpf,
+          d.cnpj,
           formatPhone(u.whatsapp || ""),
           email,
           c.user.type,
