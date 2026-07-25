@@ -118,15 +118,16 @@ function MetricsPage() {
     }
     lines.push("");
     lines.push("Conversas");
-    lines.push("Nome;Código;Telefone;Email;Tipo;Não lidas admin;Última mensagem;Tags");
+    lines.push("Nome;Código;CPF;CNPJ;Telefone;Email;Tipo;Não lidas admin;Última mensagem;Tags");
     const tagsById = Object.fromEntries(tags.map((t) => [t.id, t.label] as const));
     for (const c of conversations) {
-      const u = c.user as { whatsapp?: string; email?: string };
+      const u = c.user as { whatsapp?: string; email?: string; cpf?: string; cnpj?: string };
       const email = u.email || emailMap[c.user.id] || "";
+      const d = docsOf(u);
       const tagLabels = c.tagIds.map((id) => tagsById[id] || id).join("|");
       const last = c.lastMessage ? new Date(c.lastMessage.createdAt).toLocaleString() : "";
       lines.push(
-        [c.user.name, c.user.number, formatPhone(u.whatsapp || ""), email, c.user.type, c.unreadForAdmin, last, tagLabels]
+        [c.user.name, c.user.number, d.cpf, d.cnpj, formatPhone(u.whatsapp || ""), email, c.user.type, c.unreadForAdmin, last, tagLabels]
           .map(csvEscape)
           .join(";"),
       );
