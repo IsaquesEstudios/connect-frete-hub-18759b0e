@@ -15,6 +15,16 @@ import { homeFor } from "@/lib/auth/session";
 import { useAuth } from "@/lib/auth/useAuth";
 import { useRepoVersion } from "@/lib/hooks/useRepo";
 import { formatPhone } from "@/lib/format-phone";
+import { formatDoc } from "@/lib/format-doc";
+
+function docsOf(u: { cpf?: string; cnpj?: string }) {
+  const cpf = (u.cpf || "").replace(/\D/g, "");
+  const cnpj = (u.cnpj || "").replace(/\D/g, "");
+  return {
+    cpf: cpf ? formatDoc(cpf, "cpf") : "",
+    cnpj: cnpj ? formatDoc(cnpj, "cnpj") : "",
+  };
+}
 
 export const Route = createFileRoute("/_app/metricas")({
   head: () => ({ meta: [{ title: "Métricas — SV Logística" }] }),
