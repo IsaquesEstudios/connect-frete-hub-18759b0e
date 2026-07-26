@@ -448,7 +448,10 @@ class SupabaseRepository implements Repository {
     try {
       // 3. Cold datasets fetch in parallel with the delta sync.
       const coldLoads = Promise.all([
-        this.loadUsers().then(() => (sessionUserId ? this.loadPhotos() : undefined)),
+        this.loadUsers().then(() => {
+          if (sessionUserId) this.loadPhotosInBackground();
+        }),
+
         this.loadTags(),
         this.loadConvTags(),
         this.loadBroadcasts(),
