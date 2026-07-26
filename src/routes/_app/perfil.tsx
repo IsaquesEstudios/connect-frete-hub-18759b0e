@@ -13,6 +13,9 @@ import type { User, UserProfilePatch } from "@/lib/data";
 import { formatDoc, docPlaceholder, type DocTipo } from "@/lib/format-doc";
 import { formatPhone, phoneDigits } from "@/lib/format-phone";
 import { PhotoUploader } from "@/components/common/PhotoUploader";
+import { getExternalUserEmailsForIds } from "@/lib/data/emails.functions";
+import { reportEmailsUnavailable, EMAIL_UNAVAILABLE_LABEL } from "@/lib/data/emails-client";
+
 
 
 export const Route = createFileRoute("/_app/perfil")({
@@ -123,6 +126,7 @@ function ProfilePage() {
   const navigate = useNavigate();
   const [form, setForm] = useState<ProfileForm>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [authEmail, setAuthEmail] = useState("");
   const [docTipo, setDocTipo] = useState<DocTipo>(user?.type === "empresa" ? "cnpj" : "cpf");
 
 
@@ -135,6 +139,27 @@ function ProfilePage() {
       else setDocTipo(user.type === "empresa" ? "cnpj" : "cpf");
     }
   }, [user]);
+
+  // O email exibido deve ser o mesmo usado para login (auth), não o da tabela de perfis.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    setAuthEmail(user.email ?? "");
+    getExternalUserEmailsForIds({ data: { userIds: [user.id] } })
+      .then((map) => {
+        if (cancelled) return;
+        setAuthEmail(map[user.id] || user.email || "");
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        reportEmailsUnavailable(err);
+        setAuthEmail(user.email || EMAIL_UNAVAILABLE_LABEL);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
 
 
 
@@ -203,7 +228,7 @@ function ProfilePage() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <Editable required label="Nome" value={form.name} onChange={(value) => update("name", value)} />
-            <ReadOnly label="Email" value={form.email} />
+            <ReadOnly label="Email" value={authEmail || form.email} />
             <Editable
               required
               label="Telefone / WhatsApp"
