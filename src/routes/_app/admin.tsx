@@ -28,6 +28,7 @@ import { formatConversationTime } from "@/lib/chat/formatConversationTime";
 import { homeFor } from "@/lib/auth/session";
 import { useAuth } from "@/lib/auth/useAuth";
 import { useRepoVersion } from "@/lib/hooks/useRepo";
+import { usePinnedConversations } from "@/lib/chat/usePinnedConversations";
 
 export const Route = createFileRoute("/_app/admin")({
   head: () => ({ meta: [{ title: "Admin — SV Logística" }] }),
