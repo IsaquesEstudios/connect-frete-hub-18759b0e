@@ -790,16 +790,29 @@ class SupabaseRepository implements Repository {
           const { adminUpdateProfile } = await import("./admin-profile.functions");
           const result = await adminUpdateProfile({ data: { userId: user.id, patch: row } });
           if (result?.row) {
-            Object.assign(user, profileToUser(result.row as ProfileRow));
+            const savedRow = result.row as ProfileRow;
+            const saved = profileToUser(savedRow);
+            // Se a resposta vier sem a coluna da foto, mantém a foto atual em
+            // vez de apagá-la da tela.
+            if (saved.fotoUrl === undefined && !("foto_url" in savedRow)) {
+              saved.fotoUrl = user.fotoUrl;
+            }
+            Object.assign(user, saved);
             // A foto salva no banco vale para todos: atualiza o mapa
             // compartilhado para admin, colaboradores e o próprio usuário.
             if (patch.fotoUrl !== undefined) {
-              if (user.fotoUrl) this.serverPhotos[user.id] = user.fotoUrl;
-              else delete this.serverPhotos[user.id];
+              if (user.fotoUrl) {
+                this.removedPhotoIds.delete(user.id);
+                this.serverPhotos[user.id] = user.fotoUrl;
+                this.persistPhotoCache();
+              } else {
+                this.removePhotoFromCache(user.id);
+              }
             }
             this.persistCache();
             this.notify();
           }
+
 
         } catch (error) {
           Object.assign(user, previous);
