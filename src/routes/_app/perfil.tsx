@@ -228,7 +228,7 @@ function ProfilePage() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <Editable required label="Nome" value={form.name} onChange={(value) => update("name", value)} />
-            <ReadOnly label="Email" value={form.email} />
+            <ReadOnly label="Email" value={authEmail || form.email} />
             <Editable
               required
               label="Telefone / WhatsApp"
