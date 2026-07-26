@@ -241,12 +241,12 @@ function AdminPanel() {
             )}
           </div>
           <div className="flex-1 overflow-y-auto">
-            {filtered.length === 0 && (
+            {ordered.length === 0 && (
               <div className="p-6 text-center text-sm text-muted-foreground">
                 Nenhuma conversa
               </div>
             )}
-            {filtered.map((c) => {
+            {ordered.map((c) => {
               const isActive = selected === c.user.id;
               const perfil = (c.user as { perfilEmpresa?: string }).perfilEmpresa;
               const displayType: "empresa" | "motorista" | "colaborador" | "admin" =
