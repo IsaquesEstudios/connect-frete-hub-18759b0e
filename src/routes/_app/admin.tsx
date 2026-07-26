@@ -75,6 +75,7 @@ function AdminPanel() {
   const [mobileChat, setMobileChat] = useState(false);
   const [tagFilter, setTagFilter] = useState<Set<string>>(new Set());
   const [unreadOnly, setUnreadOnly] = useState(false);
+  const { pinned, isPinned, toggle: togglePin, max: maxPinned } = usePinnedConversations(user?.id ?? "anon");
 
   const conversations = useMemo(() => repo.listConversations(), [v]);
   const allTags = useMemo(() => repo.listTags(), [v]);
