@@ -13,6 +13,9 @@ import type { User, UserProfilePatch } from "@/lib/data";
 import { formatDoc, docPlaceholder, type DocTipo } from "@/lib/format-doc";
 import { formatPhone, phoneDigits } from "@/lib/format-phone";
 import { PhotoUploader } from "@/components/common/PhotoUploader";
+import { getExternalUserEmailsForIds } from "@/lib/data/emails.functions";
+import { reportEmailsUnavailable, EMAIL_UNAVAILABLE_LABEL } from "@/lib/data/emails-client";
+
 
 
 export const Route = createFileRoute("/_app/perfil")({
