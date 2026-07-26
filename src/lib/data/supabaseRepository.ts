@@ -655,15 +655,17 @@ class SupabaseRepository implements Repository {
           const nextUser = profileToUser(row);
           // Mantém o mapa compartilhado de fotos em sincronia: a foto do
           // perfil é a mesma para todos os usuários do sistema.
+          const hasPhotoColumn = Object.prototype.hasOwnProperty.call(row, "foto_url");
           if (row.foto_url) {
             this.removedPhotoIds.delete(row.id);
             this.serverPhotos[row.id] = row.foto_url;
             this.persistPhotoCache();
-          } else if ("foto_url" in row) {
+          } else if (hasPhotoColumn) {
             this.removePhotoFromCache(row.id);
           } else if (this.serverPhotos[row.id]) {
             nextUser.fotoUrl = this.serverPhotos[row.id];
           }
+
 
 
 
