@@ -316,24 +316,39 @@ class SupabaseRepository implements Repository {
   // Quando o servidor não devolve a foto de alguém, a última foto conhecida é
   // mantida (a foto só some quando é removida de propósito).
   private async loadPhotos() {
-    try {
-      const { getProfilePhotos } = await import("./photos.functions");
-      const map = await getProfilePhotos();
-      this.serverPhotos = { ...this.serverPhotos, ...map };
-      for (const id of Object.keys(map)) this.removedPhotoIds.delete(id);
-      const fallback = { ...this.loadPhotoCache(), ...this.serverPhotos };
-      this.users = this.users.map((u) => {
-        const photo = fallback[u.id];
-        if (photo) return u.fotoUrl === photo ? u : { ...u, fotoUrl: photo };
-        return u;
-      });
-      this.persistPhotoCache();
-      this.persistCache();
-      this.notify();
-    } catch (error) {
-      console.warn("[photos] falha ao carregar fotos dos perfis", error);
-    }
+    const { getProfilePhotos } = await import("./photos.functions");
+    const map = await getProfilePhotos();
+    this.serverPhotos = { ...this.serverPhotos, ...map };
+    for (const id of Object.keys(map)) this.removedPhotoIds.delete(id);
+    const fallback = { ...this.loadPhotoCache(), ...this.serverPhotos };
+    this.users = this.users.map((u) => {
+      const photo = fallback[u.id];
+      if (photo) return u.fotoUrl === photo ? u : { ...u, fotoUrl: photo };
+      return u;
+    });
+    this.persistPhotoCache();
+    this.persistCache();
+    this.notify();
   }
+
+  // As fotos são do perfil (banco), então valem para qualquer conta que abrir o
+  // sistema. Elas carregam em segundo plano — nunca seguram o carregamento das
+  // conversas — e tentam de novo se a primeira busca falhar. Depois ficam no
+  // cache local, então nas próximas visitas aparecem na hora.
+  private photoLoadStarted = false;
+  private loadPhotosInBackground() {
+    if (this.photoLoadStarted) return;
+    this.photoLoadStarted = true;
+    const attempt = (tries: number) => {
+      this.loadPhotos().catch((error) => {
+        console.warn("[photos] falha ao carregar fotos dos perfis", error);
+        if (tries > 0) setTimeout(() => attempt(tries - 1), 5000);
+        else this.photoLoadStarted = false;
+      });
+    };
+    attempt(3);
+  }
+
 
 
 
