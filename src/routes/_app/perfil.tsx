@@ -123,6 +123,7 @@ function ProfilePage() {
   const navigate = useNavigate();
   const [form, setForm] = useState<ProfileForm>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [authEmail, setAuthEmail] = useState("");
   const [docTipo, setDocTipo] = useState<DocTipo>(user?.type === "empresa" ? "cnpj" : "cpf");
 
 
@@ -135,6 +136,27 @@ function ProfilePage() {
       else setDocTipo(user.type === "empresa" ? "cnpj" : "cpf");
     }
   }, [user]);
+
+  // O email exibido deve ser o mesmo usado para login (auth), não o da tabela de perfis.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    setAuthEmail(user.email ?? "");
+    getExternalUserEmailsForIds({ data: { userIds: [user.id] } })
+      .then((map) => {
+        if (cancelled) return;
+        setAuthEmail(map[user.id] || user.email || "");
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        reportEmailsUnavailable(err);
+        setAuthEmail(user.email || EMAIL_UNAVAILABLE_LABEL);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
 
 
 
