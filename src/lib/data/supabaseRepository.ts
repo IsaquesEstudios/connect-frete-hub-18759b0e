@@ -197,6 +197,8 @@ type CacheBlob = {
 class SupabaseRepository implements Repository {
   private users: User[] = [];
   private serverPhotos: Record<string, string> = {};
+  private removedPhotoIds = new Set<string>();
+
 
   private messages: Message[] = [];
   private tags: Tag[] = [];
@@ -268,19 +270,39 @@ class SupabaseRepository implements Repository {
     }
   }
 
+  // Nunca sobrescreve o cache com um mapa vazio/parcial: as fotos só saem do
+  // cache quando são removidas de propósito (removePhotoFromCache).
   private persistPhotoCache() {
     if (typeof window === "undefined") return;
-    const map: Record<string, string> = {};
+    const map: Record<string, string> = { ...this.loadPhotoCache(), ...this.serverPhotos };
     for (const u of this.users) if (u.fotoUrl) map[u.id] = u.fotoUrl;
-    try {
-      window.localStorage.setItem(PHOTO_CACHE_KEY, JSON.stringify(map));
-    } catch {
+    for (const id of this.removedPhotoIds) delete map[id];
+    const ids = Object.keys(map);
+    if (!ids.length) {
       try {
         window.localStorage.removeItem(PHOTO_CACHE_KEY);
       } catch {
         /* ignore */
       }
+      return;
     }
+    // Se estourar a quota, vai descartando as fotos mais antigas do mapa em vez
+    // de apagar tudo — assim as fotos usadas continuam disponíveis offline.
+    let entries = ids.map((id) => [id, map[id]] as const);
+    while (entries.length) {
+      try {
+        window.localStorage.setItem(PHOTO_CACHE_KEY, JSON.stringify(Object.fromEntries(entries)));
+        return;
+      } catch {
+        entries = entries.slice(Math.ceil(entries.length / 4));
+      }
+    }
+  }
+
+  private removePhotoFromCache(id: string) {
+    this.removedPhotoIds.add(id);
+    delete this.serverPhotos[id];
+    this.persistPhotoCache();
   }
 
   private applyPhotoCache() {
@@ -291,22 +313,28 @@ class SupabaseRepository implements Repository {
 
   // Fotos vêm do banco (profiles.foto_url) via servidor, então todos veem
   // exatamente a mesma imagem do perfil — e a troca aparece para todo mundo.
+  // Quando o servidor não devolve a foto de alguém, a última foto conhecida é
+  // mantida (a foto só some quando é removida de propósito).
   private async loadPhotos() {
     try {
       const { getProfilePhotos } = await import("./photos.functions");
       const map = await getProfilePhotos();
-      this.serverPhotos = map;
+      this.serverPhotos = { ...this.serverPhotos, ...map };
+      for (const id of Object.keys(map)) this.removedPhotoIds.delete(id);
+      const fallback = { ...this.loadPhotoCache(), ...this.serverPhotos };
       this.users = this.users.map((u) => {
-        const photo = map[u.id];
+        const photo = fallback[u.id];
         if (photo) return u.fotoUrl === photo ? u : { ...u, fotoUrl: photo };
-        return u.fotoUrl ? { ...u, fotoUrl: undefined } : u;
+        return u;
       });
+      this.persistPhotoCache();
       this.persistCache();
       this.notify();
     } catch (error) {
       console.warn("[photos] falha ao carregar fotos dos perfis", error);
     }
   }
+
 
 
   private hydrateFromCache(uid: string): boolean {
@@ -627,9 +655,18 @@ class SupabaseRepository implements Repository {
           const nextUser = profileToUser(row);
           // Mantém o mapa compartilhado de fotos em sincronia: a foto do
           // perfil é a mesma para todos os usuários do sistema.
-          if (row.foto_url) this.serverPhotos[row.id] = row.foto_url;
-          else if (row.name !== undefined) delete this.serverPhotos[row.id];
-          else if (this.serverPhotos[row.id]) nextUser.fotoUrl = this.serverPhotos[row.id];
+          const hasPhotoColumn = Object.prototype.hasOwnProperty.call(row, "foto_url");
+          if (row.foto_url) {
+            this.removedPhotoIds.delete(row.id);
+            this.serverPhotos[row.id] = row.foto_url;
+            this.persistPhotoCache();
+          } else if (hasPhotoColumn) {
+            this.removePhotoFromCache(row.id);
+          } else if (this.serverPhotos[row.id]) {
+            nextUser.fotoUrl = this.serverPhotos[row.id];
+          }
+
+
 
 
           const i = this.users.findIndex((u) => u.id === row.id);
@@ -762,16 +799,29 @@ class SupabaseRepository implements Repository {
           const { adminUpdateProfile } = await import("./admin-profile.functions");
           const result = await adminUpdateProfile({ data: { userId: user.id, patch: row } });
           if (result?.row) {
-            Object.assign(user, profileToUser(result.row as ProfileRow));
+            const savedRow = result.row as ProfileRow;
+            const saved = profileToUser(savedRow);
+            // Se a resposta vier sem a coluna da foto, mantém a foto atual em
+            // vez de apagá-la da tela.
+            if (saved.fotoUrl === undefined && !("foto_url" in savedRow)) {
+              saved.fotoUrl = user.fotoUrl;
+            }
+            Object.assign(user, saved);
             // A foto salva no banco vale para todos: atualiza o mapa
             // compartilhado para admin, colaboradores e o próprio usuário.
             if (patch.fotoUrl !== undefined) {
-              if (user.fotoUrl) this.serverPhotos[user.id] = user.fotoUrl;
-              else delete this.serverPhotos[user.id];
+              if (user.fotoUrl) {
+                this.removedPhotoIds.delete(user.id);
+                this.serverPhotos[user.id] = user.fotoUrl;
+                this.persistPhotoCache();
+              } else {
+                this.removePhotoFromCache(user.id);
+              }
             }
             this.persistCache();
             this.notify();
           }
+
 
         } catch (error) {
           Object.assign(user, previous);
