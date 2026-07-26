@@ -112,6 +112,16 @@ function AdminPanel() {
     });
   }, [conversations, tab, query, tagFilter, unreadOnly]);
 
+  // Conversas fixadas sempre no topo (mantendo a ordem de fixação).
+  const ordered = useMemo(() => {
+    if (pinned.length === 0) return filtered;
+    const rank = (id: string) => {
+      const i = pinned.indexOf(id);
+      return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+    };
+    return filtered.slice().sort((a, b) => rank(a.user.id) - rank(b.user.id));
+  }, [filtered, pinned]);
+
 
 
 
