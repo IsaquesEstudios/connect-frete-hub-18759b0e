@@ -345,6 +345,24 @@ function AdminPanel() {
                     )}
                   </div>
                 </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const res = togglePin(c.user.id);
+                    if (!res.ok) toast.error(`Você já fixou o máximo de ${maxPinned} conversas.`);
+                  }}
+                  title={pinnedHere ? "Desafixar conversa" : "Fixar conversa no topo"}
+                  aria-label={pinnedHere ? "Desafixar conversa" : "Fixar conversa no topo"}
+                  className={`absolute right-1.5 top-2 h-7 w-7 rounded-md flex items-center justify-center transition ${
+                    pinnedHere
+                      ? "text-primary opacity-100"
+                      : "text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100"
+                  } hover:bg-background`}
+                >
+                  {pinnedHere ? <Pin className="h-3.5 w-3.5 fill-current" /> : <PinOff className="h-3.5 w-3.5" />}
+                </button>
+                </div>
               );
             })}
           </div>
