@@ -1,12 +1,15 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pin, PinOff } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { FullscreenLoading } from "@/components/ui/loading";
 import { ChatWindow } from "./ChatWindow";
 import { ADMIN_ID, repo, type User } from "@/lib/data";
 import { messagePreview } from "@/lib/chat/messagePreview";
 import { formatConversationTime } from "@/lib/chat/formatConversationTime";
+import { usePinnedConversations } from "@/lib/chat/usePinnedConversations";
 import { useEphemeralVersion, useRepoVersion } from "@/lib/hooks/useRepo";
+
 
 interface Props {
   me: User;
