@@ -31,24 +31,32 @@ export function UserChatPanel({ me }: Props) {
   const ev = useEphemeralVersion();
   const [selectedId, setSelectedId] = useState<string | null>(ADMIN_ID);
   const [mobileChat, setMobileChat] = useState(false);
+  const { pinned, isPinned, toggle: togglePin, max: maxPinned } = usePinnedConversations(me.id);
 
   const staff = useMemo(() => {
     void v;
     const all = repo.listUsers();
     const admin = all.find((u) => u.number === ADMIN_ID) ?? all.find((u) => u.type === "admin" || u.id === ADMIN_ID);
-    const collabs = all.filter((u) => u.type === "colaborador" && u.active !== false);
+    const collabs = all.filter((u) => u.type === "colaborador" && u.active !== false && u.id !== me.id);
     const list = admin ? [admin, ...collabs] : collabs;
     const lastTs = (uid: string) => {
       const conversationId = [me.id, uid].sort().join("__");
       const msgs = repo.listMessages(conversationId, { staffInbox: false });
       return msgs[msgs.length - 1]?.createdAt ?? 0;
     };
-    return list.slice().sort((a, b) => {
+    const sorted = list.slice().sort((a, b) => {
       const diff = lastTs(b.id) - lastTs(a.id);
       if (diff !== 0) return diff;
       return a.name.localeCompare(b.name);
     });
-  }, [v, me.id]);
+    if (pinned.length === 0) return sorted;
+    const rank = (id: string) => {
+      const i = pinned.indexOf(id);
+      return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+    };
+    return sorted.sort((a, b) => rank(a.id) - rank(b.id));
+  }, [v, me.id, pinned]);
+
 
   const selected = selectedId ? repo.getUser(selectedId) ?? null : null;
 
