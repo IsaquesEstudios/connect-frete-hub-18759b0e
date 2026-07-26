@@ -655,9 +655,16 @@ class SupabaseRepository implements Repository {
           const nextUser = profileToUser(row);
           // Mantém o mapa compartilhado de fotos em sincronia: a foto do
           // perfil é a mesma para todos os usuários do sistema.
-          if (row.foto_url) this.serverPhotos[row.id] = row.foto_url;
-          else if (row.name !== undefined) delete this.serverPhotos[row.id];
-          else if (this.serverPhotos[row.id]) nextUser.fotoUrl = this.serverPhotos[row.id];
+          if (row.foto_url) {
+            this.removedPhotoIds.delete(row.id);
+            this.serverPhotos[row.id] = row.foto_url;
+            this.persistPhotoCache();
+          } else if ("foto_url" in row) {
+            this.removePhotoFromCache(row.id);
+          } else if (this.serverPhotos[row.id]) {
+            nextUser.fotoUrl = this.serverPhotos[row.id];
+          }
+
 
 
           const i = this.users.findIndex((u) => u.id === row.id);
