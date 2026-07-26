@@ -278,16 +278,17 @@ function AdminPanel() {
               const convTags = c.tagIds
                 .map((id) => tagsById[id])
                 .filter((t): t is NonNullable<typeof t> => !!t);
+              const pinnedHere = isPinned(c.user.id);
               return (
+                <div key={c.user.id} className="relative group">
                 <button
-                  key={c.user.id}
                   onClick={() => {
                     setSelected(c.user.id);
                     setMobileChat(true);
                   }}
-                  className={`w-full text-left px-3 py-3 flex gap-3 border-b hover:bg-accent transition-colors ${
+                  className={`w-full text-left pl-3 pr-9 py-3 flex gap-3 border-b hover:bg-accent transition-colors ${
                     isActive ? "bg-accent" : ""
-                  }`}
+                  } ${pinnedHere ? "bg-accent/40" : ""}`}
                 >
                   <div className="relative shrink-0">
                     <div
