@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Megaphone, Search, Settings2, Trash2 } from "lucide-react";
+import { ArrowLeft, Megaphone, Pin, PinOff, Search, Settings2, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { BroadcastDialog } from "@/components/chat/BroadcastDialog";
 import { CollaboratorsDialog } from "@/components/admin/CollaboratorsDialog";
 import { ChatWindow } from "@/components/chat/ChatWindow";
