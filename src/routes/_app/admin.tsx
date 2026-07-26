@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Megaphone, Search, Settings2, Trash2 } from "lucide-react";
+import { ArrowLeft, Megaphone, Pin, PinOff, Search, Settings2, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { BroadcastDialog } from "@/components/chat/BroadcastDialog";
 import { CollaboratorsDialog } from "@/components/admin/CollaboratorsDialog";
 import { ChatWindow } from "@/components/chat/ChatWindow";
@@ -27,6 +28,7 @@ import { formatConversationTime } from "@/lib/chat/formatConversationTime";
 import { homeFor } from "@/lib/auth/session";
 import { useAuth } from "@/lib/auth/useAuth";
 import { useRepoVersion } from "@/lib/hooks/useRepo";
+import { usePinnedConversations } from "@/lib/chat/usePinnedConversations";
 
 export const Route = createFileRoute("/_app/admin")({
   head: () => ({ meta: [{ title: "Admin — SV Logística" }] }),
@@ -73,6 +75,7 @@ function AdminPanel() {
   const [mobileChat, setMobileChat] = useState(false);
   const [tagFilter, setTagFilter] = useState<Set<string>>(new Set());
   const [unreadOnly, setUnreadOnly] = useState(false);
+  const { pinned, isPinned, toggle: togglePin, max: maxPinned } = usePinnedConversations(user?.id ?? "anon");
 
   const conversations = useMemo(() => repo.listConversations(), [v]);
   const allTags = useMemo(() => repo.listTags(), [v]);
@@ -108,6 +111,16 @@ function AdminPanel() {
       return true;
     });
   }, [conversations, tab, query, tagFilter, unreadOnly]);
+
+  // Conversas fixadas sempre no topo (mantendo a ordem de fixação).
+  const ordered = useMemo(() => {
+    if (pinned.length === 0) return filtered;
+    const rank = (id: string) => {
+      const i = pinned.indexOf(id);
+      return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+    };
+    return filtered.slice().sort((a, b) => rank(a.user.id) - rank(b.user.id));
+  }, [filtered, pinned]);
 
 
 
@@ -228,12 +241,12 @@ function AdminPanel() {
             )}
           </div>
           <div className="flex-1 overflow-y-auto">
-            {filtered.length === 0 && (
+            {ordered.length === 0 && (
               <div className="p-6 text-center text-sm text-muted-foreground">
                 Nenhuma conversa
               </div>
             )}
-            {filtered.map((c) => {
+            {ordered.map((c) => {
               const isActive = selected === c.user.id;
               const perfil = (c.user as { perfilEmpresa?: string }).perfilEmpresa;
               const displayType: "empresa" | "motorista" | "colaborador" | "admin" =
@@ -265,16 +278,17 @@ function AdminPanel() {
               const convTags = c.tagIds
                 .map((id) => tagsById[id])
                 .filter((t): t is NonNullable<typeof t> => !!t);
+              const pinnedHere = isPinned(c.user.id);
               return (
+                <div key={c.user.id} className="relative group">
                 <button
-                  key={c.user.id}
                   onClick={() => {
                     setSelected(c.user.id);
                     setMobileChat(true);
                   }}
-                  className={`w-full text-left px-3 py-3 flex gap-3 border-b hover:bg-accent transition-colors ${
+                  className={`w-full text-left pl-3 pr-9 py-3 flex gap-3 border-b hover:bg-accent transition-colors ${
                     isActive ? "bg-accent" : ""
-                  }`}
+                  } ${pinnedHere ? "bg-accent/40" : ""}`}
                 >
                   <div className="relative shrink-0">
                     <div
@@ -331,6 +345,24 @@ function AdminPanel() {
                     )}
                   </div>
                 </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const res = togglePin(c.user.id);
+                    if (!res.ok) toast.error(`Você já fixou o máximo de ${maxPinned} conversas.`);
+                  }}
+                  title={pinnedHere ? "Desafixar conversa" : "Fixar conversa no topo"}
+                  aria-label={pinnedHere ? "Desafixar conversa" : "Fixar conversa no topo"}
+                  className={`absolute right-1.5 top-2 h-7 w-7 rounded-md flex items-center justify-center transition ${
+                    pinnedHere
+                      ? "text-primary opacity-100"
+                      : "text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100"
+                  } hover:bg-background`}
+                >
+                  {pinnedHere ? <Pin className="h-3.5 w-3.5 fill-current" /> : <PinOff className="h-3.5 w-3.5" />}
+                </button>
+                </div>
               );
             })}
           </div>
