@@ -104,17 +104,19 @@ export function UserChatPanel({ me }: Props) {
               const lastSeen = repo.getLastSeen(s.id);
               const isActive = selectedId === s.id;
               const color = s.type === "admin" ? "bg-primary" : "bg-[hsl(var(--collaborator))]";
+              const pinnedHere = isPinned(s.id);
               return (
+                <div key={s.id} className="relative group">
                 <button
-                  key={s.id}
                   onClick={() => {
                     setSelectedId(s.id);
                     setMobileChat(true);
                   }}
-                  className={`w-full text-left px-3 py-3 flex gap-3 border-b hover:bg-accent transition-colors ${
+                  className={`w-full text-left pl-3 pr-9 py-3 flex gap-3 border-b hover:bg-accent transition-colors ${
                     isActive ? "bg-accent" : ""
-                  }`}
+                  } ${pinnedHere ? "bg-accent/40" : ""}`}
                 >
+
                   <div className="relative shrink-0">
                     <div
                       className={`flex h-10 w-10 items-center justify-center overflow-hidden rounded-full text-xs font-semibold text-white ${color}`}
