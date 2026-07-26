@@ -139,23 +139,23 @@ export function ChatWindow({ me, other, viewer }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    setOtherEmail(other.email ?? "");
+    setOtherEmail("");
     if (other.id === me.id) {
-      setOtherEmail(me.email ?? other.email ?? "");
+      setOtherEmail(me.email ?? "");
       setOtherEmailLoading(false);
       return;
     }
-    setOtherEmailLoading(!other.email);
+    setOtherEmailLoading(true);
     getExternalUserEmailsForIds({ data: { userIds: [other.id] } })
       .then((map) => {
         if (cancelled) return;
-        setOtherEmail(map[other.id] || other.email || "");
+        setOtherEmail(map[other.id] || "");
         setOtherEmailLoading(false);
       })
       .catch((err) => {
         if (cancelled) return;
         reportEmailsUnavailable(err);
-        setOtherEmail(other.email || EMAIL_UNAVAILABLE_LABEL);
+        setOtherEmail(EMAIL_UNAVAILABLE_LABEL);
         setOtherEmailLoading(false);
       });
     return () => {
@@ -420,7 +420,7 @@ export function ChatWindow({ me, other, viewer }: Props) {
             <ProfileField label="Tipo" value={other.type} />
             <ProfileField
               label="Email"
-              value={otherEmailLoading ? "Carregando email..." : otherEmail || other.email || "Não informado"}
+              value={otherEmailLoading ? "Carregando email..." : otherEmail || "Não informado"}
             />
             {other.whatsapp && <ProfileField label="WhatsApp" value={formatPhone(other.whatsapp)} />}
             {other.cpf && <ProfileField label="CPF" value={other.cpf} />}
