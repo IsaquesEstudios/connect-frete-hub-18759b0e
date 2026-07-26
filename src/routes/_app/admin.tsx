@@ -73,7 +73,7 @@ function AdminPanel() {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [mobileChat, setMobileChat] = useState(false);
-  const [tagFilter, setTagFilter] = useState<Set<string>>(new Set());
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [unreadOnly, setUnreadOnly] = useState(false);
   const { pinned, isPinned, toggle: togglePin, max: maxPinned } = usePinnedConversations(user?.id ?? "anon");
 
@@ -89,9 +89,7 @@ function AdminPanel() {
       if (tab === "motoristas" && c.user.type !== "motorista") return false;
       if (tab === "colaboradores" && c.user.type !== "colaborador") return false;
       if (unreadOnly && !(c.unreadForAdmin > 0)) return false;
-      if (tagFilter.size > 0) {
-        for (const id of tagFilter) if (!c.tagIds.includes(id)) return false;
-      }
+      if (tagFilter && !c.tagIds.includes(tagFilter)) return false;
       if (query) {
         const q = normalizeSearchText(query);
         const qDigits = onlyDigits(query);
@@ -130,10 +128,7 @@ function AdminPanel() {
   const selectedUser = selected ? repo.getUser(selected) : null;
 
   const toggleTagFilter = (id: string) => {
-    const next = new Set(tagFilter);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setTagFilter(next);
+    setTagFilter((prev) => (prev === id ? null : id));
   };
 
   return (
@@ -205,7 +200,7 @@ function AdminPanel() {
                   </div>
                 )}
                 {allTags.map((t) => {
-                  const on = tagFilter.has(t.id);
+                  const on = tagFilter === t.id;
                   return (
                     <button
                       key={t.id}
@@ -231,12 +226,12 @@ function AdminPanel() {
                 }
               />
             </div>
-            {tagFilter.size > 0 && (
+            {tagFilter && (
               <button
-                onClick={() => setTagFilter(new Set())}
+                onClick={() => setTagFilter(null)}
                 className="text-[10px] text-muted-foreground hover:text-foreground underline"
               >
-                Limpar filtro de tags ({tagFilter.size})
+                Limpar filtro de tag
               </button>
             )}
           </div>
