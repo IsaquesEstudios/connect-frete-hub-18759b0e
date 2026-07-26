@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Redefinir senha - SV Logística</title>
+  </head>
+  <body style="margin:0;padding:0;background-color:#f1f5f9;font-family:Arial,Helvetica,sans-serif;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Redefina a senha da sua conta SV Logística.</div>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9;padding:32px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e2e8f0;">
+
+            <!-- Cabeçalho -->
+            <tr>
+              <td style="background-color:#1d4ed8;padding:24px 28px;" align="left">
+                <span style="display:inline-block;vertical-align:middle;font-size:22px;line-height:22px;">&#128667;</span>
+                <span style="display:inline-block;vertical-align:middle;color:#ffffff;font-size:20px;font-weight:bold;letter-spacing:0.3px;margin-left:8px;">SV Logística</span>
+              </td>
+            </tr>
+
+            <!-- Conteúdo -->
+            <tr>
+              <td style="padding:32px 28px 8px 28px;">
+                <h1 style="margin:0 0 16px 0;font-size:21px;color:#0f172a;">Redefinição de senha</h1>
+                <p style="margin:0 0 14px 0;font-size:15px;line-height:24px;color:#334155;">
+                  Olá! Recebemos um pedido para redefinir a senha da sua conta na plataforma
+                  <strong>SV Logística</strong> (app.svlogisticatransportes.com.br).
+                </p>
+                <p style="margin:0 0 24px 0;font-size:15px;line-height:24px;color:#334155;">
+                  Clique no botão abaixo para criar uma nova senha:
+                </p>
+
+                <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 24px 0;">
+                  <tr>
+                    <td align="center" style="background-color:#1d4ed8;border-radius:10px;">
+                      <a href="{{ .ConfirmationURL }}"
+                         style="display:inline-block;padding:14px 28px;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;">
+                        Criar nova senha
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin:0 0 8px 0;font-size:13px;line-height:20px;color:#64748b;">
+                  Se o botão não funcionar, copie e cole este endereço no seu navegador:
+                </p>
+                <p style="margin:0 0 24px 0;font-size:13px;line-height:20px;word-break:break-all;">
+                  <a href="{{ .ConfirmationURL }}" style="color:#1d4ed8;">{{ .ConfirmationURL }}</a>
+                </p>
+
+                <div style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;margin-bottom:24px;">
+                  <p style="margin:0;font-size:13px;line-height:20px;color:#475569;">
+                    Este link é válido por tempo limitado e só pode ser usado uma vez.
+                    <br />
+                    Se você não solicitou a redefinição, ignore este e-mail — sua senha atual continua ativa.
+                  </p>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Rodapé -->
+            <tr>
+              <td style="padding:0 28px 28px 28px;border-top:1px solid #e2e8f0;">
+                <p style="margin:20px 0 0 0;font-size:12px;line-height:19px;color:#94a3b8;">
+                  SV Logística Transportes — conectando embarcadores e motoristas.<br />
+                  Este é um e-mail automático, não responda a esta mensagem.
+                </p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
