@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { FileSpreadsheet, Lock, LockOpen, Pencil, Search, Users } from "lucide-react";
+import { FileSpreadsheet, FileType, Lock, LockOpen, Pencil, Search, Users } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +24,7 @@ import { useAuth } from "@/lib/auth/useAuth";
 import { useRepoVersion, useEphemeralVersion } from "@/lib/hooks/useRepo";
 import { formatPhone } from "@/lib/format-phone";
 import { AdminEditUserDialog } from "@/components/admin/AdminEditUserDialog";
+import { TagBadges } from "@/components/chat/TagBadges";
 import { setExternalUserActive } from "@/lib/data/admin-users.functions";
 
 export const Route = createFileRoute("/_app/usuarios")({
@@ -145,6 +146,15 @@ function UsuariosPage() {
   }, [v]);
 
   const users = useMemo(() => repo.listUsers(), [v]);
+  const allTags = useMemo(() => repo.listTags(), [v]);
+  const tagsFor = useMemo(() => {
+    const byId = new Map(allTags.map((t) => [t.id, t]));
+    return (u: User) =>
+      repo
+        .getConversationTagIds(u.number)
+        .map((id) => byId.get(id))
+        .filter(Boolean) as typeof allTags;
+  }, [allTags, v]);
 
   const resolveDisplayType = (u: User): "empresa" | "motorista" | "colaborador" | "admin" => {
     if (u.type === "colaborador" || u.type === "admin") return u.type;
@@ -203,6 +213,7 @@ function UsuariosPage() {
       "Data de cadastro",
       "Último login",
       "Status",
+      "Etiquetas",
     ];
     const rows = filtered.map((u) => {
       const doc = (u as { cnpj?: string }).cnpj || (u as { cpf?: string }).cpf || "";
@@ -219,6 +230,7 @@ function UsuariosPage() {
         formatDateTime(u.createdAt),
         repo.isOnline(u.id) ? "online agora" : formatDateTime(last),
         u.active === false ? "bloqueado" : "ativo",
+        tagsFor(u).map((t) => t.label).join(", "),
       ];
     });
     const csv =
@@ -228,6 +240,61 @@ function UsuariosPage() {
     a.href = URL.createObjectURL(blob);
     a.download = `usuarios-svlogistica-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  const exportWord = async () => {
+    const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import("docx");
+    const paras: InstanceType<typeof Paragraph>[] = [];
+    for (const u of filtered) {
+      const doc = (u as { cnpj?: string }).cnpj || (u as { cpf?: string }).cpf || "—";
+      const last = repo.getLastSeen(u.id);
+      const labels = tagsFor(u).map((t) => t.label).join(", ");
+      paras.push(
+        new Paragraph({
+          children: [
+            new TextRun({ text: `${u.name} `, bold: true }),
+            new TextRun({ text: `[${typeLabel(resolveDisplayType(u))}]` }),
+          ],
+        }),
+        new Paragraph(`  Código: ${u.number}`),
+        new Paragraph(`  Telefone: ${u.whatsapp ? formatPhone(u.whatsapp) : "—"}`),
+        new Paragraph(`  Email: ${u.email || emails[u.id] || "—"}`),
+        new Paragraph(`  CPF/CNPJ: ${doc}`),
+        new Paragraph(`  Cidade/UF: ${[u.cidade, u.estado].filter(Boolean).join(" / ") || "—"}`),
+        new Paragraph(`  Cadastro: ${formatDateTime(u.createdAt)}`),
+        new Paragraph(
+          `  Último login: ${repo.isOnline(u.id) ? "online agora" : formatDateTime(last)}`,
+        ),
+        new Paragraph(`  Status: ${u.active === false ? "bloqueado" : "ativo"}`),
+        new Paragraph(`  Etiquetas: ${labels || "—"}`),
+        new Paragraph(""),
+      );
+    }
+    const wordDoc = new Document({
+      sections: [
+        {
+          properties: {},
+          children: [
+            new Paragraph({
+              heading: HeadingLevel.HEADING_1,
+              children: [new TextRun("Usuários — SV Logística")],
+            }),
+            new Paragraph(`Gerado em ${new Date().toLocaleString("pt-BR")}`),
+            new Paragraph(`Total: ${filtered.length} usuário(s)`),
+            new Paragraph(""),
+            ...paras,
+          ],
+        },
+      ],
+    });
+    const blob = await Packer.toBlob(wordDoc);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `usuarios-svlogistica-${new Date().toISOString().slice(0, 10)}.docx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(a.href);
   };
 
@@ -290,16 +357,22 @@ function UsuariosPage() {
             <h2 className="text-base font-semibold">
               {filtered.length} usuário{filtered.length === 1 ? "" : "s"}
             </h2>
-            <Button size="sm" variant="outline" onClick={exportCsv}>
-              <FileSpreadsheet className="mr-2 h-4 w-4" /> Exportar (Excel/CSV)
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={exportCsv}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" /> Exportar (Excel/CSV)
+              </Button>
+              <Button size="sm" variant="outline" onClick={exportWord}>
+                <FileType className="mr-2 h-4 w-4" /> Exportar (Word)
+              </Button>
+            </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1360px] text-sm">
+            <table className="w-full min-w-[1520px] text-sm">
               <thead>
                 <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
                   <th className="px-4 py-3 font-medium">Nome</th>
                   <th className="px-4 py-3 font-medium">Tipo</th>
+                  <th className="px-4 py-3 font-medium">Etiquetas</th>
                   <th className="px-4 py-3 font-medium">Código</th>
                   <th className="px-4 py-3 font-medium">WhatsApp</th>
                   <th className="px-4 py-3 font-medium">Email</th>
@@ -316,7 +389,7 @@ function UsuariosPage() {
                 {filtered.length === 0 && (
                   <tr>
                     <td
-                      colSpan={11}
+                      colSpan={12}
                       className="px-4 py-8 text-center text-sm text-muted-foreground"
                     >
                       Nenhum usuário encontrado
@@ -360,6 +433,16 @@ function UsuariosPage() {
                             >
                               {typeLabel(dt)}
                             </span>
+                          );
+                        })()}
+                      </td>
+                      <td className="px-4 py-3 max-w-[200px]">
+                        {(() => {
+                          const ts = tagsFor(u);
+                          return ts.length ? (
+                            <TagBadges tags={ts} max={3} />
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
                           );
                         })()}
                       </td>
