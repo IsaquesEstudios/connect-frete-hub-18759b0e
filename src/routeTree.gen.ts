@@ -21,6 +21,7 @@ import { Route as AppMotoristaRouteImport } from './routes/_app/motorista'
 import { Route as AppMetricasRouteImport } from './routes/_app/metricas'
 import { Route as AppEmpresaRouteImport } from './routes/_app/empresa'
 import { Route as AppConfiguracoesRouteImport } from './routes/_app/configuracoes'
+import { Route as AppColaboradorRouteImport } from './routes/_app/colaborador'
 import { Route as AppAdminRouteImport } from './routes/_app/admin'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -82,6 +83,11 @@ const AppConfiguracoesRoute = AppConfiguracoesRouteImport.update({
   path: '/configuracoes',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppColaboradorRoute = AppColaboradorRouteImport.update({
+  id: '/colaborador',
+  path: '/colaborador',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppAdminRoute = AppAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AppAdminRoute
+  '/colaborador': typeof AppColaboradorRoute
   '/configuracoes': typeof AppConfiguracoesRoute
   '/empresa': typeof AppEmpresaRoute
   '/metricas': typeof AppMetricasRoute
@@ -107,6 +114,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AppAdminRoute
+  '/colaborador': typeof AppColaboradorRoute
   '/configuracoes': typeof AppConfiguracoesRoute
   '/empresa': typeof AppEmpresaRoute
   '/metricas': typeof AppMetricasRoute
@@ -123,6 +131,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_app/admin': typeof AppAdminRoute
+  '/_app/colaborador': typeof AppColaboradorRoute
   '/_app/configuracoes': typeof AppConfiguracoesRoute
   '/_app/empresa': typeof AppEmpresaRoute
   '/_app/metricas': typeof AppMetricasRoute
@@ -139,6 +148,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/admin'
+    | '/colaborador'
     | '/configuracoes'
     | '/empresa'
     | '/metricas'
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/admin'
+    | '/colaborador'
     | '/configuracoes'
     | '/empresa'
     | '/metricas'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/_app/admin'
+    | '/_app/colaborador'
     | '/_app/configuracoes'
     | '/_app/empresa'
     | '/_app/metricas'
@@ -273,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppConfiguracoesRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/_app/colaborador': {
+      id: '/_app/colaborador'
+      path: '/colaborador'
+      fullPath: '/colaborador'
+      preLoaderRoute: typeof AppColaboradorRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/_app/admin': {
       id: '/_app/admin'
       path: '/admin'
@@ -285,6 +304,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
+  AppColaboradorRoute: typeof AppColaboradorRoute
   AppConfiguracoesRoute: typeof AppConfiguracoesRoute
   AppEmpresaRoute: typeof AppEmpresaRoute
   AppMetricasRoute: typeof AppMetricasRoute
@@ -295,6 +315,7 @@ interface AppRouteRouteChildren {
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppAdminRoute: AppAdminRoute,
+  AppColaboradorRoute: AppColaboradorRoute,
   AppConfiguracoesRoute: AppConfiguracoesRoute,
   AppEmpresaRoute: AppEmpresaRoute,
   AppMetricasRoute: AppMetricasRoute,
