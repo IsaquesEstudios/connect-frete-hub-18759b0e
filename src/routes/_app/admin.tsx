@@ -77,7 +77,12 @@ function AdminPanel() {
   const [unreadOnly, setUnreadOnly] = useState(false);
   const { pinned, isPinned, toggle: togglePin, max: maxPinned } = usePinnedConversations(user?.id ?? "anon");
 
-  const conversations = useMemo(() => repo.listConversations(), [v]);
+  // Admin vê a caixa unificada da equipe; colaborador vê apenas as conversas dele.
+  const isAdmin = user?.type === "admin";
+  const conversations = useMemo(
+    () => repo.listConversations(isAdmin ? undefined : { staffId: user?.id }),
+    [v, isAdmin, user?.id],
+  );
   const allTags = useMemo(() => repo.listTags(), [v]);
   const tagsById = useMemo(
     () => Object.fromEntries(allTags.map((t) => [t.id, t] as const)),
