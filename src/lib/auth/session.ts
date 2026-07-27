@@ -2,6 +2,8 @@ import { supabase } from "@/integrations/supabase/loose-client";
 import { repo } from "@/lib/data";
 import { profileToUser } from "@/lib/data/supabaseRepository";
 import { translateAuthError } from "@/lib/auth/translate-error";
+import { setExternalUserActive } from "@/lib/data/admin-users.functions";
+import { deleteAuthUser } from "@/lib/data/auth-cleanup.functions";
 import type { User, UserProfilePatch, UserType } from "@/lib/data";
 import type { Session } from "@supabase/supabase-js";
 
@@ -282,13 +284,13 @@ export async function createColaborador(input: { name: string; email: string; pa
 }
 
 export async function setColaboradorActive(id: string, active: boolean): Promise<void> {
-  const { error } = await supabase.from("profiles").update({ active }).eq("id", id);
-  if (error) throw new Error(translateAuthError(error));
+  await setExternalUserActive({ data: { userId: id, active } });
+  await repo.refreshUsers().catch(() => undefined);
 }
 
 export async function deleteColaborador(id: string): Promise<void> {
-  const { error } = await supabase.from("profiles").delete().eq("id", id);
-  if (error) throw new Error(translateAuthError(error));
+  await deleteAuthUser({ data: { userId: id } });
+  await repo.refreshUsers().catch(() => undefined);
 }
 
 
@@ -381,8 +383,7 @@ export async function signup(input: SignupInput): Promise<User> {
     // Rollback: remove the just-created auth user so the email doesn't stay orphaned.
     let rollbackNote = "";
     try {
-      const { deleteAuthUser } = await import("@/lib/data/auth-cleanup.functions");
-      await deleteAuthUser({ data: { userId: data.user.id } });
+          await deleteAuthUser({ data: { userId: data.user.id } });
       rollbackNote = "A conta foi removida — tente novamente.";
     } catch (rollbackErr) {
       console.error("Falha ao reverter conta órfã", rollbackErr);
