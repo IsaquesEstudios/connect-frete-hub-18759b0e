@@ -379,8 +379,8 @@ function UsuariosPage() {
           </div>
           <div className="overflow-auto max-h-[calc(100vh-340px)]">
             <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <thead className="sticky top-0 z-20">
+                <tr className="border-b bg-card text-left text-xs uppercase tracking-wide text-muted-foreground">
                   <th className="px-4 py-3 font-medium">Nome</th>
                   <th className="px-4 py-3 font-medium">Tipo</th>
                   <th className="px-4 py-3 font-medium">Etiquetas</th>
