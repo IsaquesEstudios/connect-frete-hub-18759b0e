@@ -372,6 +372,12 @@ function UsuariosPage() {
                       <td className="max-w-[220px] truncate px-4 py-3" title={email}>{email}</td>
                       <td className="max-w-[150px] truncate px-4 py-3" title={doc}>{doc}</td>
                       <td className="max-w-[150px] truncate px-4 py-3" title={cidade}>{cidade}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-xs text-muted-foreground">
+                        {formatDateTime(u.createdAt)}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-xs text-muted-foreground">
+                        {online ? "online agora" : formatDateTime(last)}
+                      </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         {u.active === false ? (
                           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-red-600">
