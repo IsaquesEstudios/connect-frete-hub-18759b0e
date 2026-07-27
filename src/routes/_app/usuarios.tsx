@@ -190,8 +190,50 @@ function UsuariosPage() {
     });
   }, [users, tab, query, emails, ev]);
 
+  const exportCsv = () => {
+    const header = [
+      "Nome",
+      "Telefone",
+      "Tipo",
+      "Cidade",
+      "Estado",
+      "Email",
+      "CPF/CNPJ",
+      "Código",
+      "Data de cadastro",
+      "Último login",
+      "Status",
+    ];
+    const rows = filtered.map((u) => {
+      const doc = (u as { cnpj?: string }).cnpj || (u as { cpf?: string }).cpf || "";
+      const last = repo.getLastSeen(u.id);
+      return [
+        u.name,
+        u.whatsapp ? formatPhone(u.whatsapp) : "",
+        typeLabel(resolveDisplayType(u)),
+        u.cidade || "",
+        u.estado || "",
+        u.email || emails[u.id] || "",
+        doc,
+        u.number,
+        formatDateTime(u.createdAt),
+        repo.isOnline(u.id) ? "online agora" : formatDateTime(last),
+        u.active === false ? "bloqueado" : "ativo",
+      ];
+    });
+    const csv =
+      "\uFEFF" + [header, ...rows].map((r) => r.map(csvEscape).join(";")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `usuarios-svlogistica-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
   // touch ephemeral version so online/lastSeen refresh
   void ev;
+
 
   if (loading) return null;
   if (!user || user.type !== "admin") return null;
