@@ -81,20 +81,45 @@ function AppGate() {
     if (!loading && !user) navigate({ to: "/auth" });
   }, [loading, user, navigate]);
 
+  const kickBlocked = () => {
+    toast.error("Sua conta foi bloqueada. Entre em contato com o administrador.");
+    void forceLogoutBlocked().finally(() => navigate({ to: "/auth" }));
+  };
+
+  // Bloqueio em tempo real: o realtime de profiles atualiza o repo, então
+  // assim que o admin bloquear, a sessão cai sem precisar recarregar.
+  useEffect(() => {
+    if (!user) return;
+    if (repo.getUser(user.id)?.active === false) kickBlocked();
+  }, [user?.id, repoVersion]);
+
+  // Revalida ao navegar, ao voltar para a aba e a cada 1 minuto.
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    refreshCurrentUser()
-      .then((freshUser) => {
-        if (cancelled || freshUser) return;
-        toast.error("Sua conta foi desativada. Entre em contato com o administrador.");
-        navigate({ to: "/auth" });
-      })
-      .catch(() => undefined);
+    const check = () => {
+      refreshCurrentUser()
+        .then((freshUser) => {
+          if (cancelled || freshUser) return;
+          kickBlocked();
+        })
+        .catch(() => undefined);
+    };
+    check();
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "visible") check();
+    }, 60_000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") check();
+    };
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       cancelled = true;
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [user?.id, location.pathname, navigate]);
+
 
   // Força usuários antigos a preencher WhatsApp (obrigatório)
   useEffect(() => {
