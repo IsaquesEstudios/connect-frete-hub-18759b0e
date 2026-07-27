@@ -139,6 +139,24 @@ function RootComponent() {
     void runCacheBuster();
   }, []);
 
+  // Se o link de recuperação de senha cair na home (fallback do Site URL),
+  // encaminha os tokens/código para a página de redefinição.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const { pathname, search, hash } = window.location;
+    if (pathname.startsWith("/reset-password")) return;
+    const hashParams = new URLSearchParams(hash.replace(/^#/, ""));
+    const searchParams = new URLSearchParams(search);
+    const isRecovery =
+      hashParams.get("type") === "recovery" ||
+      searchParams.get("type") === "recovery" ||
+      (!!hashParams.get("access_token") && !!hashParams.get("refresh_token")) ||
+      (!!searchParams.get("code") && pathname === "/");
+    if (isRecovery) {
+      window.location.replace(`/reset-password${search}${hash}`);
+    }
+  }, []);
+
   const persister = useMemo(
     () =>
       typeof window !== "undefined"
