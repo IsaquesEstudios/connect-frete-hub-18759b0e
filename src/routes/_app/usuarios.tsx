@@ -357,16 +357,22 @@ function UsuariosPage() {
             <h2 className="text-base font-semibold">
               {filtered.length} usuário{filtered.length === 1 ? "" : "s"}
             </h2>
-            <Button size="sm" variant="outline" onClick={exportCsv}>
-              <FileSpreadsheet className="mr-2 h-4 w-4" /> Exportar (Excel/CSV)
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={exportCsv}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" /> Exportar (Excel/CSV)
+              </Button>
+              <Button size="sm" variant="outline" onClick={exportWord}>
+                <FileType className="mr-2 h-4 w-4" /> Exportar (Word)
+              </Button>
+            </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1360px] text-sm">
+            <table className="w-full min-w-[1520px] text-sm">
               <thead>
                 <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
                   <th className="px-4 py-3 font-medium">Nome</th>
                   <th className="px-4 py-3 font-medium">Tipo</th>
+                  <th className="px-4 py-3 font-medium">Etiquetas</th>
                   <th className="px-4 py-3 font-medium">Código</th>
                   <th className="px-4 py-3 font-medium">WhatsApp</th>
                   <th className="px-4 py-3 font-medium">Email</th>
@@ -383,7 +389,7 @@ function UsuariosPage() {
                 {filtered.length === 0 && (
                   <tr>
                     <td
-                      colSpan={11}
+                      colSpan={12}
                       className="px-4 py-8 text-center text-sm text-muted-foreground"
                     >
                       Nenhum usuário encontrado
