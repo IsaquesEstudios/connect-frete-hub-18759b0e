@@ -7,7 +7,7 @@ import { SyncProgressBar } from "@/components/chat/SyncProgressBar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { FullscreenLoading } from "@/components/ui/loading";
 import { useAuth } from "@/lib/auth/useAuth";
-import { refreshCurrentUser } from "@/lib/auth/session";
+import { refreshCurrentUser, forceLogoutBlocked } from "@/lib/auth/session";
 import { repo } from "@/lib/data";
 import { phoneDigits } from "@/lib/format-phone";
 import { useRepoVersion } from "@/lib/hooks/useRepo";
