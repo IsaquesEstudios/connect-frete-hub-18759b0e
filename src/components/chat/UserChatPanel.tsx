@@ -38,7 +38,13 @@ export function UserChatPanel({ me }: Props) {
     const all = repo.listUsers();
     const admin = all.find((u) => u.number === ADMIN_ID) ?? all.find((u) => u.type === "admin" || u.id === ADMIN_ID);
     const collabs = all.filter((u) => u.type === "colaborador" && u.active !== false && u.id !== me.id);
-    const list = admin ? [admin, ...collabs] : collabs;
+    // Colaboradores também conversam com empresas e motoristas
+    const clients =
+      me.type === "colaborador"
+        ? all.filter((u) => (u.type === "empresa" || u.type === "motorista") && u.active !== false)
+        : [];
+    const base = admin ? [admin, ...collabs] : collabs;
+    const list = [...base, ...clients];
     const lastTs = (uid: string) => {
       const conversationId = [me.id, uid].sort().join("__");
       const msgs = repo.listMessages(conversationId, { staffInbox: false });
