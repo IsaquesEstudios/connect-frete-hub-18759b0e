@@ -146,6 +146,15 @@ function UsuariosPage() {
   }, [v]);
 
   const users = useMemo(() => repo.listUsers(), [v]);
+  const allTags = useMemo(() => repo.listTags(), [v]);
+  const tagsFor = useMemo(() => {
+    const byId = new Map(allTags.map((t) => [t.id, t]));
+    return (u: User) =>
+      repo
+        .getConversationTagIds(u.number)
+        .map((id) => byId.get(id))
+        .filter(Boolean) as typeof allTags;
+  }, [allTags, v]);
 
   const resolveDisplayType = (u: User): "empresa" | "motorista" | "colaborador" | "admin" => {
     if (u.type === "colaborador" || u.type === "admin") return u.type;
