@@ -316,7 +316,7 @@ function UsuariosPage() {
                 {filtered.length === 0 && (
                   <tr>
                     <td
-                      colSpan={9}
+                      colSpan={11}
                       className="px-4 py-8 text-center text-sm text-muted-foreground"
                     >
                       Nenhum usuário encontrado
