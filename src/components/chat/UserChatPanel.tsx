@@ -32,6 +32,7 @@ export function UserChatPanel({ me }: Props) {
   const ev = useEphemeralVersion();
   const [selectedId, setSelectedId] = useState<string | null>(ADMIN_ID);
   const [mobileChat, setMobileChat] = useState(false);
+  const [query, setQuery] = useState("");
   const { pinned, isPinned, toggle: togglePin, max: maxPinned } = usePinnedConversations(me.id);
 
   const staff = useMemo(() => {
