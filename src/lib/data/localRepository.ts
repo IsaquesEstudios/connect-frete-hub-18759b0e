@@ -101,6 +101,10 @@ class LocalRepository implements Repository {
     return Promise.resolve();
   }
 
+  async refreshUsers(): Promise<void> {
+    return Promise.resolve();
+  }
+
   sendMessage(input: { fromUserId: string; toUserId: string; body: string }): Message {
     const isStaff = (id: string) => {
       const u = this.getUser(id);

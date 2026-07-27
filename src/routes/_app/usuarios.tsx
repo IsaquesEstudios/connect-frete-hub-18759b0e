@@ -131,6 +131,17 @@ function UsuariosPage() {
     if (user && user.type !== "admin") navigate({ to: homeFor(user) as "/admin" });
   }, [user, loading, navigate]);
 
+  // Atualiza SOMENTE a tabela de usuários a cada 1 minuto (não é tempo real,
+  // para não sobrecarregar o banco). Não afeta a lista de conversas.
+  useEffect(() => {
+    if (loading || user?.type !== "admin") return;
+    void repo.refreshUsers();
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "visible") void repo.refreshUsers();
+    }, 60_000);
+    return () => window.clearInterval(id);
+  }, [loading, user?.type]);
+
 
   useEffect(() => {
     getExternalUserEmails()

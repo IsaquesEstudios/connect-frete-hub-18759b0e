@@ -19,6 +19,7 @@ export interface Repository {
   createUser(u: NewUserInput): User;
   updateUser(id: string, patch: UserProfilePatch): User | undefined;
   applyLocalUserPatch(id: string, patch: UserProfilePatch): User | undefined;
+  refreshUsers(): Promise<void>;
   // messages
   listMessages(conversationId: string, options?: { staffInbox?: boolean }): Message[];
   refreshMessages(): Promise<void>;

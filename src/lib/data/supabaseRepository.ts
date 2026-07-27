@@ -914,6 +914,12 @@ class SupabaseRepository implements Repository {
     this.notify();
   }
 
+  /** Recarrega apenas os perfis (usado pela tabela de usuários, a cada 1 min). */
+  async refreshUsers(): Promise<void> {
+    await this.loadUsers();
+    this.notify();
+  }
+
   private pendingKey(fromUserId: string, toUserId: string, body: string): string {
     return `${fromUserId}\u0000${toUserId}\u0000${body}`;
   }

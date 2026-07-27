@@ -69,11 +69,37 @@ async function loadProfile(authId: string, options: { fresh?: boolean } = {}): P
   return profileToUser(data as Parameters<typeof profileToUser>[0]);
 }
 
+/** Limpa todo o cache local do app (conversas, fotos, sessão). */
+export function clearLocalAppCache() {
+  if (typeof window === "undefined") return;
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (k && (k.startsWith("svlogistica:") || k === EXTERNAL_AUTH_STORAGE_KEY)) keys.push(k);
+    }
+    keys.forEach((k) => window.localStorage.removeItem(k));
+  } catch {
+    // storage indisponível — segue o logout mesmo assim
+  }
+}
+
+/** Encerra a sessão de um usuário bloqueado, apagando o cache local. */
+export async function forceLogoutBlocked(): Promise<void> {
+  cachedUser = null;
+  clearLocalAppCache();
+  try {
+    await supabase.auth.signOut();
+  } catch {
+    await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+  }
+  clearLocalAppCache();
+  notify();
+}
+
 async function applySessionProfile(profile: User | null): Promise<User | null> {
   if (profile?.active === false) {
-    await supabase.auth.signOut();
-    cachedUser = null;
-    notify();
+    await forceLogoutBlocked();
     return null;
   }
   if (profile) cachedUser = profile;
