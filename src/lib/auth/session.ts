@@ -282,13 +282,15 @@ export async function createColaborador(input: { name: string; email: string; pa
 }
 
 export async function setColaboradorActive(id: string, active: boolean): Promise<void> {
-  const { error } = await supabase.from("profiles").update({ active }).eq("id", id);
-  if (error) throw new Error(translateAuthError(error));
+  const { setExternalUserActive } = await import("@/lib/data/admin-users.functions");
+  await setExternalUserActive({ data: { userId: id, active } });
+  await repo.refreshUsers().catch(() => undefined);
 }
 
 export async function deleteColaborador(id: string): Promise<void> {
-  const { error } = await supabase.from("profiles").delete().eq("id", id);
-  if (error) throw new Error(translateAuthError(error));
+  const { deleteAuthUser } = await import("@/lib/data/auth-cleanup.functions");
+  await deleteAuthUser({ data: { userId: id } });
+  await repo.refreshUsers().catch(() => undefined);
 }
 
 
