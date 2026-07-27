@@ -33,6 +33,17 @@ export const Route = createFileRoute("/_app/usuarios")({
 
 type TypeFilter = "todos" | "empresa" | "motorista" | "colaborador" | "admin";
 
+function formatDateTime(ts?: number | null): string {
+  if (!ts) return "—";
+  return new Date(ts).toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function lastSeenLabel(ts: number | null): string {
   if (!ts) return "nunca acessou";
   const s = Math.floor((Date.now() - ts) / 1000);
