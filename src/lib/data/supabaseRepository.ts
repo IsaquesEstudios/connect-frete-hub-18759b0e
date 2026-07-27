@@ -1077,7 +1077,14 @@ class SupabaseRepository implements Repository {
 
   listConversations(options?: { staffId?: string }) {
     const staffId = options?.staffId;
-    const nonStaff = this.users.filter((u) => u.type !== "admin" && u.id !== this.adminAuthId);
+    // Admin: caixa unificada com os usuários (sem a equipe).
+    // Colaborador: usuários + o administrador (para falar com ele), menos ele mesmo.
+    const nonStaff = this.users.filter((u) => {
+      if (u.id === staffId) return false;
+      if (u.type === "admin" || u.id === this.adminAuthId) return !!staffId && u.active !== false;
+      return true;
+    });
+
     return nonStaff
       .map((user) => {
         const conv = this.messages.filter((m) => {
