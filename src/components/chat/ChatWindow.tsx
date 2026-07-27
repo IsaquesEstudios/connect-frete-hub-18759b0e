@@ -98,9 +98,11 @@ interface Props {
   me: User;
   other: User;
   viewer: "admin" | "user";
+  /** Caixa unificada da equipe (somente admin). Colaborador vê apenas a própria conversa. */
+  sharedInbox?: boolean;
 }
 
-export function ChatWindow({ me, other, viewer }: Props) {
+export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
   const v = useRepoVersion();
   const ev = useEphemeralVersion();
   const [text, setText] = useState("");
@@ -121,7 +123,7 @@ export function ChatWindow({ me, other, viewer }: Props) {
   // IDs (UUIDs) dos usuários. O admin vê a caixa unificada com todas as
   // mensagens trocadas entre a equipe e o usuário.
   const conversationId = [me.id, other.id].sort().join("__");
-  const useStaffInbox = viewer === "admin";
+  const useStaffInbox = sharedInbox ?? viewer === "admin";
 
 
   // Feedback visual ao trocar de conversa

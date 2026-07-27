@@ -77,7 +77,12 @@ function AdminPanel() {
   const [unreadOnly, setUnreadOnly] = useState(false);
   const { pinned, isPinned, toggle: togglePin, max: maxPinned } = usePinnedConversations(user?.id ?? "anon");
 
-  const conversations = useMemo(() => repo.listConversations(), [v]);
+  // Admin vê a caixa unificada da equipe; colaborador vê apenas as conversas dele.
+  const isAdmin = user?.type === "admin";
+  const conversations = useMemo(
+    () => repo.listConversations(isAdmin ? undefined : { staffId: user?.id }),
+    [v, isAdmin, user?.id],
+  );
   const allTags = useMemo(() => repo.listTags(), [v]);
   const tagsById = useMemo(
     () => Object.fromEntries(allTags.map((t) => [t.id, t] as const)),
@@ -399,7 +404,7 @@ function AdminPanel() {
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => {
-                          repo.deleteConversation(`${selectedUser.number}__${user.number}`);
+                          repo.deleteConversation([user.id, selectedUser.id].sort().join("__"));
                           setSelected(null);
                           setMobileChat(false);
                         }}
@@ -411,7 +416,7 @@ function AdminPanel() {
                 </AlertDialog>
               </div>
               <div className="flex-1 min-h-0">
-                <ChatWindow me={user} other={selectedUser} viewer="admin" />
+                <ChatWindow me={user} other={selectedUser} viewer="admin" sharedInbox={isAdmin} />
               </div>
             </>
           ) : (
