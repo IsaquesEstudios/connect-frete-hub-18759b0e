@@ -25,13 +25,13 @@ export function AppSidebar({ user }: { user: User }) {
 
   const items = [
     { title: "Início", url: home, icon: Home },
-    ...(user.type === "admin"
-      ? [
-          { title: "Usuários", url: "/usuarios", icon: Users },
-          { title: "Métricas", url: "/metricas", icon: BarChart3 },
-        ]
+    ...(user.type === "admin" ? [{ title: "Usuários", url: "/usuarios", icon: Users }] : []),
+    ...(user.type === "admin" || user.type === "colaborador"
+      ? [{ title: "Métricas", url: "/metricas", icon: BarChart3 }]
       : []),
-    { title: "Configurações", url: "/configuracoes", icon: Settings },
+    ...(user.type !== "colaborador"
+      ? [{ title: "Configurações", url: "/configuracoes", icon: Settings }]
+      : []),
   ];
 
   return (

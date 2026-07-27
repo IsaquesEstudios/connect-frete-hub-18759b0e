@@ -14,10 +14,10 @@ function MotoristaPanel() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user && user.type !== "motorista" && user.type !== "colaborador") navigate({ to: homeFor(user) as "/admin" });
+    if (user && user.type !== "motorista") navigate({ to: homeFor(user) as "/admin" });
   }, [user, navigate]);
 
-  if (!user || (user.type !== "motorista" && user.type !== "colaborador")) return null;
+  if (!user || user.type !== "motorista") return null;
 
   return <UserChatPanel me={user} />;
 }
