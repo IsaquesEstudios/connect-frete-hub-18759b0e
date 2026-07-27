@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Lock, LockOpen, Pencil, Search, Users } from "lucide-react";
+import { FileSpreadsheet, Lock, LockOpen, Pencil, Search, Users } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +32,17 @@ export const Route = createFileRoute("/_app/usuarios")({
 });
 
 type TypeFilter = "todos" | "empresa" | "motorista" | "colaborador" | "admin";
+
+function formatDateTime(ts?: number | null): string {
+  if (!ts) return "—";
+  return new Date(ts).toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 function lastSeenLabel(ts: number | null): string {
   if (!ts) return "nunca acessou";
@@ -108,6 +119,12 @@ function UsuariosPage() {
     }
   };
 
+  const csvEscape = (v: string | number) => {
+    const s = String(v ?? "");
+    return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+
   useEffect(() => {
     if (loading) return;
     if (user && user.type !== "admin") navigate({ to: homeFor(user) as "/admin" });
@@ -173,8 +190,50 @@ function UsuariosPage() {
     });
   }, [users, tab, query, emails, ev]);
 
+  const exportCsv = () => {
+    const header = [
+      "Nome",
+      "Telefone",
+      "Tipo",
+      "Cidade",
+      "Estado",
+      "Email",
+      "CPF/CNPJ",
+      "Código",
+      "Data de cadastro",
+      "Último login",
+      "Status",
+    ];
+    const rows = filtered.map((u) => {
+      const doc = (u as { cnpj?: string }).cnpj || (u as { cpf?: string }).cpf || "";
+      const last = repo.getLastSeen(u.id);
+      return [
+        u.name,
+        u.whatsapp ? formatPhone(u.whatsapp) : "",
+        typeLabel(resolveDisplayType(u)),
+        u.cidade || "",
+        u.estado || "",
+        u.email || emails[u.id] || "",
+        doc,
+        u.number,
+        formatDateTime(u.createdAt),
+        repo.isOnline(u.id) ? "online agora" : formatDateTime(last),
+        u.active === false ? "bloqueado" : "ativo",
+      ];
+    });
+    const csv =
+      "\uFEFF" + [header, ...rows].map((r) => r.map(csvEscape).join(";")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `usuarios-svlogistica-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
   // touch ephemeral version so online/lastSeen refresh
   void ev;
+
 
   if (loading) return null;
   if (!user || user.type !== "admin") return null;
@@ -231,9 +290,12 @@ function UsuariosPage() {
             <h2 className="text-base font-semibold">
               {filtered.length} usuário{filtered.length === 1 ? "" : "s"}
             </h2>
+            <Button size="sm" variant="outline" onClick={exportCsv}>
+              <FileSpreadsheet className="mr-2 h-4 w-4" /> Exportar (Excel/CSV)
+            </Button>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1120px] text-sm">
+            <table className="w-full min-w-[1360px] text-sm">
               <thead>
                 <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
                   <th className="px-4 py-3 font-medium">Nome</th>
@@ -243,15 +305,18 @@ function UsuariosPage() {
                   <th className="px-4 py-3 font-medium">Email</th>
                   <th className="px-4 py-3 font-medium">CPF/CNPJ</th>
                   <th className="px-4 py-3 font-medium">Cidade/UF</th>
+                  <th className="px-4 py-3 font-medium">Cadastro</th>
+                  <th className="px-4 py-3 font-medium">Último login</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                   <th className="sticky right-0 z-10 bg-card px-4 py-3 font-medium text-right shadow-[-12px_0_16px_-16px_hsl(var(--foreground))]">Ações</th>
                 </tr>
               </thead>
+
               <tbody>
                 {filtered.length === 0 && (
                   <tr>
                     <td
-                      colSpan={9}
+                      colSpan={11}
                       className="px-4 py-8 text-center text-sm text-muted-foreground"
                     >
                       Nenhum usuário encontrado
@@ -307,6 +372,12 @@ function UsuariosPage() {
                       <td className="max-w-[220px] truncate px-4 py-3" title={email}>{email}</td>
                       <td className="max-w-[150px] truncate px-4 py-3" title={doc}>{doc}</td>
                       <td className="max-w-[150px] truncate px-4 py-3" title={cidade}>{cidade}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-xs text-muted-foreground">
+                        {formatDateTime(u.createdAt)}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-xs text-muted-foreground">
+                        {online ? "online agora" : formatDateTime(last)}
+                      </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         {u.active === false ? (
                           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-red-600">
