@@ -24,6 +24,7 @@ import { useAuth } from "@/lib/auth/useAuth";
 import { useRepoVersion, useEphemeralVersion } from "@/lib/hooks/useRepo";
 import { formatPhone } from "@/lib/format-phone";
 import { AdminEditUserDialog } from "@/components/admin/AdminEditUserDialog";
+import { TagBadges } from "@/components/chat/TagBadges";
 import { setExternalUserActive } from "@/lib/data/admin-users.functions";
 
 export const Route = createFileRoute("/_app/usuarios")({
