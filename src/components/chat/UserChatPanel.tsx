@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { ArrowLeft, Pin, PinOff } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { FullscreenLoading } from "@/components/ui/loading";
 import { ChatWindow } from "./ChatWindow";
 import { ADMIN_ID, repo, type User } from "@/lib/data";
