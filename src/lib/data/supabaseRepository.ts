@@ -1075,13 +1075,18 @@ class SupabaseRepository implements Repository {
     }).length;
   }
 
-  listConversations() {
+  listConversations(options?: { staffId?: string }) {
+    const staffId = options?.staffId;
     const nonStaff = this.users.filter((u) => u.type !== "admin" && u.id !== this.adminAuthId);
     return nonStaff
       .map((user) => {
-        const conv = this.messages.filter(
-          (m) => m.fromUserId === user.id || m.toUserId === user.id,
-        );
+        const conv = this.messages.filter((m) => {
+          const involvesUser = m.fromUserId === user.id || m.toUserId === user.id;
+          if (!involvesUser) return false;
+          // Colaboradores veem apenas a própria conversa com cada usuário.
+          if (!staffId) return true;
+          return m.fromUserId === staffId || m.toUserId === staffId;
+        });
         const lastMessage = [...conv].sort((a, b) => b.createdAt - a.createdAt)[0];
         const unreadForAdmin = conv.filter(
           (m) => this.isStaff(this.getUser(m.toUserId)) && !m.readByAdmin,
