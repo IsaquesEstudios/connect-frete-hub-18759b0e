@@ -63,10 +63,21 @@ export function UserChatPanel({ me }: Props) {
       return i === -1 ? Number.MAX_SAFE_INTEGER : i;
     };
     return sorted.sort((a, b) => rank(a.id) - rank(b.id));
-  }, [v, me.id, pinned]);
+  }, [v, me.id, me.type, pinned]);
 
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return staff;
+    return staff.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        s.number.toLowerCase().includes(q) ||
+        String(s.whatsapp ?? "").replace(/\D/g, "").includes(q.replace(/\D/g, "") || "\u0000"),
+    );
+  }, [staff, query]);
 
   const selected = selectedId ? repo.getUser(selectedId) ?? null : null;
+
 
   if (!repo.isBootstrapped()) {
     return <FullscreenLoading label="Carregando central..." />;
