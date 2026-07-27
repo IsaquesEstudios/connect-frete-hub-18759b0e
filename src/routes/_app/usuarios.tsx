@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Lock, LockOpen, Pencil, Search, Users } from "lucide-react";
+import { FileSpreadsheet, Lock, LockOpen, Pencil, Search, Users } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
