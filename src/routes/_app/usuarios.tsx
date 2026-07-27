@@ -213,6 +213,7 @@ function UsuariosPage() {
       "Data de cadastro",
       "Último login",
       "Status",
+      "Etiquetas",
     ];
     const rows = filtered.map((u) => {
       const doc = (u as { cnpj?: string }).cnpj || (u as { cpf?: string }).cpf || "";
@@ -229,6 +230,7 @@ function UsuariosPage() {
         formatDateTime(u.createdAt),
         repo.isOnline(u.id) ? "online agora" : formatDateTime(last),
         u.active === false ? "bloqueado" : "ativo",
+        tagsFor(u).map((t) => t.label).join(", "),
       ];
     });
     const csv =
@@ -238,6 +240,61 @@ function UsuariosPage() {
     a.href = URL.createObjectURL(blob);
     a.download = `usuarios-svlogistica-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  const exportWord = async () => {
+    const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import("docx");
+    const paras: InstanceType<typeof Paragraph>[] = [];
+    for (const u of filtered) {
+      const doc = (u as { cnpj?: string }).cnpj || (u as { cpf?: string }).cpf || "—";
+      const last = repo.getLastSeen(u.id);
+      const labels = tagsFor(u).map((t) => t.label).join(", ");
+      paras.push(
+        new Paragraph({
+          children: [
+            new TextRun({ text: `${u.name} `, bold: true }),
+            new TextRun({ text: `[${typeLabel(resolveDisplayType(u))}]` }),
+          ],
+        }),
+        new Paragraph(`  Código: ${u.number}`),
+        new Paragraph(`  Telefone: ${u.whatsapp ? formatPhone(u.whatsapp) : "—"}`),
+        new Paragraph(`  Email: ${u.email || emails[u.id] || "—"}`),
+        new Paragraph(`  CPF/CNPJ: ${doc}`),
+        new Paragraph(`  Cidade/UF: ${[u.cidade, u.estado].filter(Boolean).join(" / ") || "—"}`),
+        new Paragraph(`  Cadastro: ${formatDateTime(u.createdAt)}`),
+        new Paragraph(
+          `  Último login: ${repo.isOnline(u.id) ? "online agora" : formatDateTime(last)}`,
+        ),
+        new Paragraph(`  Status: ${u.active === false ? "bloqueado" : "ativo"}`),
+        new Paragraph(`  Etiquetas: ${labels || "—"}`),
+        new Paragraph(""),
+      );
+    }
+    const wordDoc = new Document({
+      sections: [
+        {
+          properties: {},
+          children: [
+            new Paragraph({
+              heading: HeadingLevel.HEADING_1,
+              children: [new TextRun("Usuários — SV Logística")],
+            }),
+            new Paragraph(`Gerado em ${new Date().toLocaleString("pt-BR")}`),
+            new Paragraph(`Total: ${filtered.length} usuário(s)`),
+            new Paragraph(""),
+            ...paras,
+          ],
+        },
+      ],
+    });
+    const blob = await Packer.toBlob(wordDoc);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `usuarios-svlogistica-${new Date().toISOString().slice(0, 10)}.docx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(a.href);
   };
 
