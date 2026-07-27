@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { ArrowLeft, Pin, PinOff } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { FullscreenLoading } from "@/components/ui/loading";
 import { ChatWindow } from "./ChatWindow";
 import { ADMIN_ID, repo, type User } from "@/lib/data";
@@ -31,6 +32,7 @@ export function UserChatPanel({ me }: Props) {
   const ev = useEphemeralVersion();
   const [selectedId, setSelectedId] = useState<string | null>(ADMIN_ID);
   const [mobileChat, setMobileChat] = useState(false);
+  const [query, setQuery] = useState("");
   const { pinned, isPinned, toggle: togglePin, max: maxPinned } = usePinnedConversations(me.id);
 
   const staff = useMemo(() => {
@@ -38,7 +40,13 @@ export function UserChatPanel({ me }: Props) {
     const all = repo.listUsers();
     const admin = all.find((u) => u.number === ADMIN_ID) ?? all.find((u) => u.type === "admin" || u.id === ADMIN_ID);
     const collabs = all.filter((u) => u.type === "colaborador" && u.active !== false && u.id !== me.id);
-    const list = admin ? [admin, ...collabs] : collabs;
+    // Colaboradores também conversam com empresas e motoristas
+    const clients =
+      me.type === "colaborador"
+        ? all.filter((u) => (u.type === "empresa" || u.type === "motorista") && u.active !== false)
+        : [];
+    const base = admin ? [admin, ...collabs] : collabs;
+    const list = [...base, ...clients];
     const lastTs = (uid: string) => {
       const conversationId = [me.id, uid].sort().join("__");
       const msgs = repo.listMessages(conversationId, { staffInbox: false });
@@ -55,10 +63,21 @@ export function UserChatPanel({ me }: Props) {
       return i === -1 ? Number.MAX_SAFE_INTEGER : i;
     };
     return sorted.sort((a, b) => rank(a.id) - rank(b.id));
-  }, [v, me.id, pinned]);
+  }, [v, me.id, me.type, pinned]);
 
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return staff;
+    return staff.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        s.number.toLowerCase().includes(q) ||
+        String(s.whatsapp ?? "").replace(/\D/g, "").includes(q.replace(/\D/g, "") || "\u0000"),
+    );
+  }, [staff, query]);
 
   const selected = selectedId ? repo.getUser(selectedId) ?? null : null;
+
 
   if (!repo.isBootstrapped()) {
     return <FullscreenLoading label="Carregando central..." />;
@@ -79,12 +98,22 @@ export function UserChatPanel({ me }: Props) {
         <aside
           className={`${mobileChat ? "hidden" : "flex"} md:flex flex-col w-full md:w-80 md:min-w-80 border-r bg-card`}
         >
-          <div className="px-4 py-3 border-b">
+          <div className="px-4 py-3 border-b space-y-2">
             <div className="text-sm font-semibold">Atendimento</div>
-            <div className="text-xs text-muted-foreground">Fale com o administrador ou um colaborador</div>
+            <div className="text-xs text-muted-foreground">
+              {me.type === "colaborador"
+                ? "Fale com usuários, o administrador ou outros colaboradores"
+                : "Fale com o administrador ou um colaborador"}
+            </div>
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar por nome ou código"
+              className="h-8 text-xs"
+            />
           </div>
           <div className="flex-1 overflow-y-auto">
-            {staff.map((s) => {
+            {visible.map((s) => {
               const conversationId = [me.id, s.id].sort().join("__");
               const useStaffInbox = false;
 
@@ -103,7 +132,22 @@ export function UserChatPanel({ me }: Props) {
               })();
               const lastSeen = repo.getLastSeen(s.id);
               const isActive = selectedId === s.id;
-              const color = s.type === "admin" ? "bg-primary" : "bg-[hsl(var(--collaborator))]";
+              const color =
+                s.type === "admin"
+                  ? "bg-primary"
+                  : s.type === "colaborador"
+                    ? "bg-[hsl(var(--collaborator))]"
+                    : s.type === "empresa"
+                      ? "bg-sky-600"
+                      : "bg-amber-600";
+              const typeLabel =
+                s.type === "admin"
+                  ? "Admin"
+                  : s.type === "colaborador"
+                    ? "Colaborador"
+                    : s.type === "empresa"
+                      ? "Empresa"
+                      : "Motorista";
               const pinnedHere = isPinned(s.id);
               return (
                 <div key={s.id} className="relative group">
@@ -145,7 +189,7 @@ export function UserChatPanel({ me }: Props) {
                         <span
                           className={`text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0 text-white ${color}`}
                         >
-                          {s.type === "admin" ? "Admin" : "Colaborador"}
+                          {typeLabel}
                         </span>
                       </div>
                       <div className="text-[10px] text-muted-foreground shrink-0">
