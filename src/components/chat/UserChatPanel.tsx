@@ -85,12 +85,22 @@ export function UserChatPanel({ me }: Props) {
         <aside
           className={`${mobileChat ? "hidden" : "flex"} md:flex flex-col w-full md:w-80 md:min-w-80 border-r bg-card`}
         >
-          <div className="px-4 py-3 border-b">
+          <div className="px-4 py-3 border-b space-y-2">
             <div className="text-sm font-semibold">Atendimento</div>
-            <div className="text-xs text-muted-foreground">Fale com o administrador ou um colaborador</div>
+            <div className="text-xs text-muted-foreground">
+              {me.type === "colaborador"
+                ? "Fale com usuários, o administrador ou outros colaboradores"
+                : "Fale com o administrador ou um colaborador"}
+            </div>
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar por nome ou código"
+              className="h-8 text-xs"
+            />
           </div>
           <div className="flex-1 overflow-y-auto">
-            {staff.map((s) => {
+            {visible.map((s) => {
               const conversationId = [me.id, s.id].sort().join("__");
               const useStaffInbox = false;
 
