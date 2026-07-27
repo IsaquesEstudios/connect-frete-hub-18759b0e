@@ -36,6 +36,12 @@ function reportError(title: string, error: unknown) {
   const description = parts.filter(Boolean).join("\n");
   console.error(title, error);
   toast.error(title, { description: description || undefined, duration: 12000 });
+  const text = [title, description, raw?.message]
+    .filter(Boolean)
+    .join(" ");
+  if (/conta\s+(est[aá]\s+)?(desativada|bloqueada)|usu[aá]rio\s+bloqueado|user\s+(is\s+)?banned/i.test(text)) {
+    void import("@/lib/auth/session").then(({ forceLogoutBlocked }) => forceLogoutBlocked());
+  }
 }
 
 type ProfileRow = {

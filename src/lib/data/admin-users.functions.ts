@@ -20,6 +20,20 @@ export const setExternalUserActive = createServerFn({ method: "POST" })
       if (!serviceKey.startsWith("sb_secret_")) headers.Authorization = `Bearer ${serviceKey}`;
       return headers;
     };
+    const authAdminHeaders = (): Record<string, string> => ({
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
+    });
+    const readError = async (res: Response) => {
+      const text = await res.text().catch(() => "");
+      if (!text) return `Erro ${res.status}`;
+      try {
+        const parsed = JSON.parse(text) as { msg?: string; message?: string; error?: string; error_description?: string };
+        return [parsed.msg, parsed.message, parsed.error_description, parsed.error].filter(Boolean).join(" ") || text;
+      } catch {
+        return text;
+      }
+    };
 
     const request = getRequest();
     const authHeader = request?.headers.get("authorization") ?? "";
@@ -51,6 +65,20 @@ export const setExternalUserActive = createServerFn({ method: "POST" })
     if (!target) throw new Error("Usuário não encontrado.");
     if (target.type === "admin") throw new Error("Administradores não podem ser bloqueados por aqui.");
 
+    const banRes = await fetch(`${EXT_SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(data.userId)}`, {
+      method: "PUT",
+      headers: {
+        ...authAdminHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ ban_duration: data.active ? "none" : "876000h" }),
+    });
+    if (!banRes.ok) {
+      throw new Error(
+        `${data.active ? "Não foi possível desbloquear" : "Não foi possível bloquear"} a conta de autenticação. ${await readError(banRes)}`.trim(),
+      );
+    }
+
     const updateRes = await fetch(`${EXT_SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(data.userId)}`, {
       method: "PATCH",
       headers: {
@@ -60,18 +88,18 @@ export const setExternalUserActive = createServerFn({ method: "POST" })
       },
       body: JSON.stringify({ active: data.active }),
     });
-    if (!updateRes.ok) throw new Error("Não foi possível atualizar o bloqueio do usuário.");
-
-    const banRes = await fetch(`${EXT_SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(data.userId)}`, {
-      method: "PUT",
-      headers: {
-        ...serviceHeaders(),
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ ban_duration: data.active ? "none" : "876000h" }),
-    });
-    if (!banRes.ok) {
-      console.warn("Não foi possível encerrar sessões do usuário bloqueado.");
+    if (!updateRes.ok) {
+      if (!data.active) {
+        await fetch(`${EXT_SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(data.userId)}`, {
+          method: "PUT",
+          headers: {
+            ...authAdminHeaders(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ban_duration: "none" }),
+        }).catch(() => undefined);
+      }
+      throw new Error(`Não foi possível atualizar o bloqueio do usuário. ${await readError(updateRes)}`.trim());
     }
 
     return { ok: true };

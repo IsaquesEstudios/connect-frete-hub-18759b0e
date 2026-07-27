@@ -139,6 +139,12 @@ function RootComponent() {
     void runCacheBuster();
   }, []);
 
+  useEffect(() => {
+    const clear = () => queryClient.clear();
+    window.addEventListener("svlogistica:clear-query-cache", clear);
+    return () => window.removeEventListener("svlogistica:clear-query-cache", clear);
+  }, [queryClient]);
+
   // Se o link de recuperação de senha cair na home (fallback do Site URL),
   // encaminha os tokens/código para a página de redefinição.
   useEffect(() => {

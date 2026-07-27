@@ -76,12 +76,23 @@ export function clearLocalAppCache() {
     const keys: string[] = [];
     for (let i = 0; i < window.localStorage.length; i++) {
       const k = window.localStorage.key(i);
-      if (k && (k.startsWith("svlogistica:") || k === EXTERNAL_AUTH_STORAGE_KEY)) keys.push(k);
+      if (k && (k.startsWith("svlogistica:") || k.startsWith("sv:") || k === EXTERNAL_AUTH_STORAGE_KEY)) keys.push(k);
     }
     keys.forEach((k) => window.localStorage.removeItem(k));
   } catch {
     // storage indisponível — segue o logout mesmo assim
   }
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < window.sessionStorage.length; i++) {
+      const k = window.sessionStorage.key(i);
+      if (k && (k.startsWith("svlogistica:") || k.startsWith("sv:"))) keys.push(k);
+    }
+    keys.forEach((k) => window.sessionStorage.removeItem(k));
+  } catch {
+    // storage indisponível — segue o logout mesmo assim
+  }
+  window.dispatchEvent(new Event("svlogistica:clear-query-cache"));
 }
 
 /** Encerra a sessão de um usuário bloqueado, apagando o cache local. */
