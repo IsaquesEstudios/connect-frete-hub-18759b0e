@@ -164,7 +164,9 @@ export const listVisibleMessages = createServerFn({ method: "POST" })
       return { rows, total };
     }
 
-    if (isStaff(profile)) {
+    // Somente o admin enxerga a caixa unificada. Colaborador vê apenas as
+    // mensagens das próprias conversas.
+    if (profile.type === "admin") {
       const { rows, total } = await fetchPage("");
       return { rows: since ? rows : rows.slice().reverse(), total };
     }

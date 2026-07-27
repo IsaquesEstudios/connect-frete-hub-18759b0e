@@ -382,7 +382,8 @@ export async function logout() {
 }
 
 export function homeFor(user: User): string {
-  if (user.type === "admin" || user.type === "colaborador") return "/admin";
+  if (user.type === "admin") return "/admin";
+  if (user.type === "colaborador") return "/colaborador";
   if (user.type === "empresa") return "/empresa";
   return "/motorista";
 }

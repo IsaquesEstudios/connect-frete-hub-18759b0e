@@ -37,7 +37,7 @@ function MetricsPage() {
   const v = useRepoVersion();
 
   useEffect(() => {
-    if (user && user.type !== "admin" && user.type !== "colaborador") navigate({ to: homeFor(user) as "/admin" });
+    if (user && user.type !== "admin") navigate({ to: homeFor(user) as "/admin" });
   }, [user, navigate]);
 
   const allConversations = useMemo(() => repo.listConversations(), [v]);
@@ -88,7 +88,7 @@ function MetricsPage() {
     });
   }, [conversations, tags, filterTag]);
 
-  if (!user || (user.type !== "admin" && user.type !== "colaborador")) return null;
+  if (!user || user.type !== "admin") return null;
 
   function csvEscape(v: string | number) {
     const s = String(v ?? "");
