@@ -80,14 +80,18 @@ export function CollaboratorsDialog() {
   }
 
   async function toggleActive(u: User, active: boolean) {
+    // otimista: atualiza o switch imediatamente
+    setList((prev) => prev.map((x) => (x.id === u.id ? { ...x, active } : x)));
     try {
       await setColaboradorActive(u.id, active);
       toast.success(active ? "Colaborador ativado" : "Colaborador desativado");
-      await refresh();
     } catch (e) {
+      // reverte em caso de falha
+      setList((prev) => prev.map((x) => (x.id === u.id ? { ...x, active: !active } : x)));
       toast.error((e as Error).message);
     }
   }
+
 
   async function remove(u: User) {
     try {
