@@ -436,6 +436,16 @@ function UsuariosPage() {
                           );
                         })()}
                       </td>
+                      <td className="px-4 py-3 max-w-[200px]">
+                        {(() => {
+                          const ts = tagsFor(u);
+                          return ts.length ? (
+                            <TagBadges tags={ts} max={3} />
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          );
+                        })()}
+                      </td>
                       <td className="px-4 py-3 uppercase text-xs text-muted-foreground">
                         {u.number}
                       </td>
