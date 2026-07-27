@@ -416,7 +416,7 @@ function AdminPanel() {
                 </AlertDialog>
               </div>
               <div className="flex-1 min-h-0">
-                <ChatWindow me={user} other={selectedUser} viewer={isAdmin ? "admin" : "user"} />
+                <ChatWindow me={user} other={selectedUser} viewer="admin" sharedInbox={isAdmin} />
               </div>
             </>
           ) : (
