@@ -28,7 +28,7 @@ export interface Repository {
   markConversationRead(conversationId: string, viewer: "admin" | "user", options?: { staffInbox?: boolean }): void;
   unreadCount(conversationId: string, viewer: "admin" | "user"): number;
   // conversations
-  listConversations(): {
+  listConversations(options?: { staffId?: string }): {
     user: User;
     lastMessage?: Message;
     unreadForAdmin: number;
