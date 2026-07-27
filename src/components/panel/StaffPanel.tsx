@@ -55,14 +55,14 @@ function onlyDigits(value: unknown): string {
   return String(value ?? "").replace(/\D/g, "");
 }
 
-export function StaffPanel() {
+export function StaffPanel({ role }: { role: "admin" | "colaborador" }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const v = useRepoVersion();
 
   useEffect(() => {
-    if (user && user.type !== "admin" && user.type !== "colaborador") navigate({ to: homeFor(user) as "/admin" });
-  }, [user, navigate]);
+    if (user && user.type !== role) navigate({ to: homeFor(user) as "/admin" });
+  }, [user, role, navigate]);
 
   const [tab, setTab] = useState<FilterTab>("todos");
   const [query, setQuery] = useState("");
@@ -123,7 +123,7 @@ export function StaffPanel() {
 
 
 
-  if (!user || (user.type !== "admin" && user.type !== "colaborador")) return null;
+  if (!user || user.type !== role) return null;
 
   const selectedUser = selected ? repo.getUser(selected) : null;
 
