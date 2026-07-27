@@ -119,6 +119,12 @@ function UsuariosPage() {
     }
   };
 
+  const csvEscape = (v: string | number) => {
+    const s = String(v ?? "");
+    return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+
   useEffect(() => {
     if (loading) return;
     if (user && user.type !== "admin") navigate({ to: homeFor(user) as "/admin" });
