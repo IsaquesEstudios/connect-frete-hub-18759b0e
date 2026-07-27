@@ -109,7 +109,22 @@ export function UserChatPanel({ me }: Props) {
               })();
               const lastSeen = repo.getLastSeen(s.id);
               const isActive = selectedId === s.id;
-              const color = s.type === "admin" ? "bg-primary" : "bg-[hsl(var(--collaborator))]";
+              const color =
+                s.type === "admin"
+                  ? "bg-primary"
+                  : s.type === "colaborador"
+                    ? "bg-[hsl(var(--collaborator))]"
+                    : s.type === "empresa"
+                      ? "bg-sky-600"
+                      : "bg-amber-600";
+              const typeLabel =
+                s.type === "admin"
+                  ? "Admin"
+                  : s.type === "colaborador"
+                    ? "Colaborador"
+                    : s.type === "empresa"
+                      ? "Empresa"
+                      : "Motorista";
               const pinnedHere = isPinned(s.id);
               return (
                 <div key={s.id} className="relative group">
