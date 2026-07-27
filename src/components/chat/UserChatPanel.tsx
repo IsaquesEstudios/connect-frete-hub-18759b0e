@@ -166,7 +166,7 @@ export function UserChatPanel({ me }: Props) {
                         <span
                           className={`text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0 text-white ${color}`}
                         >
-                          {s.type === "admin" ? "Admin" : "Colaborador"}
+                          {typeLabel}
                         </span>
                       </div>
                       <div className="text-[10px] text-muted-foreground shrink-0">
