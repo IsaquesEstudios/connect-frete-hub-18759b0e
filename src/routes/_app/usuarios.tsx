@@ -377,8 +377,8 @@ function UsuariosPage() {
               </Button>
             </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1520px] text-sm">
+          <div className="overflow-auto max-h-[calc(100vh-340px)]">
+            <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
                   <th className="px-4 py-3 font-medium">Nome</th>
