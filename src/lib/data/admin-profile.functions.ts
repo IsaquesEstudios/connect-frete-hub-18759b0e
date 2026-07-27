@@ -33,18 +33,20 @@ export const adminUpdateProfile = createServerFn({ method: "POST" })
     const authUser = (await userRes.json()) as { id?: string };
     if (!authUser.id) throw new Error("Sessão inválida. Faça login novamente.");
 
-    // Permite editar o próprio perfil sem checagem de admin.
+    const currentProfileRes = await fetch(
+      `${EXT_SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(authUser.id)}&select=type,active`,
+      { headers: serviceHeaders() },
+    );
+    if (!currentProfileRes.ok) throw new Error("Não foi possível validar seu perfil.");
+    const currentProfiles = (await currentProfileRes.json()) as Array<{ type?: string; active?: boolean | null }>;
+    const currentProfile = currentProfiles[0];
+    if (!currentProfile) throw new Error("Perfil não encontrado. Faça login novamente.");
+    if (currentProfile.active === false) throw new Error("Sua conta está desativada.");
+
+    // Permite editar o próprio perfil, mas edição de terceiros exige equipe.
     if (authUser.id !== data.userId) {
-      const adminProfileRes = await fetch(
-        `${EXT_SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(authUser.id)}&select=type`,
-        { headers: serviceHeaders() },
-      );
-      if (!adminProfileRes.ok) throw new Error("Não foi possível validar o administrador.");
-      const adminProfiles = (await adminProfileRes.json()) as Array<{ type?: string }>;
-      const t = adminProfiles[0]?.type;
-      if (t !== "admin" && t !== "colaborador") {
-        throw new Error("Apenas administradores podem editar outros perfis.");
-      }
+      const t = currentProfile.type;
+      if (t !== "admin" && t !== "colaborador") throw new Error("Apenas administradores podem editar outros perfis.");
     }
 
     const updateRes = await fetch(
