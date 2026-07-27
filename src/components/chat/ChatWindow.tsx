@@ -123,7 +123,7 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
   // IDs (UUIDs) dos usuários. O admin vê a caixa unificada com todas as
   // mensagens trocadas entre a equipe e o usuário.
   const conversationId = [me.id, other.id].sort().join("__");
-  const useStaffInbox = viewer === "admin";
+  const useStaffInbox = sharedInbox ?? viewer === "admin";
 
 
   // Feedback visual ao trocar de conversa
