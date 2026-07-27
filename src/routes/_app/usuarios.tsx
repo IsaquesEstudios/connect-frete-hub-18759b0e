@@ -290,9 +290,12 @@ function UsuariosPage() {
             <h2 className="text-base font-semibold">
               {filtered.length} usuário{filtered.length === 1 ? "" : "s"}
             </h2>
+            <Button size="sm" variant="outline" onClick={exportCsv}>
+              <FileSpreadsheet className="mr-2 h-4 w-4" /> Exportar (Excel/CSV)
+            </Button>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1120px] text-sm">
+            <table className="w-full min-w-[1360px] text-sm">
               <thead>
                 <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
                   <th className="px-4 py-3 font-medium">Nome</th>
@@ -302,10 +305,13 @@ function UsuariosPage() {
                   <th className="px-4 py-3 font-medium">Email</th>
                   <th className="px-4 py-3 font-medium">CPF/CNPJ</th>
                   <th className="px-4 py-3 font-medium">Cidade/UF</th>
+                  <th className="px-4 py-3 font-medium">Cadastro</th>
+                  <th className="px-4 py-3 font-medium">Último login</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                   <th className="sticky right-0 z-10 bg-card px-4 py-3 font-medium text-right shadow-[-12px_0_16px_-16px_hsl(var(--foreground))]">Ações</th>
                 </tr>
               </thead>
+
               <tbody>
                 {filtered.length === 0 && (
                   <tr>
