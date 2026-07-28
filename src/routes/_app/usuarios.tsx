@@ -278,7 +278,34 @@ function UsuariosPage() {
       const lb = repo.getLastSeen(b.id) ?? 0;
       return lb - la;
     });
-  }, [users, tab, query, emails, ev]);
+  }, [users, tab, query, emails, ev, sort, tagsFor]);
+
+  const SortHeader = ({
+    label,
+    sortKey,
+    className,
+  }: {
+    label: string;
+    sortKey: SortKey;
+    className?: string;
+  }) => {
+    const active = sort?.key === sortKey;
+    const Icon = !active ? ChevronsUpDown : sort.dir === "desc" ? ArrowDown : ArrowUp;
+    return (
+      <th className={`px-4 py-3 font-medium ${className ?? ""}`}>
+        <button
+          type="button"
+          onClick={() => toggleSort(sortKey)}
+          title="Clique para ordenar"
+          className={`inline-flex items-center gap-1 uppercase tracking-wide transition-colors hover:text-foreground ${active ? "text-foreground" : ""}`}
+        >
+          {label}
+          <Icon className={`h-3 w-3 ${active ? "opacity-100" : "opacity-40"}`} />
+        </button>
+      </th>
+    );
+  };
+
 
   const exportCsv = () => {
     const header = [
