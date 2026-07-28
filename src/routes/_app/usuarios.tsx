@@ -118,6 +118,17 @@ function UsuariosPage() {
   const [emails, setEmails] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<User | null>(null);
   const [confirmBlock, setConfirmBlock] = useState<User | null>(null);
+  const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" } | null>(null);
+
+  const toggleSort = (key: SortKey) => {
+    setSort((prev) =>
+      prev?.key === key
+        ? prev.dir === "desc"
+          ? { key, dir: "asc" }
+          : null
+        : { key, dir: "desc" },
+    );
+  };
 
   const toggleActive = async (u: User, next: boolean) => {
     try {
