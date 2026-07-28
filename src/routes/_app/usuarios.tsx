@@ -45,6 +45,19 @@ export const Route = createFileRoute("/_app/usuarios")({
 
 type TypeFilter = "todos" | "empresa" | "motorista" | "colaborador" | "admin";
 
+type SortKey =
+  | "name"
+  | "type"
+  | "tags"
+  | "number"
+  | "whatsapp"
+  | "email"
+  | "doc"
+  | "cidade"
+  | "createdAt"
+  | "lastSeen"
+  | "status";
+
 function formatDateTime(ts?: number | null): string {
   if (!ts) return "—";
   return new Date(ts).toLocaleString("pt-BR", {
