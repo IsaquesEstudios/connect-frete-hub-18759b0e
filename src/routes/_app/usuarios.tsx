@@ -477,17 +477,17 @@ function UsuariosPage() {
             <table className="w-full text-sm">
               <thead className="sticky top-0 z-20">
                 <tr className="border-b bg-card text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="px-4 py-3 font-medium">Nome</th>
-                  <th className="px-4 py-3 font-medium">Tipo</th>
-                  <th className="px-4 py-3 font-medium">Etiquetas</th>
-                  <th className="px-4 py-3 font-medium">Código</th>
-                  <th className="px-4 py-3 font-medium">WhatsApp</th>
-                  <th className="px-4 py-3 font-medium">Email</th>
-                  <th className="px-4 py-3 font-medium">CPF/CNPJ</th>
-                  <th className="px-4 py-3 font-medium">Cidade/UF</th>
-                  <th className="px-4 py-3 font-medium">Cadastro</th>
-                  <th className="px-4 py-3 font-medium">Último login</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
+                  <SortHeader label="Nome" sortKey="name" />
+                  <SortHeader label="Tipo" sortKey="type" />
+                  <SortHeader label="Etiquetas" sortKey="tags" />
+                  <SortHeader label="Código" sortKey="number" />
+                  <SortHeader label="WhatsApp" sortKey="whatsapp" />
+                  <SortHeader label="Email" sortKey="email" />
+                  <SortHeader label="CPF/CNPJ" sortKey="doc" />
+                  <SortHeader label="Cidade/UF" sortKey="cidade" />
+                  <SortHeader label="Cadastro" sortKey="createdAt" />
+                  <SortHeader label="Último login" sortKey="lastSeen" />
+                  <SortHeader label="Status" sortKey="status" />
                   <th className="sticky right-0 z-10 bg-card px-4 py-3 font-medium text-right shadow-[-12px_0_16px_-16px_hsl(var(--foreground))]">Ações</th>
                 </tr>
               </thead>
