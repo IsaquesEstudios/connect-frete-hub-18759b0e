@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { User } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 function perfilLabel(user: User): string {
   if (user.type === "admin") return "Administrador";
@@ -39,7 +40,8 @@ export function AppTopBar({ user }: { user: User }) {
 
   return (
     <header className="sticky top-0 z-30 flex items-center gap-3 border-b bg-background/95 px-4 py-2.5 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <Link to="/perfil" className="flex items-center gap-3 group">
+      <SidebarTrigger className="-ml-1 shrink-0 md:hidden" />
+      <Link to="/perfil" className="flex min-w-0 items-center gap-3 group">
         {user.fotoUrl ? (
           <img
             src={user.fotoUrl}
