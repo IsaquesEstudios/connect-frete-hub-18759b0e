@@ -233,7 +233,43 @@ function UsuariosPage() {
       }
       return true;
     });
-    // Ordena: online primeiro, depois por último acesso (mais recente antes).
+    if (sort) {
+      const val = (u: User): string | number => {
+        const docUser = u as { cnpj?: string; cpf?: string };
+        switch (sort.key) {
+          case "name":
+            return normalizeSearchText(u.name);
+          case "type":
+            return normalizeSearchText(typeLabel(resolveDisplayType(u)));
+          case "tags":
+            return normalizeSearchText(tagsFor(u).map((t) => t.label).join(", "));
+          case "number":
+            return normalizeSearchText(u.number);
+          case "whatsapp":
+            return onlyDigits(u.whatsapp);
+          case "email":
+            return normalizeSearchText(u.email || emails[u.id] || "");
+          case "doc":
+            return onlyDigits(docUser.cnpj || docUser.cpf || "");
+          case "cidade":
+            return normalizeSearchText([u.cidade, u.estado].filter(Boolean).join(" / "));
+          case "createdAt":
+            return u.createdAt ?? 0;
+          case "lastSeen":
+            return repo.isOnline(u.id) ? Number.MAX_SAFE_INTEGER : (repo.getLastSeen(u.id) ?? 0);
+          case "status":
+            return u.active === false ? 0 : repo.isOnline(u.id) ? 2 : 1;
+        }
+      };
+      const factor = sort.dir === "asc" ? 1 : -1;
+      return [...list].sort((a, b) => {
+        const va = val(a);
+        const vb = val(b);
+        if (typeof va === "number" && typeof vb === "number") return (va - vb) * factor;
+        return String(va).localeCompare(String(vb), "pt-BR") * factor;
+      });
+    }
+    // Padrão: online primeiro, depois por último acesso (mais recente antes).
     return [...list].sort((a, b) => {
       const oa = repo.isOnline(a.id) ? 1 : 0;
       const ob = repo.isOnline(b.id) ? 1 : 0;
