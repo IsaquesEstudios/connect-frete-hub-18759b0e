@@ -134,13 +134,11 @@ function UsuariosPage() {
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" } | null>(null);
 
   const toggleSort = (key: SortKey) => {
-    setSort((prev) =>
-      prev?.key === key
-        ? prev.dir === "desc"
-          ? { key, dir: "asc" }
-          : null
-        : { key, dir: "desc" },
-    );
+    setSort((prev) => {
+      if (!prev || prev.key !== key) return { key, dir: "desc" as const };
+      if (prev.dir === "desc") return { key, dir: "asc" as const };
+      return null;
+    });
   };
 
   const toggleActive = async (u: User, next: boolean) => {
