@@ -30,9 +30,9 @@ const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 
 function audienceLabel(kind: AudienceKind, tagLabel?: string) {
   if (kind === "all") return "Todos os usuários";
-  if (kind === "empresas") return "Somente Empresas";
-  if (kind === "motoristas") return "Somente Motoristas";
-  if (kind === "colaboradores") return "Somente Colaboradores";
+  if (kind === "empresas") return "Empresas";
+  if (kind === "motoristas") return "Motoristas";
+  if (kind === "colaboradores") return "Colaboradores";
   return `Tag: ${tagLabel ?? "—"}`;
 }
 
@@ -245,11 +245,11 @@ export function BroadcastDialog({
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent translate="no">
                   <SelectItem value="all">Todos os usuários</SelectItem>
-                  <SelectItem value="empresas">Somente Empresas</SelectItem>
-                  <SelectItem value="motoristas">Somente Motoristas</SelectItem>
-                  <SelectItem value="colaboradores">Somente Colaboradores</SelectItem>
+                  <SelectItem value="empresas">Empresas</SelectItem>
+                  <SelectItem value="motoristas">Motoristas</SelectItem>
+                  <SelectItem value="colaboradores">Colaboradores</SelectItem>
                   <SelectItem value="tag" disabled={tags.length === 0}>
                     Por tag
                   </SelectItem>
