@@ -245,11 +245,11 @@ export function BroadcastDialog({
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent translate="no">
                   <SelectItem value="all">Todos os usuários</SelectItem>
-                  <SelectItem value="empresas">Somente Empresas</SelectItem>
-                  <SelectItem value="motoristas">Somente Motoristas</SelectItem>
-                  <SelectItem value="colaboradores">Somente Colaboradores</SelectItem>
+                  <SelectItem value="empresas">Empresas</SelectItem>
+                  <SelectItem value="motoristas">Motoristas</SelectItem>
+                  <SelectItem value="colaboradores">Colaboradores</SelectItem>
                   <SelectItem value="tag" disabled={tags.length === 0}>
                     Por tag
                   </SelectItem>
