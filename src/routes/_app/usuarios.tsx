@@ -1,7 +1,18 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { FileSpreadsheet, FileType, Lock, LockOpen, Pencil, Search, Users } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronsUpDown,
+  FileSpreadsheet,
+  FileType,
+  Lock,
+  LockOpen,
+  Pencil,
+  Search,
+  Users,
+} from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +44,19 @@ export const Route = createFileRoute("/_app/usuarios")({
 });
 
 type TypeFilter = "todos" | "empresa" | "motorista" | "colaborador" | "admin";
+
+type SortKey =
+  | "name"
+  | "type"
+  | "tags"
+  | "number"
+  | "whatsapp"
+  | "email"
+  | "doc"
+  | "cidade"
+  | "createdAt"
+  | "lastSeen"
+  | "status";
 
 function formatDateTime(ts?: number | null): string {
   if (!ts) return "—";
@@ -107,6 +131,15 @@ function UsuariosPage() {
   const [emails, setEmails] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<User | null>(null);
   const [confirmBlock, setConfirmBlock] = useState<User | null>(null);
+  const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" } | null>(null);
+
+  const toggleSort = (key: SortKey) => {
+    setSort((prev) => {
+      if (!prev || prev.key !== key) return { key, dir: "desc" as const };
+      if (prev.dir === "desc") return { key, dir: "asc" as const };
+      return null;
+    });
+  };
 
   const toggleActive = async (u: User, next: boolean) => {
     try {
@@ -200,7 +233,43 @@ function UsuariosPage() {
       }
       return true;
     });
-    // Ordena: online primeiro, depois por último acesso (mais recente antes).
+    if (sort) {
+      const val = (u: User): string | number => {
+        const docUser = u as { cnpj?: string; cpf?: string };
+        switch (sort.key) {
+          case "name":
+            return normalizeSearchText(u.name);
+          case "type":
+            return normalizeSearchText(typeLabel(resolveDisplayType(u)));
+          case "tags":
+            return normalizeSearchText(tagsFor(u).map((t) => t.label).join(", "));
+          case "number":
+            return normalizeSearchText(u.number);
+          case "whatsapp":
+            return onlyDigits(u.whatsapp);
+          case "email":
+            return normalizeSearchText(u.email || emails[u.id] || "");
+          case "doc":
+            return onlyDigits(docUser.cnpj || docUser.cpf || "");
+          case "cidade":
+            return normalizeSearchText([u.cidade, u.estado].filter(Boolean).join(" / "));
+          case "createdAt":
+            return u.createdAt ?? 0;
+          case "lastSeen":
+            return repo.isOnline(u.id) ? Number.MAX_SAFE_INTEGER : (repo.getLastSeen(u.id) ?? 0);
+          case "status":
+            return u.active === false ? 0 : repo.isOnline(u.id) ? 2 : 1;
+        }
+      };
+      const factor = sort.dir === "asc" ? 1 : -1;
+      return [...list].sort((a, b) => {
+        const va = val(a);
+        const vb = val(b);
+        if (typeof va === "number" && typeof vb === "number") return (va - vb) * factor;
+        return String(va).localeCompare(String(vb), "pt-BR") * factor;
+      });
+    }
+    // Padrão: online primeiro, depois por último acesso (mais recente antes).
     return [...list].sort((a, b) => {
       const oa = repo.isOnline(a.id) ? 1 : 0;
       const ob = repo.isOnline(b.id) ? 1 : 0;
@@ -209,7 +278,34 @@ function UsuariosPage() {
       const lb = repo.getLastSeen(b.id) ?? 0;
       return lb - la;
     });
-  }, [users, tab, query, emails, ev]);
+  }, [users, tab, query, emails, ev, sort, tagsFor]);
+
+  const SortHeader = ({
+    label,
+    sortKey,
+    className,
+  }: {
+    label: string;
+    sortKey: SortKey;
+    className?: string;
+  }) => {
+    const active = sort?.key === sortKey;
+    const Icon = !active ? ChevronsUpDown : sort.dir === "desc" ? ArrowDown : ArrowUp;
+    return (
+      <th className={`px-4 py-3 font-medium ${className ?? ""}`}>
+        <button
+          type="button"
+          onClick={() => toggleSort(sortKey)}
+          title="Clique para ordenar"
+          className={`inline-flex items-center gap-1 uppercase tracking-wide transition-colors hover:text-foreground ${active ? "text-foreground" : ""}`}
+        >
+          {label}
+          <Icon className={`h-3 w-3 ${active ? "opacity-100" : "opacity-40"}`} />
+        </button>
+      </th>
+    );
+  };
+
 
   const exportCsv = () => {
     const header = [
@@ -381,17 +477,17 @@ function UsuariosPage() {
             <table className="w-full text-sm">
               <thead className="sticky top-0 z-20">
                 <tr className="border-b bg-card text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="px-4 py-3 font-medium">Nome</th>
-                  <th className="px-4 py-3 font-medium">Tipo</th>
-                  <th className="px-4 py-3 font-medium">Etiquetas</th>
-                  <th className="px-4 py-3 font-medium">Código</th>
-                  <th className="px-4 py-3 font-medium">WhatsApp</th>
-                  <th className="px-4 py-3 font-medium">Email</th>
-                  <th className="px-4 py-3 font-medium">CPF/CNPJ</th>
-                  <th className="px-4 py-3 font-medium">Cidade/UF</th>
-                  <th className="px-4 py-3 font-medium">Cadastro</th>
-                  <th className="px-4 py-3 font-medium">Último login</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
+                  <SortHeader label="Nome" sortKey="name" />
+                  <SortHeader label="Tipo" sortKey="type" />
+                  <SortHeader label="Etiquetas" sortKey="tags" />
+                  <SortHeader label="Código" sortKey="number" />
+                  <SortHeader label="WhatsApp" sortKey="whatsapp" />
+                  <SortHeader label="Email" sortKey="email" />
+                  <SortHeader label="CPF/CNPJ" sortKey="doc" />
+                  <SortHeader label="Cidade/UF" sortKey="cidade" />
+                  <SortHeader label="Cadastro" sortKey="createdAt" />
+                  <SortHeader label="Último login" sortKey="lastSeen" />
+                  <SortHeader label="Status" sortKey="status" />
                   <th className="sticky right-0 z-10 bg-card px-4 py-3 font-medium text-right shadow-[-12px_0_16px_-16px_hsl(var(--foreground))]">Ações</th>
                 </tr>
               </thead>
