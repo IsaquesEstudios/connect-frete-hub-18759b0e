@@ -151,13 +151,15 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
         patch[key] = value;
       };
 
+      setIf("cpf", form.cpf);
+      setIf("cnpj", form.cnpj);
+
       if (targetType === "empresa") {
-        setIf("cnpj", form.cnpj);
-        setIf("cpf", form.cpf);
         setIf("nomeFantasia", form.nomeFantasia);
         setIf("perfilEmpresa", perfil);
         setIf("siteRedeSocial", form.siteRedeSocial);
       }
+
       if (targetType === "motorista") {
         const joinObs = (base: string, obs: string) => {
           const b = (base || "").trim();
