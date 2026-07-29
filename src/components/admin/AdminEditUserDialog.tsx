@@ -224,11 +224,18 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
                 {form.cpf ? formatDoc(form.cpf, "cpf") : "Não informado"}
               </div>
             </Field>
+            <Field label="CNPJ">
+              <Input
+                value={form.cnpj || ""}
+                onChange={(e) => set("cnpj", formatDoc(e.target.value, "cnpj"))}
+                placeholder="Não informado"
+              />
+            </Field>
 
             {user.type === "empresa" && (
               <>
-                <Field label="CNPJ"><Input value={form.cnpj || ""} onChange={(e) => set("cnpj", formatDoc(e.target.value, "cnpj"))} /></Field>
                 <Field label="Nome fantasia"><Input value={form.nomeFantasia || ""} onChange={(e) => set("nomeFantasia", e.target.value)} /></Field>
+
                 <Field label="Perfil">
                   <PerfilSelect value={form.perfilEmpresa || ""} onChange={(v) => set("perfilEmpresa", v)} />
                 </Field>
