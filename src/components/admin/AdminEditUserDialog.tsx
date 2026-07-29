@@ -151,13 +151,15 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
         patch[key] = value;
       };
 
+      setIf("cpf", form.cpf);
+      setIf("cnpj", form.cnpj);
+
       if (targetType === "empresa") {
-        setIf("cnpj", form.cnpj);
-        setIf("cpf", form.cpf);
         setIf("nomeFantasia", form.nomeFantasia);
         setIf("perfilEmpresa", perfil);
         setIf("siteRedeSocial", form.siteRedeSocial);
       }
+
       if (targetType === "motorista") {
         const joinObs = (base: string, obs: string) => {
           const b = (base || "").trim();
@@ -224,11 +226,18 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
                 {form.cpf ? formatDoc(form.cpf, "cpf") : "Não informado"}
               </div>
             </Field>
+            <Field label="CNPJ">
+              <Input
+                value={form.cnpj || ""}
+                onChange={(e) => set("cnpj", formatDoc(e.target.value, "cnpj"))}
+                placeholder="Não informado"
+              />
+            </Field>
 
             {user.type === "empresa" && (
               <>
-                <Field label="CNPJ"><Input value={form.cnpj || ""} onChange={(e) => set("cnpj", formatDoc(e.target.value, "cnpj"))} /></Field>
                 <Field label="Nome fantasia"><Input value={form.nomeFantasia || ""} onChange={(e) => set("nomeFantasia", e.target.value)} /></Field>
+
                 <Field label="Perfil">
                   <PerfilSelect value={form.perfilEmpresa || ""} onChange={(v) => set("perfilEmpresa", v)} />
                 </Field>

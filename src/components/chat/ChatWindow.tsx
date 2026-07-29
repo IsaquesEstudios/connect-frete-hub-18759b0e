@@ -426,9 +426,13 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
             />
             {other.whatsapp && <ProfileField label="WhatsApp" value={formatPhone(other.whatsapp)} />}
             {other.cpf && <ProfileField label="CPF" value={other.cpf} />}
+            {other.cnpj && <ProfileField label="CNPJ" value={other.cnpj} />}
+            {!other.cpf && !other.cnpj && (
+              <ProfileField label="CPF / CNPJ" value="Não informado" />
+            )}
             {other.type === "empresa" && (
               <>
-                <ProfileField label="CNPJ" value={other.cnpj} />
+
                 {other.nomeFantasia && (
                   <ProfileField label="Nome fantasia" value={other.nomeFantasia} />
                 )}
