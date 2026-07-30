@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ADMIN_ID, repo, type Message, type User } from "@/lib/data";
+import { useQuickReplies } from "@/lib/chat/useQuickReplies";
 import { useEphemeralVersion, useRepoVersion } from "@/lib/hooks/useRepo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
