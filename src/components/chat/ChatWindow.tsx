@@ -106,6 +106,9 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
   const v = useRepoVersion();
   const ev = useEphemeralVersion();
   const [text, setText] = useState("");
+  const [slashIndex, setSlashIndex] = useState(0);
+  const [slashDismissed, setSlashDismissed] = useState(false);
+  const { items: quickReplies } = useQuickReplies();
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
