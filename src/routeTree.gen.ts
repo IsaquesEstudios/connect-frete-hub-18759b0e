@@ -19,6 +19,7 @@ import { Route as AppUsuariosRouteImport } from './routes/_app/usuarios'
 import { Route as AppPerfilRouteImport } from './routes/_app/perfil'
 import { Route as AppMotoristaRouteImport } from './routes/_app/motorista'
 import { Route as AppMetricasRouteImport } from './routes/_app/metricas'
+import { Route as AppMensagensRapidasRouteImport } from './routes/_app/mensagens-rapidas'
 import { Route as AppEmpresaRouteImport } from './routes/_app/empresa'
 import { Route as AppConfiguracoesRouteImport } from './routes/_app/configuracoes'
 import { Route as AppColaboradorRouteImport } from './routes/_app/colaborador'
@@ -73,6 +74,11 @@ const AppMetricasRoute = AppMetricasRouteImport.update({
   path: '/metricas',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppMensagensRapidasRoute = AppMensagensRapidasRouteImport.update({
+  id: '/mensagens-rapidas',
+  path: '/mensagens-rapidas',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppEmpresaRoute = AppEmpresaRouteImport.update({
   id: '/empresa',
   path: '/empresa',
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/colaborador': typeof AppColaboradorRoute
   '/configuracoes': typeof AppConfiguracoesRoute
   '/empresa': typeof AppEmpresaRoute
+  '/mensagens-rapidas': typeof AppMensagensRapidasRoute
   '/metricas': typeof AppMetricasRoute
   '/motorista': typeof AppMotoristaRoute
   '/perfil': typeof AppPerfilRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/colaborador': typeof AppColaboradorRoute
   '/configuracoes': typeof AppConfiguracoesRoute
   '/empresa': typeof AppEmpresaRoute
+  '/mensagens-rapidas': typeof AppMensagensRapidasRoute
   '/metricas': typeof AppMetricasRoute
   '/motorista': typeof AppMotoristaRoute
   '/perfil': typeof AppPerfilRoute
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/_app/colaborador': typeof AppColaboradorRoute
   '/_app/configuracoes': typeof AppConfiguracoesRoute
   '/_app/empresa': typeof AppEmpresaRoute
+  '/_app/mensagens-rapidas': typeof AppMensagensRapidasRoute
   '/_app/metricas': typeof AppMetricasRoute
   '/_app/motorista': typeof AppMotoristaRoute
   '/_app/perfil': typeof AppPerfilRoute
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/colaborador'
     | '/configuracoes'
     | '/empresa'
+    | '/mensagens-rapidas'
     | '/metricas'
     | '/motorista'
     | '/perfil'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/colaborador'
     | '/configuracoes'
     | '/empresa'
+    | '/mensagens-rapidas'
     | '/metricas'
     | '/motorista'
     | '/perfil'
@@ -182,6 +193,7 @@ export interface FileRouteTypes {
     | '/_app/colaborador'
     | '/_app/configuracoes'
     | '/_app/empresa'
+    | '/_app/mensagens-rapidas'
     | '/_app/metricas'
     | '/_app/motorista'
     | '/_app/perfil'
@@ -271,6 +283,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMetricasRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/_app/mensagens-rapidas': {
+      id: '/_app/mensagens-rapidas'
+      path: '/mensagens-rapidas'
+      fullPath: '/mensagens-rapidas'
+      preLoaderRoute: typeof AppMensagensRapidasRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/_app/empresa': {
       id: '/_app/empresa'
       path: '/empresa'
@@ -307,6 +326,7 @@ interface AppRouteRouteChildren {
   AppColaboradorRoute: typeof AppColaboradorRoute
   AppConfiguracoesRoute: typeof AppConfiguracoesRoute
   AppEmpresaRoute: typeof AppEmpresaRoute
+  AppMensagensRapidasRoute: typeof AppMensagensRapidasRoute
   AppMetricasRoute: typeof AppMetricasRoute
   AppMotoristaRoute: typeof AppMotoristaRoute
   AppPerfilRoute: typeof AppPerfilRoute
@@ -318,6 +338,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppColaboradorRoute: AppColaboradorRoute,
   AppConfiguracoesRoute: AppConfiguracoesRoute,
   AppEmpresaRoute: AppEmpresaRoute,
+  AppMensagensRapidasRoute: AppMensagensRapidasRoute,
   AppMetricasRoute: AppMetricasRoute,
   AppMotoristaRoute: AppMotoristaRoute,
   AppPerfilRoute: AppPerfilRoute,
