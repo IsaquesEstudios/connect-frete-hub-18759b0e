@@ -229,6 +229,32 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
     sendBody(current);
   }
 
+  // Mensagens rápidas: digitar "/" no início do campo abre a lista de títulos.
+  const slashQuery = text.startsWith("/") ? text.slice(1).trim().toLowerCase() : null;
+  const slashMatches =
+    slashQuery === null
+      ? []
+      : quickReplies.filter(
+          (q) =>
+            !slashQuery ||
+            q.title.toLowerCase().includes(slashQuery) ||
+            q.body.toLowerCase().includes(slashQuery),
+        );
+  const slashOpen = slashQuery !== null && !slashDismissed && !recording;
+
+  function applyQuickReply(qr: { body: string } | undefined) {
+    if (!qr) return;
+    setText(qr.body);
+    setSlashDismissed(true);
+    setSlashIndex(0);
+  }
+
+  useEffect(() => {
+    if (!text.startsWith("/")) setSlashDismissed(false);
+  }, [text]);
+
+
+
   async function handleFile(file: File | undefined | null) {
     if (!file) return;
     if (file.size > MAX_ATTACHMENT_BYTES) {
