@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ADMIN_ID, repo, type Message, type User } from "@/lib/data";
+import { useQuickReplies } from "@/lib/chat/useQuickReplies";
 import { useEphemeralVersion, useRepoVersion } from "@/lib/hooks/useRepo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -106,6 +107,9 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
   const v = useRepoVersion();
   const ev = useEphemeralVersion();
   const [text, setText] = useState("");
+  const [slashIndex, setSlashIndex] = useState(0);
+  const [slashDismissed, setSlashDismissed] = useState(false);
+  const { items: quickReplies } = useQuickReplies();
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
@@ -225,6 +229,32 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
     setText("");
     sendBody(current);
   }
+
+  // Mensagens rápidas: digitar "/" no início do campo abre a lista de títulos.
+  const slashQuery = text.startsWith("/") ? text.slice(1).trim().toLowerCase() : null;
+  const slashMatches =
+    slashQuery === null
+      ? []
+      : quickReplies.filter(
+          (q) =>
+            !slashQuery ||
+            q.title.toLowerCase().includes(slashQuery) ||
+            q.body.toLowerCase().includes(slashQuery),
+        );
+  const slashOpen = slashQuery !== null && !slashDismissed && !recording;
+
+  function applyQuickReply(qr: { body: string } | undefined) {
+    if (!qr) return;
+    setText(qr.body);
+    setSlashDismissed(true);
+    setSlashIndex(0);
+  }
+
+  useEffect(() => {
+    if (!text.startsWith("/")) setSlashDismissed(false);
+  }, [text]);
+
+
 
   async function handleFile(file: File | undefined | null) {
     if (!file) return;
@@ -649,16 +679,61 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
             >
               <Mic className="h-4 w-4" />
             </Button>
-            <Input
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder={
-                other.id === ADMIN_ID
-                  ? "Escreva uma mensagem para o Admin..."
-                  : `Responder ${other.name}...`
-              }
-              autoComplete="off"
-            />
+            <div className="relative flex-1">
+              {slashOpen && slashMatches.length > 0 && (
+                <div className="absolute bottom-full left-0 z-50 mb-2 w-full max-h-64 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                  <div className="px-2 py-1 text-[11px] uppercase tracking-wide text-muted-foreground">
+                    Mensagens rápidas
+                  </div>
+                  {slashMatches.map((qr, i) => (
+                    <button
+                      key={qr.id}
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        applyQuickReply(qr);
+                      }}
+                      onMouseEnter={() => setSlashIndex(i)}
+                      className={`block w-full rounded-sm px-2 py-1.5 text-left ${
+                        i === slashIndex ? "bg-accent" : ""
+                      }`}
+                    >
+                      <div className="truncate text-sm font-medium">{qr.title}</div>
+                      <div className="truncate text-xs text-muted-foreground">{qr.body}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <Input
+                value={text}
+                onChange={(e) => {
+                  setText(e.target.value);
+                  setSlashIndex(0);
+                }}
+                onKeyDown={(e) => {
+                  if (!slashOpen || slashMatches.length === 0) return;
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setSlashIndex((i) => (i + 1) % slashMatches.length);
+                  } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setSlashIndex((i) => (i - 1 + slashMatches.length) % slashMatches.length);
+                  } else if (e.key === "Enter" || e.key === "Tab") {
+                    e.preventDefault();
+                    applyQuickReply(slashMatches[slashIndex] ?? slashMatches[0]);
+                  } else if (e.key === "Escape") {
+                    e.preventDefault();
+                    setSlashDismissed(true);
+                  }
+                }}
+                placeholder={
+                  other.id === ADMIN_ID
+                    ? "Escreva uma mensagem para o Admin... (digite / para mensagens rápidas)"
+                    : `Responder ${other.name}... (digite / para mensagens rápidas)`
+                }
+                autoComplete="off"
+              />
+            </div>
             <Button type="submit" size="icon" disabled={!text.trim()}>
               <Send className="h-4 w-4" />
             </Button>
