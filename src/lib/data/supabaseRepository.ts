@@ -875,40 +875,17 @@ class SupabaseRepository implements Repository {
   }
 
   // ============ messages ============
-  private staffInboxConversationIds(conversationId: string): string[] {
-    const parts = conversationId.split("__").filter(Boolean);
-    const nonStaffId = parts.find((part) => {
-      const user = this.getUser(part);
-      return user && !this.isStaff(user);
-    });
-    if (!nonStaffId) return [conversationId];
-    const staffIds = this.users.filter((u) => this.isStaff(u)).map((u) => u.id);
-    return Array.from(
-      new Set([
-        conversationId,
-        ...staffIds.map((sid) => this.staffPairId(nonStaffId, sid)),
-      ]),
-    );
-  }
-
-
-  private conversationLookupIds(conversationId: string, staffInbox?: boolean): string[] {
-    if (staffInbox) return this.staffInboxConversationIds(conversationId);
-    const parts = conversationId.split("__").filter(Boolean);
-    const nonStaffId = parts.find((part) => {
-      const user = this.getUser(part);
-      return user && !this.isStaff(user);
-    });
-    const hasAdminContact = parts.some((part) => this.getUser(part)?.type === "admin");
-    if (nonStaffId && hasAdminContact) {
-      const adminIds = this.users.filter((u) => u.type === "admin").map((u) => u.id);
-      return Array.from(new Set([conversationId, ...adminIds.map((id) => this.staffPairId(nonStaffId, id))]));
-    }
+  /**
+   * Cada conversa é estritamente o par (pessoa A, pessoa B).
+   * Nada de caixa unificada da equipe: isso misturava conversas.
+   */
+  private conversationLookupIds(conversationId: string, _staffInbox?: boolean): string[] {
     return [conversationId];
   }
 
   listMessages(conversationId: string, options?: { staffInbox?: boolean }) {
     const ids = this.conversationLookupIds(conversationId, options?.staffInbox);
+
     return this.messages
       .filter((m) => ids.includes(m.conversationId))
       .sort((a, b) => {
