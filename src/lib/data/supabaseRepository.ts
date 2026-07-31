@@ -1225,17 +1225,9 @@ class SupabaseRepository implements Repository {
       }
 
       const validTagIds = uniqueTagIds.filter((tagId) => this.tags.some((t) => t.id === tagId));
-      const { error: deleteError } = await supabase
-        .from("conversation_tags")
-        .delete()
-        .eq("conversation_id", conversationId);
-      if (deleteError) throw deleteError;
-      if (validTagIds.length > 0) {
-        const { error: insertError } = await supabase
-          .from("conversation_tags")
-          .insert(validTagIds.map((tag_id) => ({ conversation_id: conversationId, tag_id })));
-        if (insertError) throw insertError;
-      }
+      const { saveConversationTags } = await import("./tags.functions");
+      await saveConversationTags({ data: { conversationId, tagIds: validTagIds } });
+
     })().catch((error) => {
       this.convTags = prevConv;
       this.notify();
