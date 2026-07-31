@@ -592,15 +592,18 @@ class SupabaseRepository implements Repository {
     }
   }
   private async loadBroadcasts() {
-    const { data } = await supabase
-      .from("broadcast_messages")
-      .select("*")
-      .order("sent_at", { ascending: false });
-    if (data) {
-      this.broadcasts = (data as BroadcastRow[]).map(mapBroadcast);
+    // Histórico de envios também é lido pela server function (RLS de equipe).
+    try {
+      const { listStaffTagData } = await import("./tags.functions");
+      const data = await listStaffTagData();
+      this.convTags = data.convTags;
+      this.broadcasts = (data.broadcasts as BroadcastRow[]).map(mapBroadcast);
       this.persistCache();
+    } catch {
+      // sem permissão: mantém cache atual
     }
   }
+
 
 
   private subscribeRealtime() {
