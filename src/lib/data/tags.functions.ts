@@ -70,8 +70,16 @@ async function requireStaff(key: string): Promise<StaffProfile> {
 }
 
 export const listStaffTagData = createServerFn({ method: "GET" }).handler(async () => {
+  const empty = { convTags: [] as Array<{ conversationId: string; tagId: string }>, broadcasts: [] as BroadcastRecord[] };
   const key = serviceKey();
-  await requireStaff(key);
+  // Leitura opcional: sem sessão válida ou sem permissão de equipe apenas
+  // devolvemos vazio — lançar aqui derruba a página com erro de runtime.
+  try {
+    await requireStaff(key);
+  } catch {
+    return empty;
+  }
+
 
   const [tagsRes, broadcastRes] = await Promise.all([
     fetch(`${EXT_SUPABASE_URL}/rest/v1/conversation_tags?select=conversation_id,tag_id`, {
