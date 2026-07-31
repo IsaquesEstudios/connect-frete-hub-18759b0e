@@ -3,7 +3,6 @@ import { ADMIN_ID, repo, type Message, type User } from "@/lib/data";
 import { useQuickReplies } from "@/lib/chat/useQuickReplies";
 import { useEphemeralVersion, useRepoVersion } from "@/lib/hooks/useRepo";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { LoadingSpinner } from "@/components/ui/loading";
 import {
   AlertDialog,
@@ -704,26 +703,44 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
                   ))}
                 </div>
               )}
-              <Input
+              <textarea
                 value={text}
+                rows={1}
                 onChange={(e) => {
                   setText(e.target.value);
                   setSlashIndex(0);
+                  const el = e.currentTarget;
+                  el.style.height = "auto";
+                  el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
                 }}
                 onKeyDown={(e) => {
-                  if (!slashOpen || slashMatches.length === 0) return;
-                  if (e.key === "ArrowDown") {
+                  if (slashOpen && slashMatches.length > 0) {
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setSlashIndex((i) => (i + 1) % slashMatches.length);
+                      return;
+                    }
+                    if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setSlashIndex((i) => (i - 1 + slashMatches.length) % slashMatches.length);
+                      return;
+                    }
+                    if (e.key === "Enter" || e.key === "Tab") {
+                      e.preventDefault();
+                      applyQuickReply(slashMatches[slashIndex] ?? slashMatches[0]);
+                      return;
+                    }
+                    if (e.key === "Escape") {
+                      e.preventDefault();
+                      setSlashDismissed(true);
+                      return;
+                    }
+                  }
+                  if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    setSlashIndex((i) => (i + 1) % slashMatches.length);
-                  } else if (e.key === "ArrowUp") {
-                    e.preventDefault();
-                    setSlashIndex((i) => (i - 1 + slashMatches.length) % slashMatches.length);
-                  } else if (e.key === "Enter" || e.key === "Tab") {
-                    e.preventDefault();
-                    applyQuickReply(slashMatches[slashIndex] ?? slashMatches[0]);
-                  } else if (e.key === "Escape") {
-                    e.preventDefault();
-                    setSlashDismissed(true);
+                    sendText();
+                    const el = e.currentTarget;
+                    el.style.height = "auto";
                   }
                 }}
                 placeholder={
@@ -732,7 +749,9 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
                     : `Responder ${other.name}... (digite / para mensagens rápidas)`
                 }
                 autoComplete="off"
+                className="flex min-h-9 w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-base leading-6 shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
               />
+
             </div>
             <Button type="submit" size="icon" disabled={!text.trim()}>
               <Send className="h-4 w-4" />
