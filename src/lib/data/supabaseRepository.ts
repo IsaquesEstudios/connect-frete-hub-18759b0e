@@ -1302,23 +1302,25 @@ class SupabaseRepository implements Repository {
     };
     this.broadcasts.unshift(record);
     this.notify();
-    void supabase
-      .from("broadcast_messages")
-      .insert({
-        body,
-        audience: audience.kind,
-        tag_id: audience.kind === "tag" ? audience.tagId : null,
-        recipient_count: recipients.length,
-      })
-      .select("*")
-      .single()
-      .then(({ data }) => {
-        if (data) {
-          const i = this.broadcasts.findIndex((b) => b.id === record.id);
-          if (i >= 0) this.broadcasts[i] = mapBroadcast(data as BroadcastRow);
-          this.notify();
-        }
+    void (async () => {
+      const { recordBroadcast } = await import("./tags.functions");
+      const data = await recordBroadcast({
+        data: {
+          body,
+          audience: audience.kind,
+          tagId: audience.kind === "tag" ? audience.tagId : null,
+          recipientCount: recipients.length,
+        },
       });
+      if (data) {
+        const i = this.broadcasts.findIndex((b) => b.id === record.id);
+        if (i >= 0) this.broadcasts[i] = mapBroadcast(data as BroadcastRow);
+        this.notify();
+      }
+    })().catch((error: unknown) => {
+      reportError("Não foi possível registrar o envio em massa", error);
+    });
+
     return record;
   }
   listBroadcasts() {
