@@ -507,15 +507,19 @@ class SupabaseRepository implements Repository {
     }
   }
   private async loadConvTags() {
-    const { data } = await supabase.from("conversation_tags").select("*");
-    if (data) {
-      this.convTags = (data as { conversation_id: string; tag_id: string }[]).map((c) => ({
-        conversationId: c.conversation_id,
-        tagId: c.tag_id,
-      }));
+    // RLS do banco externo não libera conversation_tags para o cliente:
+    // a leitura passa pela server function com validação de equipe.
+    try {
+      const { listStaffTagData } = await import("./tags.functions");
+      const data = await listStaffTagData();
+      this.convTags = data.convTags;
+      this.broadcasts = (data.broadcasts as BroadcastRow[]).map(mapBroadcast);
       this.persistCache();
+    } catch {
+      // Usuário comum (ou sessão sem permissão): mantém o que já existe em cache.
     }
   }
+
   private async syncMessages() {
     // Skip authenticated server call when there's no session (e.g. /auth route).
     const { data: sessionData } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
@@ -588,15 +592,18 @@ class SupabaseRepository implements Repository {
     }
   }
   private async loadBroadcasts() {
-    const { data } = await supabase
-      .from("broadcast_messages")
-      .select("*")
-      .order("sent_at", { ascending: false });
-    if (data) {
-      this.broadcasts = (data as BroadcastRow[]).map(mapBroadcast);
+    // Histórico de envios também é lido pela server function (RLS de equipe).
+    try {
+      const { listStaffTagData } = await import("./tags.functions");
+      const data = await listStaffTagData();
+      this.convTags = data.convTags;
+      this.broadcasts = (data.broadcasts as BroadcastRow[]).map(mapBroadcast);
       this.persistCache();
+    } catch {
+      // sem permissão: mantém cache atual
     }
   }
+
 
 
   private subscribeRealtime() {
@@ -1035,10 +1042,14 @@ class SupabaseRepository implements Repository {
     );
     this.notify();
     void (async () => {
-      await supabase.from("conversation_tags").delete().eq("conversation_id", conversationId);
-      if (tagConversationId !== conversationId) {
-        await supabase.from("conversation_tags").delete().eq("conversation_id", tagConversationId);
-      }
+      const { clearConversationTags } = await import("./tags.functions");
+      await clearConversationTags({
+        data: {
+          conversationIds:
+            tagConversationId !== conversationId ? [conversationId, tagConversationId] : [conversationId],
+        },
+      }).catch(() => undefined);
+
       const query = supabase.from("messages").delete();
       const { error } = idsToDelete.length > 0 ? await query.in("id", idsToDelete) : await query.eq("conversation_id", conversationId);
       if (error) {
@@ -1187,7 +1198,9 @@ class SupabaseRepository implements Repository {
     this.convTags = this.convTags.filter((c) => c.tagId !== id);
     this.notify();
     void (async () => {
-      await supabase.from("conversation_tags").delete().eq("tag_id", id);
+      const { clearConversationTags } = await import("./tags.functions");
+      await clearConversationTags({ data: { conversationIds: [], tagId: id } });
+
       const { error } = await supabase.from("tags").delete().eq("id", id);
       if (error) {
         this.tags = prevTags;
@@ -1218,17 +1231,9 @@ class SupabaseRepository implements Repository {
       }
 
       const validTagIds = uniqueTagIds.filter((tagId) => this.tags.some((t) => t.id === tagId));
-      const { error: deleteError } = await supabase
-        .from("conversation_tags")
-        .delete()
-        .eq("conversation_id", conversationId);
-      if (deleteError) throw deleteError;
-      if (validTagIds.length > 0) {
-        const { error: insertError } = await supabase
-          .from("conversation_tags")
-          .insert(validTagIds.map((tag_id) => ({ conversation_id: conversationId, tag_id })));
-        if (insertError) throw insertError;
-      }
+      const { saveConversationTags } = await import("./tags.functions");
+      await saveConversationTags({ data: { conversationId, tagIds: validTagIds } });
+
     })().catch((error) => {
       this.convTags = prevConv;
       this.notify();
@@ -1295,23 +1300,25 @@ class SupabaseRepository implements Repository {
     };
     this.broadcasts.unshift(record);
     this.notify();
-    void supabase
-      .from("broadcast_messages")
-      .insert({
-        body,
-        audience: audience.kind,
-        tag_id: audience.kind === "tag" ? audience.tagId : null,
-        recipient_count: recipients.length,
-      })
-      .select("*")
-      .single()
-      .then(({ data }) => {
-        if (data) {
-          const i = this.broadcasts.findIndex((b) => b.id === record.id);
-          if (i >= 0) this.broadcasts[i] = mapBroadcast(data as BroadcastRow);
-          this.notify();
-        }
+    void (async () => {
+      const { recordBroadcast } = await import("./tags.functions");
+      const data = await recordBroadcast({
+        data: {
+          body,
+          audience: audience.kind,
+          tagId: audience.kind === "tag" ? audience.tagId : null,
+          recipientCount: recipients.length,
+        },
       });
+      if (data) {
+        const i = this.broadcasts.findIndex((b) => b.id === record.id);
+        if (i >= 0) this.broadcasts[i] = mapBroadcast(data as BroadcastRow);
+        this.notify();
+      }
+    })().catch((error: unknown) => {
+      reportError("Não foi possível registrar o envio em massa", error);
+    });
+
     return record;
   }
   listBroadcasts() {
