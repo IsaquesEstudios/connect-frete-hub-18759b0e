@@ -120,6 +120,9 @@ export const getExternalUserEmailsForIds = createServerFn({ method: "POST" })
     const ids = Array.from(new Set(data.userIds));
 
     if (!isStaff(currentProfile)) {
+      // Usuários comuns podem ver o email dos perfis que enxergam no app
+      // (o perfil abre com o email visível). Limitamos apenas a perfis
+      // existentes e ativos — sem bloquear conversas legítimas.
       const otherIds = ids.filter((id) => id !== currentProfile.id);
       if (otherIds.length > 0) {
         const encodedIds = otherIds.map(encodeURIComponent).join(",");
@@ -131,11 +134,12 @@ export const getExternalUserEmailsForIds = createServerFn({ method: "POST" })
           throw new Error(`Não foi possível validar perfis. ${await readError(profileRes)}`.trim());
         }
         const profiles = (await profileRes.json()) as ProfileEmailAccess[];
-        const allowed = new Set(profiles.filter(isStaff).map((p) => p.id));
-        const blocked = otherIds.some((id) => !allowed.has(id));
-        if (blocked) throw new Error("Você não tem permissão para ver este email.");
+        const known = new Set(profiles.filter((p) => p.active !== false).map((p) => p.id));
+        // Ignora silenciosamente ids desconhecidos em vez de falhar a tela toda.
+        for (const id of otherIds) if (!known.has(id)) ids.splice(ids.indexOf(id), 1);
       }
     }
+
 
     const entries = await Promise.all(
       ids.map(async (id) => {
