@@ -21,6 +21,7 @@ import { Route as AppMotoristaRouteImport } from './routes/_app/motorista'
 import { Route as AppMetricasRouteImport } from './routes/_app/metricas'
 import { Route as AppMensagensRapidasRouteImport } from './routes/_app/mensagens-rapidas'
 import { Route as AppEmpresaRouteImport } from './routes/_app/empresa'
+import { Route as AppDisponibilidadeRouteImport } from './routes/_app/disponibilidade'
 import { Route as AppConfiguracoesRouteImport } from './routes/_app/configuracoes'
 import { Route as AppColaboradorRouteImport } from './routes/_app/colaborador'
 import { Route as AppAdminRouteImport } from './routes/_app/admin'
@@ -84,6 +85,11 @@ const AppEmpresaRoute = AppEmpresaRouteImport.update({
   path: '/empresa',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppDisponibilidadeRoute = AppDisponibilidadeRouteImport.update({
+  id: '/disponibilidade',
+  path: '/disponibilidade',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppConfiguracoesRoute = AppConfiguracoesRouteImport.update({
   id: '/configuracoes',
   path: '/configuracoes',
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AppAdminRoute
   '/colaborador': typeof AppColaboradorRoute
   '/configuracoes': typeof AppConfiguracoesRoute
+  '/disponibilidade': typeof AppDisponibilidadeRoute
   '/empresa': typeof AppEmpresaRoute
   '/mensagens-rapidas': typeof AppMensagensRapidasRoute
   '/metricas': typeof AppMetricasRoute
@@ -123,6 +130,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AppAdminRoute
   '/colaborador': typeof AppColaboradorRoute
   '/configuracoes': typeof AppConfiguracoesRoute
+  '/disponibilidade': typeof AppDisponibilidadeRoute
   '/empresa': typeof AppEmpresaRoute
   '/mensagens-rapidas': typeof AppMensagensRapidasRoute
   '/metricas': typeof AppMetricasRoute
@@ -141,6 +149,7 @@ export interface FileRoutesById {
   '/_app/admin': typeof AppAdminRoute
   '/_app/colaborador': typeof AppColaboradorRoute
   '/_app/configuracoes': typeof AppConfiguracoesRoute
+  '/_app/disponibilidade': typeof AppDisponibilidadeRoute
   '/_app/empresa': typeof AppEmpresaRoute
   '/_app/mensagens-rapidas': typeof AppMensagensRapidasRoute
   '/_app/metricas': typeof AppMetricasRoute
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/colaborador'
     | '/configuracoes'
+    | '/disponibilidade'
     | '/empresa'
     | '/mensagens-rapidas'
     | '/metricas'
@@ -175,6 +185,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/colaborador'
     | '/configuracoes'
+    | '/disponibilidade'
     | '/empresa'
     | '/mensagens-rapidas'
     | '/metricas'
@@ -192,6 +203,7 @@ export interface FileRouteTypes {
     | '/_app/admin'
     | '/_app/colaborador'
     | '/_app/configuracoes'
+    | '/_app/disponibilidade'
     | '/_app/empresa'
     | '/_app/mensagens-rapidas'
     | '/_app/metricas'
@@ -297,6 +309,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEmpresaRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/_app/disponibilidade': {
+      id: '/_app/disponibilidade'
+      path: '/disponibilidade'
+      fullPath: '/disponibilidade'
+      preLoaderRoute: typeof AppDisponibilidadeRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/_app/configuracoes': {
       id: '/_app/configuracoes'
       path: '/configuracoes'
@@ -325,6 +344,7 @@ interface AppRouteRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
   AppColaboradorRoute: typeof AppColaboradorRoute
   AppConfiguracoesRoute: typeof AppConfiguracoesRoute
+  AppDisponibilidadeRoute: typeof AppDisponibilidadeRoute
   AppEmpresaRoute: typeof AppEmpresaRoute
   AppMensagensRapidasRoute: typeof AppMensagensRapidasRoute
   AppMetricasRoute: typeof AppMetricasRoute
@@ -337,6 +357,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppAdminRoute: AppAdminRoute,
   AppColaboradorRoute: AppColaboradorRoute,
   AppConfiguracoesRoute: AppConfiguracoesRoute,
+  AppDisponibilidadeRoute: AppDisponibilidadeRoute,
   AppEmpresaRoute: AppEmpresaRoute,
   AppMensagensRapidasRoute: AppMensagensRapidasRoute,
   AppMetricasRoute: AppMetricasRoute,
