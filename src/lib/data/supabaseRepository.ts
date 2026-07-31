@@ -1194,7 +1194,9 @@ class SupabaseRepository implements Repository {
     this.convTags = this.convTags.filter((c) => c.tagId !== id);
     this.notify();
     void (async () => {
-      await supabase.from("conversation_tags").delete().eq("tag_id", id);
+      const { clearConversationTags } = await import("./tags.functions");
+      await clearConversationTags({ data: { conversationIds: [], tagId: id } });
+
       const { error } = await supabase.from("tags").delete().eq("id", id);
       if (error) {
         this.tags = prevTags;
