@@ -1,67 +1,44 @@
-## Problema
+# Correções e novas funcionalidades
 
-Toda navegação/retorno à aba dispara `SupabaseRepository.bootstrap()`, que baixa **usuários, tags, tags de conversa, mensagens e broadcasts** antes de renderizar qualquer tela. Como `_app` usa `ssr: false` e o gate espera `repo.isBootstrapped()`, o usuário vê o loading fullscreen a cada visita.
+Agrupei os pedidos em 4 blocos. O bloco 1 é o mais crítico (conversas misturadas).
 
-O TanStack Query já está configurado no projeto (`QueryClientProvider` no root, `queryClient` no contexto do router), mas o repo em memória não é integrado a ele — nada é cacheado entre navegações.
+## 1. Chat: privacidade, entrega e leitura
 
-## Objetivo
+**Conversas misturadas (crítico).** Hoje o painel de staff agrupa deliberadamente as conversas: quando um usuário fala com o admin, o sistema junta as mensagens de *todos* os admins/colaboradores numa mesma thread. Por isso "FETR x SV" aparece misturado com o admin.
 
-Tornar a navegação instantânea usando cache do TanStack Query, mantendo o chat sempre atualizado via realtime (comportamento atual preservado).
+Correção: cada conversa passa a ser estritamente o par (pessoa A, pessoa B). Removo o agrupamento por "caixa de staff":
+- `conversationLookupIds` e `staffInboxConversationIds` deixam de expandir para outros staff — a thread só lê o próprio `conversation_id` do par.
+- A lista lateral do painel de staff passa a listar uma linha por par real, não por usuário.
+- Leitura/exclusão/contagem passam a usar o mesmo par.
 
-## Estratégia
+**Bolinha verde com contador.** Restaurar o badge de não lidas por conversa na lista lateral (staff e usuário), alimentado pelo contador por par.
 
-Envolver as leituras do repositório em queries do TanStack Query com `staleTime` alto para dados frios (usuários, tags, broadcasts, links da landing) e `staleTime: 0` para o chat (mensagens/presença), sem reescrever o repositório.
+**"Visualizado" antes de ler.** Hoje a conversa é marcada como lida ao ser montada/selecionada. Passa a marcar como lida só quando a janela está em foco e a conversa está aberta e visível (com pequeno atraso), não ao apenas carregar a lista.
 
-### 1. Bootstrap incremental (mudança pequena e cirúrgica em `supabaseRepository.ts`)
+**Demora na entrega.** Reduzir a latência: enviar pelo canal direto e aplicar a mensagem recebida via Realtime imediatamente na thread aberta (sem esperar o próximo ciclo de sincronização), com refetch de segurança curto.
 
-- Separar `bootstrap()` em `bootstrapCore()` (só sessão + realtime, muito rápido) e loaders individuais idempotentes (`ensureUsers`, `ensureTags`, `ensureConvTags`, `ensureMessages`, `ensureBroadcasts`) que retornam promessas cacheadas — se já carregou, resolvem imediatamente.
-- `isBootstrapped()` passa a refletir apenas o core (sessão + realtime pronto), não os dados. Assim `_app/route.tsx` não trava mais na tela cheia esperando datasets.
-- Manter `subscribe()` intacto para realtime continuar invalidando.
+## 2. Colaboradores
 
-### 2. Camada de queries (novo arquivo `src/lib/data/queries.ts`)
+- Ao criar colaborador: escolher CPF ou CNPJ, com máscara e validação, salvo no perfil.
+- Bloquear/desbloquear: um único aviso (toast com id fixo, sem duplicar) e bloqueio do botão por 10 segundos após a ação.
 
-Expor `queryOptions` para cada dataset, chamando os `ensure*` do repo:
+## 3. Usuários / filtros / exportação
 
-```
-usersQuery       -> staleTime 5min, gcTime 30min
-tagsQuery        -> staleTime 5min
-convTagsQuery    -> staleTime 5min
-broadcastsQuery  -> staleTime 5min
-appSettingsQuery -> staleTime 10min (landing)
-messagesQuery(conversationId) -> staleTime 0 (chat sempre fresco)
-```
+- Filtro de etiquetas na página de Usuários passa a ler a lista completa de etiquetas do banco (hoje só enxerga as usadas no cache carregado), incluindo etiquetas novas.
+- Exportar (CSV / Excel / Word) passa a exportar exatamente as linhas visíveis: filtros ativos + ordenação atual.
 
-Um pequeno hook `useRepoInvalidator()` assina `repo.subscribe()` uma vez no root e chama `queryClient.invalidateQueries()` nos keys afetados quando o realtime dispara — mantendo o fluxo atual de atualização automática, mas agora o React Query decide o refetch e serve cache instantâneo enquanto isso.
+## 4. Perfil, site e nova página
 
-### 3. Consumo nas telas (mínimo invasivo)
+- **Peso do motorista**: rótulo vira "Peso suportado (em kg)" nos formulários, perfil, edição do admin e relatórios.
+- **Rodapé do site**: bloco de redes sociais na landing page (links configuráveis nas Configurações do admin).
+- **Cargas na página inicial**: seção com os três links externos — Cargas ativas, Cargas inativas e Buscar fretes (freteemtemporeal.com.br).
+- **Nova página "Disponibilidade"**: lista pública/interna com dois tipos de registro que o admin cadastra, edita e remove:
+  - *Motorista disponível*: várias origens (cidade/UF) + destino em texto livre.
+  - *Frete disponível*: rota (UF x UF), peso, tipo de carroceria, eixos e observações.
+  - Publicação com data, status ativo/inativo e ordenação por mais recente.
 
-- `_app/route.tsx`: remover o gate de `repo.isBootstrapped()` para dados; manter só o gate de auth. A UI aparece imediatamente com dados cacheados; loaders locais (skeleton) cobrem o primeiro fetch.
-- `UserChatPanel`, `admin.tsx`, `usuarios.tsx`, `metricas.tsx`, landing: trocar `useRepoVersion()` por `useSuspenseQuery(usersQuery)` / `useQuery(...)` conforme o dado.
-- `ChatWindow` continua usando `useRepoVersion` + realtime (mensagens são realtime puro, cache não ajuda aqui — mas o histórico inicial da conversa passa por `messagesQuery` para reidratar entre navegações).
+## Detalhes técnicos
 
-### 4. Cache entre sessões (opcional, ligado por padrão)
-
-Adicionar `persistQueryClient` do `@tanstack/react-query-persist-client` com `localStorage` (chave versionada com `APP_VERSION` do cache-buster existente). Assim, ao voltar depois de horas, a UI aparece com o snapshot anterior enquanto revalida em background — comportamento tipo WhatsApp Web.
-
-## Fora de escopo
-
-- Não altero a lógica de envio de mensagem, realtime, RLS, nem o `AdminEditUserDialog`.
-- Não mudo endpoints server-side nem o schema do banco.
-- Não mexo em `client.ts` (auto-gerado).
-
-## Arquivos afetados
-
-- `src/lib/data/supabaseRepository.ts` (refactor bootstrap → ensure\*)
-- `src/lib/data/queries.ts` (novo)
-- `src/lib/hooks/useRepo.ts` (adiciona `useRepoInvalidator`)
-- `src/routes/__root.tsx` (montar invalidator + persister)
-- `src/routes/_app/route.tsx` (remover gate de dados)
-- `src/components/chat/UserChatPanel.tsx`, `src/routes/_app/admin.tsx`, `usuarios.tsx`, `metricas.tsx`, `src/routes/index.tsx` (trocar `useRepoVersion` por queries onde faz sentido)
-- `package.json`: adicionar `@tanstack/react-query-persist-client` se aprovar a etapa 4
-
-## Resultado esperado
-
-- Primeira visita: igual à atual.
-- Navegação entre telas: **instantânea** (cache).
-- Voltar à aba depois de minutos: UI aparece na hora, com revalidação silenciosa.
-- Chat: mensagens continuam chegando em tempo real (sem regressão).
+- Banco: nova tabela `disponibilidades` (tipo, payload dos campos, ativo, created_at) com RLS — leitura para autenticados, escrita apenas para staff; GRANTs incluídos.
+- Links de redes sociais reaproveitam `app_settings` (mesmo mecanismo dos links de WhatsApp).
+- A mudança de identidade de conversa não altera dados existentes: as linhas de `messages` já guardam o par correto em `conversation_id`; apenas a leitura deixa de agregar.
