@@ -32,6 +32,7 @@ import {
   setColaboradorActive,
 } from "@/lib/auth/session";
 import type { User } from "@/lib/data";
+import { docDigitsValid, docPlaceholder, formatDoc, type DocTipo } from "@/lib/format-doc";
 
 export function CollaboratorsDialog() {
   const [open, setOpen] = useState(false);
@@ -41,7 +42,10 @@ export function CollaboratorsDialog() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [docTipo, setDocTipo] = useState<DocTipo>("cpf");
+  const [documento, setDocumento] = useState("");
   const [saving, setSaving] = useState(false);
+  const [cooldown, setCooldown] = useState<Record<string, boolean>>({});
 
   async function refresh() {
     setLoading(true);
@@ -63,13 +67,24 @@ export function CollaboratorsDialog() {
       toast.error("Preencha nome, email e senha (mín. 6 caracteres).");
       return;
     }
+    if (!docDigitsValid(documento, docTipo)) {
+      toast.error(docTipo === "cpf" ? "Informe um CPF válido." : "Informe um CNPJ válido.");
+      return;
+    }
     setSaving(true);
     try {
-      await createColaborador({ name: name.trim(), email: email.trim(), password });
+      await createColaborador({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+        documentoTipo: docTipo,
+        documento: documento.replace(/\D/g, ""),
+      });
       toast.success("Colaborador criado.");
       setName("");
       setEmail("");
       setPassword("");
+      setDocumento("");
       setShowCreate(false);
       await refresh();
     } catch (e) {
@@ -80,15 +95,21 @@ export function CollaboratorsDialog() {
   }
 
   async function toggleActive(u: User, active: boolean) {
+    if (cooldown[u.id]) return;
     // otimista: atualiza o switch imediatamente
     setList((prev) => prev.map((x) => (x.id === u.id ? { ...x, active } : x)));
+    setCooldown((prev) => ({ ...prev, [u.id]: true }));
+    window.setTimeout(() => setCooldown((prev) => ({ ...prev, [u.id]: false })), 10000);
     try {
       await setColaboradorActive(u.id, active);
-      toast.success(active ? "Colaborador ativado" : "Colaborador desativado");
+      // aviso único por colaborador (id fixo evita duplicações)
+      toast.success(active ? "Colaborador ativado" : "Colaborador desativado", {
+        id: `colab-active-${u.id}`,
+      });
     } catch (e) {
       // reverte em caso de falha
       setList((prev) => prev.map((x) => (x.id === u.id ? { ...x, active: !active } : x)));
-      toast.error((e as Error).message);
+      toast.error((e as Error).message, { id: `colab-active-${u.id}` });
     }
   }
 
@@ -132,6 +153,29 @@ export function CollaboratorsDialog() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="colaborador@empresa.com"
               />
+            </div>
+            <div>
+              <Label>Documento</Label>
+              <div className="flex gap-2">
+                <select
+                  className="h-10 rounded-md border border-input bg-background px-2 text-sm"
+                  value={docTipo}
+                  onChange={(e) => {
+                    setDocTipo(e.target.value as DocTipo);
+                    setDocumento("");
+                  }}
+                >
+                  <option value="cpf">CPF</option>
+                  <option value="cnpj">CNPJ</option>
+                </select>
+                <Input
+                  className="flex-1"
+                  value={documento}
+                  onChange={(e) => setDocumento(formatDoc(e.target.value, docTipo))}
+                  placeholder={docPlaceholder(docTipo)}
+                  inputMode="numeric"
+                />
+              </div>
             </div>
             <div>
               <Label>Senha</Label>
@@ -180,6 +224,7 @@ export function CollaboratorsDialog() {
                         <Power className={`h-3.5 w-3.5 ${active ? "text-emerald-600" : "text-muted-foreground"}`} />
                         <Switch
                           checked={active}
+                          disabled={!!cooldown[u.id]}
                           onCheckedChange={(v) => toggleActive(u, v)}
                         />
                       </div>

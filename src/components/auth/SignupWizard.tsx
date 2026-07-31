@@ -849,7 +849,7 @@ function StepCarroceria({ data, update }: StepProps) {
         groups={CARROCERIAS}
         placeholder="Selecione a carroceria"
       />
-      <Field required label="Peso (kg)">
+      <Field required label="Peso suportado (em kg)">
         <Input
           value={data.peso ? `${Number(data.peso.replace(/\D/g, "")).toLocaleString("pt-BR")} kg` : ""}
           onChange={(e) => {

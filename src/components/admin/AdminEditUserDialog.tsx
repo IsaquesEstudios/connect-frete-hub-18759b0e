@@ -258,7 +258,7 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
                 <Field label="Tipo de carroceria"><Input value={form.carroceria || ""} onChange={(e) => set("carroceria", e.target.value)} /></Field>
                 <Field label="Observação do veículo"><Input value={form.tipoVeiculoObs || ""} onChange={(e) => set("tipoVeiculoObs", e.target.value)} placeholder="Ex.: 2 eixos, ano 2020" /></Field>
                 <Field label="Observação da carroceria"><Input value={form.carroceriaObs || ""} onChange={(e) => set("carroceriaObs", e.target.value)} /></Field>
-                <Field label="Peso (kg)" className="md:col-span-2"><Input value={form.peso || ""} onChange={(e) => set("peso", e.target.value)} /></Field>
+                <Field label="Peso suportado (em kg)" className="md:col-span-2"><Input value={form.peso || ""} onChange={(e) => set("peso", e.target.value)} /></Field>
               </>
             )}
           </div>

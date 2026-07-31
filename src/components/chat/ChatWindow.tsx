@@ -126,7 +126,9 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
   // IDs (UUIDs) dos usuários. O admin vê a caixa unificada com todas as
   // mensagens trocadas entre a equipe e o usuário.
   const conversationId = [me.id, other.id].sort().join("__");
-  const useStaffInbox = sharedInbox ?? viewer === "admin";
+  // Conversa é sempre estritamente entre duas pessoas.
+  void sharedInbox;
+  const useStaffInbox = false;
 
 
   // Feedback visual ao trocar de conversa
@@ -168,8 +170,14 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
     };
   }, [other.id, other.email, me.id, me.email]);
 
+  // Só marca como lida quando a conversa está realmente visível e em foco.
   useEffect(() => {
-    repo.markConversationRead(conversationId, viewer, { staffInbox: useStaffInbox });
+    if (typeof document === "undefined") return;
+    if (document.visibilityState !== "visible" || !document.hasFocus()) return;
+    const t = window.setTimeout(() => {
+      repo.markConversationRead(conversationId, viewer, { staffInbox: useStaffInbox });
+    }, 700);
+    return () => window.clearTimeout(t);
   }, [conversationId, viewer, useStaffInbox, v, messages.length]);
 
   useEffect(() => {
@@ -182,17 +190,22 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
       });
     };
     refresh();
-    const interval = window.setInterval(refresh, 3000);
+    const interval = window.setInterval(refresh, 1200);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
     window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       window.clearInterval(interval);
       window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [conversationId]);
 
   useEffect(() => {
     const onVis = () => {
-      if (document.visibilityState === "visible") {
+      if (document.visibilityState === "visible" && document.hasFocus()) {
         repo.markConversationRead(conversationId, viewer, { staffInbox: useStaffInbox });
       }
     };
@@ -482,7 +495,7 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
                 {other.carroceria && (
                   <ProfileField label="Tipo de carroceria" value={other.carroceria} />
                 )}
-                {other.peso && <ProfileField label="Peso" value={other.peso} />}
+                {other.peso && <ProfileField label="Peso suportado (kg)" value={other.peso} />}
                 {other.rntrc && <ProfileField label="RNTRC" value={other.rntrc} />}
               </>
             )}
