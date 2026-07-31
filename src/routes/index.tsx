@@ -1,6 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowRight, MessageCircle, Radio, ShieldCheck, Truck } from "lucide-react";
+import { ArrowRight, Facebook, Instagram, MessageCircle, Package, PackageSearch, Radio, ShieldCheck, Truck } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { WHATSAPP_MOTORISTAS, WHATSAPP_EMPRESAS } from "@/lib/whatsapp-groups";
 import { getWhatsappLinks } from "@/lib/data/app-settings.functions";
@@ -125,6 +125,36 @@ function LandingPage() {
 
 
 
+        {/* Fretes */}
+        <section className="mx-auto max-w-6xl px-6 pb-16">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-white">Procure fretes</h2>
+            <p className="mt-3 text-slate-400 max-w-xl mx-auto">
+              Acompanhe as cargas disponíveis em tempo real.
+            </p>
+          </div>
+          <div className="grid gap-6 md:grid-cols-3">
+            <FreteCard
+              icon={<PackageSearch className="h-6 w-6" />}
+              title="Buscar fretes"
+              description="Painel completo de fretes em tempo real."
+              href="https://freteemtemporeal.com.br/fretes"
+            />
+            <FreteCard
+              icon={<Package className="h-6 w-6" />}
+              title="Cargas ativas"
+              description="Cargas com status ativo disponíveis agora."
+              href="https://freteemtemporeal.com.br/index.php?page1=fretes&statusFilter=active"
+            />
+            <FreteCard
+              icon={<Package className="h-6 w-6" />}
+              title="Cargas inativas"
+              description="Cargas inativas (origem PR) para consulta."
+              href="https://freteemtemporeal.com.br/index.php?page1=fretes&statusFilter=inactive&estadoOrigem=PR"
+            />
+          </div>
+        </section>
+
         {/* Comunidades WhatsApp */}
         <section id="comunidades" className="mx-auto max-w-6xl px-6 pb-24">
           <div className="text-center mb-10">
@@ -158,11 +188,40 @@ function LandingPage() {
         </section>
 
         <footer className="border-t border-white/5 py-8">
-          <div className="mx-auto max-w-6xl px-6 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+          <div className="mx-auto max-w-6xl px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500">
             <span>© {new Date().getFullYear()} SV Logística. Todos os direitos reservados.</span>
-            <Link to="/auth" className="hover:text-slate-300 transition">
-              Área do usuário
-            </Link>
+            <div className="flex items-center gap-4">
+              <a
+                href="https://www.instagram.com/svlogisticatransportes"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Instagram da SV Logística"
+                className="inline-flex items-center gap-1.5 hover:text-slate-200 transition"
+              >
+                <Instagram className="h-4 w-4" /> Instagram
+              </a>
+              <a
+                href="https://www.facebook.com/svlogisticatransportes"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Facebook da SV Logística"
+                className="inline-flex items-center gap-1.5 hover:text-slate-200 transition"
+              >
+                <Facebook className="h-4 w-4" /> Facebook
+              </a>
+              <a
+                href={links.motoristas}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="WhatsApp da SV Logística"
+                className="inline-flex items-center gap-1.5 hover:text-slate-200 transition"
+              >
+                <MessageCircle className="h-4 w-4" /> WhatsApp
+              </a>
+              <Link to="/auth" className="hover:text-slate-300 transition">
+                Área do usuário
+              </Link>
+            </div>
           </div>
         </footer>
       </div>
@@ -255,3 +314,32 @@ function SignupShortcut({
   );
 }
 
+function FreteCard({
+  icon,
+  title,
+  description,
+  href,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  href: string;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur transition hover:border-sky-400/40 hover:bg-white/[0.06]"
+    >
+      <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl ring-1 ring-sky-400/40 bg-sky-500/20 text-sky-300">
+        {icon}
+      </div>
+      <h3 className="mt-4 text-lg font-semibold text-white">{title}</h3>
+      <p className="mt-2 text-sm text-slate-300">{description}</p>
+      <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-sky-300 group-hover:text-sky-200">
+        Acessar <ArrowRight className="h-4 w-4" />
+      </span>
+    </a>
+  );
+}
