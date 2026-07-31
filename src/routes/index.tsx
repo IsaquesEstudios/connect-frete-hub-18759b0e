@@ -1,11 +1,9 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowRight, Facebook, Instagram, MessageCircle, Package, PackageSearch, Radio, ShieldCheck, Truck } from "lucide-react";
+import { ArrowRight, Facebook, Instagram, MessageCircle, Package, PackageSearch, Radio, ShieldCheck, Truck, Youtube, Globe } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { WHATSAPP_MOTORISTAS, WHATSAPP_EMPRESAS } from "@/lib/whatsapp-groups";
-import { getWhatsappLinks } from "@/lib/data/app-settings.functions";
-
-
+import { getWhatsappLinks, getSocialLinks, type SocialLinks } from "@/lib/data/app-settings.functions";
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -31,13 +29,19 @@ export const Route = createFileRoute("/")({
 
 function LandingPage() {
   const [links, setLinks] = useState({ motoristas: WHATSAPP_MOTORISTAS, empresas: WHATSAPP_EMPRESAS });
+  const [social, setSocial] = useState<SocialLinks>({
+    website: "https://svlogisticatransportes.com.br",
+    instagram: "https://www.instagram.com/svlogisticatransportes",
+    facebook: "https://www.facebook.com/svlogisticatransportes",
+    threads: "https://www.threads.com/svlogisticatransportes",
+    youtube: "https://www.youtube.com/@svlogisticatransportes",
+    tiktok: "https://www.tiktok.com/@svlogisticatransportes",
+  });
 
   useEffect(() => {
     getWhatsappLinks().then(setLinks).catch(() => {});
+    getSocialLinks().then(setSocial).catch(() => {});
   }, []);
-
-
-
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#050b1a] text-slate-100">
@@ -122,9 +126,6 @@ function LandingPage() {
           </div>
         </section>
 
-
-
-
         {/* Fretes */}
         <section className="mx-auto max-w-6xl px-6 pb-16">
           <div className="text-center mb-8">
@@ -190,34 +191,14 @@ function LandingPage() {
         <footer className="border-t border-white/5 py-8">
           <div className="mx-auto max-w-6xl px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500">
             <span>© {new Date().getFullYear()} SV Logística. Todos os direitos reservados.</span>
-            <div className="flex items-center gap-4">
-              <a
-                href="https://www.instagram.com/svlogisticatransportes"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Instagram da SV Logística"
-                className="inline-flex items-center gap-1.5 hover:text-slate-200 transition"
-              >
-                <Instagram className="h-4 w-4" /> Instagram
-              </a>
-              <a
-                href="https://www.facebook.com/svlogisticatransportes"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Facebook da SV Logística"
-                className="inline-flex items-center gap-1.5 hover:text-slate-200 transition"
-              >
-                <Facebook className="h-4 w-4" /> Facebook
-              </a>
-              <a
-                href={links.motoristas}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="WhatsApp da SV Logística"
-                className="inline-flex items-center gap-1.5 hover:text-slate-200 transition"
-              >
-                <MessageCircle className="h-4 w-4" /> WhatsApp
-              </a>
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <SocialLink href={social.website} label="Site da SV Logística" icon={<Globe className="h-4 w-4" />} text="Site" />
+              <SocialLink href={social.instagram} label="Instagram da SV Logística" icon={<Instagram className="h-4 w-4" />} text="Instagram" />
+              <SocialLink href={social.facebook} label="Facebook da SV Logística" icon={<Facebook className="h-4 w-4" />} text="Facebook" />
+              <SocialLink href={social.threads} label="Threads da SV Logística" icon={<ThreadsIcon className="h-4 w-4" />} text="Threads" />
+              <SocialLink href={social.youtube} label="YouTube da SV Logística" icon={<Youtube className="h-4 w-4" />} text="YouTube" />
+              <SocialLink href={social.tiktok} label="TikTok da SV Logística" icon={<TikTokIcon className="h-4 w-4" />} text="TikTok" />
+              <SocialLink href={links.motoristas} label="WhatsApp da SV Logística" icon={<MessageCircle className="h-4 w-4" />} text="WhatsApp" />
               <Link to="/auth" className="hover:text-slate-300 transition">
                 Área do usuário
               </Link>
@@ -226,6 +207,46 @@ function LandingPage() {
         </footer>
       </div>
     </div>
+  );
+}
+
+function SocialLink({
+  href,
+  label,
+  icon,
+  text,
+}: {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+  text: string;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={label}
+      className="inline-flex items-center gap-1.5 hover:text-slate-200 transition"
+    >
+      {icon} {text}
+    </a>
+  );
+}
+
+function ThreadsIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12.186 24h-.007c-3.792-.017-6.631-1.184-8.442-3.476C1.93 18.232.99 14.9.948 10.69v-.017c.042-4.21.982-7.542 2.789-9.665C5.55 1.184 8.39.017 12.183 0h.007c3.792.017 6.631 1.184 8.442 3.476 1.807 2.123 2.747 5.455 2.789 9.665v.017c-.042 4.21-.982 7.542-2.789 9.665-1.811 2.292-4.65 3.459-8.442 3.476Zm-.007-22.046C9.234 1.963 6.86 2.83 5.387 4.526 3.846 6.298 3.014 9.253 2.975 13.02c.039 3.767.871 6.722 2.412 8.494 1.473 1.696 3.847 2.563 6.792 2.572 2.945-.009 5.319-.876 6.792-2.572 1.541-1.772 2.373-4.727 2.412-8.494-.039-3.767-.871-6.722-2.412-8.494C17.397 2.83 15.023 1.963 12.18 1.954Zm.014 17.798c-3.62 0-5.627-2.628-5.627-5.764 0-3.135 2.007-5.763 5.627-5.763 1.51 0 2.6.505 3.26 1.07.66.564.967 1.156.967 1.156l-1.46 1.017s-.46-.79-1.38-1.135c-.46-.183-1.01-.243-1.38-.243-1.87 0-3.42 1.342-3.42 3.898s1.55 3.898 3.42 3.898c.37 0 .92-.06 1.38-.243.92-.346 1.38-1.135 1.38-1.135l1.46 1.017s-.307.592-.967 1.156c-.66.565-1.75 1.07-3.26 1.07Z" />
+    </svg>
+  );
+}
+
+function TikTokIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.37v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298.003.594.05.88.14V9.4a6.33 6.33 0 0 0-1-.05A6.34 6.34 0 0 0 5 20.1a6.34 6.34 0 0 0 10.6-4.43V8.66a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-.78-.09Z" />
+    </svg>
   );
 }
 
