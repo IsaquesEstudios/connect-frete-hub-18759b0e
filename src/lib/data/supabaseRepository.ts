@@ -507,15 +507,19 @@ class SupabaseRepository implements Repository {
     }
   }
   private async loadConvTags() {
-    const { data } = await supabase.from("conversation_tags").select("*");
-    if (data) {
-      this.convTags = (data as { conversation_id: string; tag_id: string }[]).map((c) => ({
-        conversationId: c.conversation_id,
-        tagId: c.tag_id,
-      }));
+    // RLS do banco externo não libera conversation_tags para o cliente:
+    // a leitura passa pela server function com validação de equipe.
+    try {
+      const { listStaffTagData } = await import("./tags.functions");
+      const data = await listStaffTagData();
+      this.convTags = data.convTags;
+      this.broadcasts = (data.broadcasts as BroadcastRow[]).map(mapBroadcast);
       this.persistCache();
+    } catch {
+      // Usuário comum (ou sessão sem permissão): mantém o que já existe em cache.
     }
   }
+
   private async syncMessages() {
     // Skip authenticated server call when there's no session (e.g. /auth route).
     const { data: sessionData } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
