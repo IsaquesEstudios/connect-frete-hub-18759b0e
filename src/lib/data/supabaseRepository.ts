@@ -1077,26 +1077,23 @@ class SupabaseRepository implements Repository {
 
   listConversations(options?: { staffId?: string }) {
     const staffId = options?.staffId;
-    // Admin: caixa unificada com os usuários (sem a equipe).
-    // Colaborador: usuários + o administrador (para falar com ele), menos ele mesmo.
-    const nonStaff = this.users.filter((u) => {
+    // Cada membro da equipe vê SOMENTE as próprias conversas (par a par).
+    const contacts = this.users.filter((u) => {
       if (u.id === staffId) return false;
       if (u.type === "admin" || u.id === this.adminAuthId) return !!staffId && u.active !== false;
       return true;
     });
 
-    return nonStaff
+    return contacts
       .map((user) => {
+        const pairId = staffId ? this.staffPairId(staffId, user.id) : null;
         const conv = this.messages.filter((m) => {
-          const involvesUser = m.fromUserId === user.id || m.toUserId === user.id;
-          if (!involvesUser) return false;
-          // Colaboradores veem apenas a própria conversa com cada usuário.
-          if (!staffId) return true;
-          return m.fromUserId === staffId || m.toUserId === staffId;
+          if (pairId) return m.conversationId === pairId;
+          return m.fromUserId === user.id || m.toUserId === user.id;
         });
         const lastMessage = [...conv].sort((a, b) => b.createdAt - a.createdAt)[0];
         const unreadForAdmin = conv.filter(
-          (m) => this.isStaff(this.getUser(m.toUserId)) && !m.readByAdmin,
+          (m) => (staffId ? m.toUserId === staffId : this.isStaff(this.getUser(m.toUserId))) && !m.readByAdmin,
         ).length;
         const tagIds = this.convTags
           .filter((c) => c.conversationId === user.number)
@@ -1105,6 +1102,7 @@ class SupabaseRepository implements Repository {
       })
       .sort((a, b) => (b.lastMessage?.createdAt ?? 0) - (a.lastMessage?.createdAt ?? 0));
   }
+
 
 
   // ============ tags ============
