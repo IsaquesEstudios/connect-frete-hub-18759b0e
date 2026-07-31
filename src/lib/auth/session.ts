@@ -237,7 +237,13 @@ export async function listColaboradores(): Promise<User[]> {
   return (data ?? []).map((r: unknown) => profileToUser(r as Parameters<typeof profileToUser>[0]));
 }
 
-export async function createColaborador(input: { name: string; email: string; password: string }): Promise<void> {
+export async function createColaborador(input: {
+  name: string;
+  email: string;
+  password: string;
+  documentoTipo?: "cpf" | "cnpj";
+  documento?: string;
+}): Promise<void> {
   // Preserve current admin session — signUp replaces it with the new user's session.
   const adminSession = await getSessionSafely();
   const adminUser = cachedUser;
@@ -266,7 +272,8 @@ export async function createColaborador(input: { name: string; email: string; pa
     type: "colaborador",
     name: input.name,
     // email vive em auth.users
-
+    cpf: input.documentoTipo === "cpf" ? input.documento || null : null,
+    cnpj: input.documentoTipo === "cnpj" ? input.documento || null : null,
     active: true,
   });
 
