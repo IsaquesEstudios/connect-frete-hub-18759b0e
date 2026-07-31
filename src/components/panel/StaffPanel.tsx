@@ -72,11 +72,11 @@ export function StaffPanel({ role }: { role: "admin" | "colaborador" }) {
   const [unreadOnly, setUnreadOnly] = useState(false);
   const { pinned, isPinned, toggle: togglePin, max: maxPinned } = usePinnedConversations(user?.id ?? "anon");
 
-  // Admin vê a caixa unificada da equipe; colaborador vê apenas as conversas dele.
+  // Cada membro da equipe (admin ou colaborador) vê SOMENTE as próprias conversas.
   const isAdmin = user?.type === "admin";
   const conversations = useMemo(
-    () => repo.listConversations(isAdmin ? undefined : { staffId: user?.id }),
-    [v, isAdmin, user?.id],
+    () => repo.listConversations({ staffId: user?.id }),
+    [v, user?.id],
   );
   const allTags = useMemo(() => repo.listTags(), [v]);
   const tagsById = useMemo(
@@ -411,7 +411,7 @@ export function StaffPanel({ role }: { role: "admin" | "colaborador" }) {
                 </AlertDialog>
               </div>
               <div className="flex-1 min-h-0">
-                <ChatWindow me={user} other={selectedUser} viewer="admin" sharedInbox={isAdmin} />
+                <ChatWindow me={user} other={selectedUser} viewer="admin" sharedInbox={false} />
               </div>
             </>
           ) : (
