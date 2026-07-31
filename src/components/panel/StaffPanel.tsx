@@ -73,7 +73,7 @@ export function StaffPanel({ role }: { role: "admin" | "colaborador" }) {
   const { pinned, isPinned, toggle: togglePin, max: maxPinned } = usePinnedConversations(user?.id ?? "anon");
 
   // Cada membro da equipe (admin ou colaborador) vê SOMENTE as próprias conversas.
-  const isAdmin = user?.type === "admin";
+
   const conversations = useMemo(
     () => repo.listConversations({ staffId: user?.id }),
     [v, user?.id],
