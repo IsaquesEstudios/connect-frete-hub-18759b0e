@@ -281,7 +281,7 @@ function ProfilePage() {
                 <Editable label="RNTRC" value={form.rntrc} onChange={(value) => update("rntrc", value)} />
                 <Editable label="Tipo de veículo" value={form.tipoVeiculo} onChange={(value) => update("tipoVeiculo", value)} />
                 <Editable label="Tipo de carroceria" value={form.carroceria} onChange={(value) => update("carroceria", value)} />
-                <Editable label="Peso (kg)" value={form.peso} onChange={(value) => update("peso", value)} />
+                <Editable label="Peso suportado (em kg)" value={form.peso} onChange={(value) => update("peso", value)} />
                 <div className="space-y-2 md:col-span-2">
                   <Label>Site / Redes sociais</Label>
                   <Textarea
