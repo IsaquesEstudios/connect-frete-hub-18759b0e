@@ -10,6 +10,15 @@ import { EXT_SUPABASE_URL } from "@/integrations/supabase/external-config";
 
 type StaffProfile = { id: string; type: string; active: boolean | null };
 
+export type BroadcastRecord = {
+  id: string;
+  body: string;
+  audience: string;
+  tag_id: string | null;
+  sent_at: string;
+  recipient_count: number;
+};
+
 function apiHeaders(key: string, bearer?: string): Record<string, string> {
   const headers: Record<string, string> = { apikey: key, "Content-Type": "application/json" };
   const isOpaque = key.startsWith("sb_publishable_") || key.startsWith("sb_secret_");
@@ -78,7 +87,7 @@ export const listStaffTagData = createServerFn({ method: "GET" }).handler(async 
   }
 
   const convTags = (await tagsRes.json()) as Array<{ conversation_id: string; tag_id: string }>;
-  const broadcasts = (await broadcastRes.json()) as Array<Record<string, unknown>>;
+  const broadcasts = (await broadcastRes.json()) as BroadcastRecord[];
   return {
     convTags: convTags.map((c) => ({ conversationId: c.conversation_id, tagId: c.tag_id })),
     broadcasts,
@@ -174,6 +183,6 @@ export const recordBroadcast = createServerFn({ method: "POST" })
       }),
     });
     if (!res.ok) throw new Error(`Não foi possível registrar o envio em massa. ${await readError(res)}`.trim());
-    const rows = (await res.json()) as Array<Record<string, unknown>>;
+    const rows = (await res.json()) as BroadcastRecord[];
     return rows[0] ?? null;
   });
