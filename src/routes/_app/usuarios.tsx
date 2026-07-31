@@ -128,6 +128,7 @@ function UsuariosPage() {
   const ev = useEphemeralVersion();
   const [tab, setTab] = useState<TypeFilter>("todos");
   const [query, setQuery] = useState("");
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [emails, setEmails] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<User | null>(null);
   const [confirmBlock, setConfirmBlock] = useState<User | null>(null);
@@ -214,6 +215,7 @@ function UsuariosPage() {
       const emailForUser = (u.email || emails[u.id] || "").toLowerCase();
       if (u.type === "admin" && emailForUser === "sharlysongomes@gmail.com") return false;
       if (tab !== "todos" && resolveDisplayType(u) !== tab) return false;
+      if (tagFilter && !repo.getConversationTagIds(u.number).includes(tagFilter)) return false;
       if (query) {
         const q = normalizeSearchText(query);
         const qDigits = onlyDigits(query);
@@ -278,7 +280,7 @@ function UsuariosPage() {
       const lb = repo.getLastSeen(b.id) ?? 0;
       return lb - la;
     });
-  }, [users, tab, query, emails, ev, sort, tagsFor]);
+  }, [users, tab, query, emails, ev, sort, tagsFor, tagFilter]);
 
   const SortHeader = ({
     label,
@@ -458,6 +460,37 @@ function UsuariosPage() {
             </TabsList>
           </Tabs>
         </div>
+
+        {allTags.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] text-muted-foreground mr-1">Etiquetas:</span>
+            {allTags.map((t) => {
+              const on = tagFilter === t.id;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setTagFilter((prev) => (prev === t.id ? null : t.id))}
+                  className={`text-[10px] rounded-full px-2 py-0.5 font-medium border transition ${
+                    on ? "text-white" : "text-foreground/70 bg-transparent"
+                  }`}
+                  style={{ borderColor: t.color, backgroundColor: on ? t.color : "transparent" }}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+            {tagFilter && (
+              <button
+                type="button"
+                onClick={() => setTagFilter(null)}
+                className="text-[10px] text-muted-foreground hover:text-foreground underline ml-1"
+              >
+                Limpar
+              </button>
+            )}
+          </div>
+        )}
 
         <section className="mt-4 rounded-lg border bg-card shadow-sm">
           <div className="border-b px-4 py-3 flex items-center justify-between">
