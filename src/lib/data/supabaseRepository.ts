@@ -1042,10 +1042,14 @@ class SupabaseRepository implements Repository {
     );
     this.notify();
     void (async () => {
-      await supabase.from("conversation_tags").delete().eq("conversation_id", conversationId);
-      if (tagConversationId !== conversationId) {
-        await supabase.from("conversation_tags").delete().eq("conversation_id", tagConversationId);
-      }
+      const { clearConversationTags } = await import("./tags.functions");
+      await clearConversationTags({
+        data: {
+          conversationIds:
+            tagConversationId !== conversationId ? [conversationId, tagConversationId] : [conversationId],
+        },
+      }).catch(() => undefined);
+
       const query = supabase.from("messages").delete();
       const { error } = idsToDelete.length > 0 ? await query.in("id", idsToDelete) : await query.eq("conversation_id", conversationId);
       if (error) {
