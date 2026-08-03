@@ -76,11 +76,10 @@ export const saveDisponibilidades = createServerFn({ method: "POST" })
               id: z.string().min(1),
               kind: z.enum(["motorista", "frete"]),
               title: z.string().trim().min(1).max(200),
-              lines: z.array(z.string().trim().max(1000)).max(1000),
+              lines: z.array(z.string().trim().max(2000)),
               createdAt: z.number(),
             }),
-          )
-          .max(300),
+          ),
       })
       .parse(data),
   )
