@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
-import { EXT_SUPABASE_URL } from "@/integrations/supabase/external-config";
+import { EXT_SUPABASE_URL, EXT_SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/external-config";
 
 export const setExternalUserActive = createServerFn({ method: "POST" })
   .inputValidator((data) =>
@@ -41,7 +41,7 @@ export const setExternalUserActive = createServerFn({ method: "POST" })
     if (!token) throw new Error("Sessão inválida. Faça login novamente.");
 
     const userRes = await fetch(`${EXT_SUPABASE_URL}/auth/v1/user`, {
-      headers: { apikey: serviceKey, Authorization: `Bearer ${token}` },
+      headers: { apikey: EXT_SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${token}` },
     });
     if (!userRes.ok) throw new Error("Sessão inválida. Faça login novamente.");
     const authUser = (await userRes.json()) as { id?: string };

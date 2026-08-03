@@ -284,7 +284,7 @@ function CommunityCard({
         <h3 className="mt-4 text-lg font-semibold text-white">{title}</h3>
         <p className="mt-2 text-sm text-slate-300">{description}</p>
         <span className="mt-5 inline-flex items-center gap-1.5 rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-white group-hover:bg-emerald-400 transition">
-          <MessageCircle className="h-4 w-4" /> Entrar no grupo
+          <MessageCircle className="h-4 w-4" /> Entrar na comunidade do WhatsApp
         </span>
       </div>
     </a>
