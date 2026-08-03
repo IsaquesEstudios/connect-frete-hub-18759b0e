@@ -403,7 +403,9 @@ function SuccessScreen({ user, onContinue }: { user: User; onContinue: () => voi
         </p>
       </div>
       <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/5 p-4 text-left">
-        <div className="text-sm font-medium text-white">Entre no grupo de {grupoLabel}</div>
+        <div className="text-sm font-medium text-white">
+          Entre na comunidade do WhatsApp de {grupoLabel}
+        </div>
         <p className="mt-1 text-xs text-slate-400">
           Fique por dentro de oportunidades e novidades no WhatsApp.
         </p>
@@ -413,7 +415,7 @@ function SuccessScreen({ user, onContinue }: { user: User; onContinue: () => voi
           rel="noopener noreferrer"
           className="mt-3 inline-flex items-center justify-center rounded-xl bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-400"
         >
-          Entrar no grupo
+          Entrar na comunidade do WhatsApp
         </a>
       </div>
       <Button type="button" onClick={onContinue} className="w-full">
