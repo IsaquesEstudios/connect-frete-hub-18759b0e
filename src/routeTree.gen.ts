@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as DisponibilidadeRouteImport } from './routes/disponibilidade'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DisponRouteImport } from './routes/_dispon'
 import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DisponibilidadeIndexRouteImport } from './routes/disponibilidade.index'
@@ -28,6 +29,8 @@ import { Route as AppEmpresaRouteImport } from './routes/_app/empresa'
 import { Route as AppConfiguracoesRouteImport } from './routes/_app/configuracoes'
 import { Route as AppColaboradorRouteImport } from './routes/_app/colaborador'
 import { Route as AppAdminRouteImport } from './routes/_app/admin'
+import { Route as DisponMotoristaDisponChar237velRouteImport } from './routes/_dispon.motorista.disponível'
+import { Route as DisponFretesDisponivelRouteImport } from './routes/_dispon.fretes.disponivel'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -42,6 +45,10 @@ const DisponibilidadeRoute = DisponibilidadeRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DisponRoute = DisponRouteImport.update({
+  id: '/_dispon',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRouteRoute = AppRouteRouteImport.update({
@@ -124,6 +131,17 @@ const AppAdminRoute = AppAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const DisponMotoristaDisponChar237velRoute =
+  DisponMotoristaDisponChar237velRouteImport.update({
+    id: '/motorista/disponível',
+    path: '/motorista/disponível',
+    getParentRoute: () => DisponRoute,
+  } as any)
+const DisponFretesDisponivelRoute = DisponFretesDisponivelRouteImport.update({
+  id: '/fretes/disponivel',
+  path: '/fretes/disponivel',
+  getParentRoute: () => DisponRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -144,6 +162,8 @@ export interface FileRoutesByFullPath {
   '/disponibilidade/empresas': typeof DisponibilidadeEmpresasRoute
   '/disponibilidade/motoristas': typeof DisponibilidadeMotoristasRoute
   '/disponibilidade/': typeof DisponibilidadeIndexRoute
+  '/fretes/disponivel': typeof DisponFretesDisponivelRoute
+  '/motorista/disponível': typeof DisponMotoristaDisponChar237velRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -163,11 +183,14 @@ export interface FileRoutesByTo {
   '/disponibilidade/empresas': typeof DisponibilidadeEmpresasRoute
   '/disponibilidade/motoristas': typeof DisponibilidadeMotoristasRoute
   '/disponibilidade': typeof DisponibilidadeIndexRoute
+  '/fretes/disponivel': typeof DisponFretesDisponivelRoute
+  '/motorista/disponível': typeof DisponMotoristaDisponChar237velRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteRouteWithChildren
+  '/_dispon': typeof DisponRouteWithChildren
   '/auth': typeof AuthRoute
   '/disponibilidade': typeof DisponibilidadeRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
@@ -185,6 +208,8 @@ export interface FileRoutesById {
   '/disponibilidade/empresas': typeof DisponibilidadeEmpresasRoute
   '/disponibilidade/motoristas': typeof DisponibilidadeMotoristasRoute
   '/disponibilidade/': typeof DisponibilidadeIndexRoute
+  '/_dispon/fretes/disponivel': typeof DisponFretesDisponivelRoute
+  '/_dispon/motorista/disponível': typeof DisponMotoristaDisponChar237velRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -207,6 +232,8 @@ export interface FileRouteTypes {
     | '/disponibilidade/empresas'
     | '/disponibilidade/motoristas'
     | '/disponibilidade/'
+    | '/fretes/disponivel'
+    | '/motorista/disponível'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -226,10 +253,13 @@ export interface FileRouteTypes {
     | '/disponibilidade/empresas'
     | '/disponibilidade/motoristas'
     | '/disponibilidade'
+    | '/fretes/disponivel'
+    | '/motorista/disponível'
   id:
     | '__root__'
     | '/'
     | '/_app'
+    | '/_dispon'
     | '/auth'
     | '/disponibilidade'
     | '/reset-password'
@@ -247,11 +277,14 @@ export interface FileRouteTypes {
     | '/disponibilidade/empresas'
     | '/disponibilidade/motoristas'
     | '/disponibilidade/'
+    | '/_dispon/fretes/disponivel'
+    | '/_dispon/motorista/disponível'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRouteRoute: typeof AppRouteRouteWithChildren
+  DisponRoute: typeof DisponRouteWithChildren
   AuthRoute: typeof AuthRoute
   DisponibilidadeRoute: typeof DisponibilidadeRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -280,6 +313,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_dispon': {
+      id: '/_dispon'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof DisponRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -394,6 +434,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/_dispon/motorista/disponível': {
+      id: '/_dispon/motorista/disponível'
+      path: '/motorista/disponível'
+      fullPath: '/motorista/disponível'
+      preLoaderRoute: typeof DisponMotoristaDisponChar237velRouteImport
+      parentRoute: typeof DisponRoute
+    }
+    '/_dispon/fretes/disponivel': {
+      id: '/_dispon/fretes/disponivel'
+      path: '/fretes/disponivel'
+      fullPath: '/fretes/disponivel'
+      preLoaderRoute: typeof DisponFretesDisponivelRouteImport
+      parentRoute: typeof DisponRoute
+    }
   }
 }
 
@@ -425,6 +479,19 @@ const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
   AppRouteRouteChildren,
 )
 
+interface DisponRouteChildren {
+  DisponFretesDisponivelRoute: typeof DisponFretesDisponivelRoute
+  DisponMotoristaDisponChar237velRoute: typeof DisponMotoristaDisponChar237velRoute
+}
+
+const DisponRouteChildren: DisponRouteChildren = {
+  DisponFretesDisponivelRoute: DisponFretesDisponivelRoute,
+  DisponMotoristaDisponChar237velRoute: DisponMotoristaDisponChar237velRoute,
+}
+
+const DisponRouteWithChildren =
+  DisponRoute._addFileChildren(DisponRouteChildren)
+
 interface DisponibilidadeRouteChildren {
   DisponibilidadeEmpresasRoute: typeof DisponibilidadeEmpresasRoute
   DisponibilidadeMotoristasRoute: typeof DisponibilidadeMotoristasRoute
@@ -444,6 +511,7 @@ const DisponibilidadeRouteWithChildren = DisponibilidadeRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRouteRoute: AppRouteRouteWithChildren,
+  DisponRoute: DisponRouteWithChildren,
   AuthRoute: AuthRoute,
   DisponibilidadeRoute: DisponibilidadeRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
