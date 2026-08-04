@@ -27,6 +27,7 @@ import { Route as AppColaboradorRouteImport } from './routes/_app/colaborador'
 import { Route as AppAdminRouteImport } from './routes/_app/admin'
 import { Route as AppDisponibilidadeIndexRouteImport } from './routes/_app/disponibilidade.index'
 import { Route as AppDisponibilidadeMotoristasRouteImport } from './routes/_app/disponibilidade.motoristas'
+import { Route as AppDisponibilidadeEmpresasRouteImport } from './routes/_app/disponibilidade.empresas'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -118,6 +119,12 @@ const AppDisponibilidadeMotoristasRoute =
     path: '/motoristas',
     getParentRoute: () => AppDisponibilidadeRoute,
   } as any)
+const AppDisponibilidadeEmpresasRoute =
+  AppDisponibilidadeEmpresasRouteImport.update({
+    id: '/empresas',
+    path: '/empresas',
+    getParentRoute: () => AppDisponibilidadeRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -135,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/usuarios': typeof AppUsuariosRoute
   '/cadastrar/caminhoneiro': typeof CadastrarCaminhoneiroRoute
   '/cadastrar/empresa': typeof CadastrarEmpresaRoute
+  '/disponibilidade/empresas': typeof AppDisponibilidadeEmpresasRoute
   '/disponibilidade/motoristas': typeof AppDisponibilidadeMotoristasRoute
   '/disponibilidade/': typeof AppDisponibilidadeIndexRoute
 }
@@ -153,6 +161,7 @@ export interface FileRoutesByTo {
   '/usuarios': typeof AppUsuariosRoute
   '/cadastrar/caminhoneiro': typeof CadastrarCaminhoneiroRoute
   '/cadastrar/empresa': typeof CadastrarEmpresaRoute
+  '/disponibilidade/empresas': typeof AppDisponibilidadeEmpresasRoute
   '/disponibilidade/motoristas': typeof AppDisponibilidadeMotoristasRoute
   '/disponibilidade': typeof AppDisponibilidadeIndexRoute
 }
@@ -174,6 +183,7 @@ export interface FileRoutesById {
   '/_app/usuarios': typeof AppUsuariosRoute
   '/cadastrar/caminhoneiro': typeof CadastrarCaminhoneiroRoute
   '/cadastrar/empresa': typeof CadastrarEmpresaRoute
+  '/_app/disponibilidade/empresas': typeof AppDisponibilidadeEmpresasRoute
   '/_app/disponibilidade/motoristas': typeof AppDisponibilidadeMotoristasRoute
   '/_app/disponibilidade/': typeof AppDisponibilidadeIndexRoute
 }
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/usuarios'
     | '/cadastrar/caminhoneiro'
     | '/cadastrar/empresa'
+    | '/disponibilidade/empresas'
     | '/disponibilidade/motoristas'
     | '/disponibilidade/'
   fileRoutesByTo: FileRoutesByTo
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/usuarios'
     | '/cadastrar/caminhoneiro'
     | '/cadastrar/empresa'
+    | '/disponibilidade/empresas'
     | '/disponibilidade/motoristas'
     | '/disponibilidade'
   id:
@@ -233,6 +245,7 @@ export interface FileRouteTypes {
     | '/_app/usuarios'
     | '/cadastrar/caminhoneiro'
     | '/cadastrar/empresa'
+    | '/_app/disponibilidade/empresas'
     | '/_app/disponibilidade/motoristas'
     | '/_app/disponibilidade/'
   fileRoutesById: FileRoutesById
@@ -374,15 +387,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDisponibilidadeMotoristasRouteImport
       parentRoute: typeof AppDisponibilidadeRoute
     }
+    '/_app/disponibilidade/empresas': {
+      id: '/_app/disponibilidade/empresas'
+      path: '/empresas'
+      fullPath: '/disponibilidade/empresas'
+      preLoaderRoute: typeof AppDisponibilidadeEmpresasRouteImport
+      parentRoute: typeof AppDisponibilidadeRoute
+    }
   }
 }
 
 interface AppDisponibilidadeRouteChildren {
+  AppDisponibilidadeEmpresasRoute: typeof AppDisponibilidadeEmpresasRoute
   AppDisponibilidadeMotoristasRoute: typeof AppDisponibilidadeMotoristasRoute
   AppDisponibilidadeIndexRoute: typeof AppDisponibilidadeIndexRoute
 }
 
 const AppDisponibilidadeRouteChildren: AppDisponibilidadeRouteChildren = {
+  AppDisponibilidadeEmpresasRoute: AppDisponibilidadeEmpresasRoute,
   AppDisponibilidadeMotoristasRoute: AppDisponibilidadeMotoristasRoute,
   AppDisponibilidadeIndexRoute: AppDisponibilidadeIndexRoute,
 }
