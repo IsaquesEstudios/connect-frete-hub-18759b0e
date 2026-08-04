@@ -26,7 +26,8 @@ export function AppSidebar({ user }: { user: User }) {
   const items = [
     { title: "Início", url: home, icon: Home },
     { title: "Mensagens rápidas", url: "/mensagens-rapidas", icon: MessageSquareText },
-    { title: "Disponibilidade", url: "/disponibilidade", icon: Truck },
+    { title: "Motoristas disponíveis", url: "/disponibilidade/motoristas", icon: Truck },
+    { title: "Empresas / fretes", url: "/disponibilidade/empresas", icon: Truck },
     ...(user.type === "admin" ? [{ title: "Usuários", url: "/usuarios", icon: Users }] : []),
     ...(user.type === "admin" ? [{ title: "Métricas", url: "/metricas", icon: BarChart3 }] : []),
     ...(user.type !== "colaborador"
