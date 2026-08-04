@@ -10,9 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as DisponibilidadeRouteImport } from './routes/disponibilidade'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DisponibilidadeIndexRouteImport } from './routes/disponibilidade.index'
+import { Route as DisponibilidadeMotoristasRouteImport } from './routes/disponibilidade.motoristas'
+import { Route as DisponibilidadeEmpresasRouteImport } from './routes/disponibilidade.empresas'
 import { Route as CadastrarEmpresaRouteImport } from './routes/cadastrar.empresa'
 import { Route as CadastrarCaminhoneiroRouteImport } from './routes/cadastrar.caminhoneiro'
 import { Route as AppUsuariosRouteImport } from './routes/_app/usuarios'
@@ -21,17 +25,18 @@ import { Route as AppMotoristaRouteImport } from './routes/_app/motorista'
 import { Route as AppMetricasRouteImport } from './routes/_app/metricas'
 import { Route as AppMensagensRapidasRouteImport } from './routes/_app/mensagens-rapidas'
 import { Route as AppEmpresaRouteImport } from './routes/_app/empresa'
-import { Route as AppDisponibilidadeRouteImport } from './routes/_app/disponibilidade'
 import { Route as AppConfiguracoesRouteImport } from './routes/_app/configuracoes'
 import { Route as AppColaboradorRouteImport } from './routes/_app/colaborador'
 import { Route as AppAdminRouteImport } from './routes/_app/admin'
-import { Route as AppDisponibilidadeIndexRouteImport } from './routes/_app/disponibilidade.index'
-import { Route as AppDisponibilidadeMotoristasRouteImport } from './routes/_app/disponibilidade.motoristas'
-import { Route as AppDisponibilidadeEmpresasRouteImport } from './routes/_app/disponibilidade.empresas'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DisponibilidadeRoute = DisponibilidadeRouteImport.update({
+  id: '/disponibilidade',
+  path: '/disponibilidade',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -47,6 +52,22 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DisponibilidadeIndexRoute = DisponibilidadeIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DisponibilidadeRoute,
+} as any)
+const DisponibilidadeMotoristasRoute =
+  DisponibilidadeMotoristasRouteImport.update({
+    id: '/motoristas',
+    path: '/motoristas',
+    getParentRoute: () => DisponibilidadeRoute,
+  } as any)
+const DisponibilidadeEmpresasRoute = DisponibilidadeEmpresasRouteImport.update({
+  id: '/empresas',
+  path: '/empresas',
+  getParentRoute: () => DisponibilidadeRoute,
 } as any)
 const CadastrarEmpresaRoute = CadastrarEmpresaRouteImport.update({
   id: '/cadastrar/empresa',
@@ -88,11 +109,6 @@ const AppEmpresaRoute = AppEmpresaRouteImport.update({
   path: '/empresa',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const AppDisponibilidadeRoute = AppDisponibilidadeRouteImport.update({
-  id: '/disponibilidade',
-  path: '/disponibilidade',
-  getParentRoute: () => AppRouteRoute,
-} as any)
 const AppConfiguracoesRoute = AppConfiguracoesRouteImport.update({
   id: '/configuracoes',
   path: '/configuracoes',
@@ -108,32 +124,15 @@ const AppAdminRoute = AppAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const AppDisponibilidadeIndexRoute = AppDisponibilidadeIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AppDisponibilidadeRoute,
-} as any)
-const AppDisponibilidadeMotoristasRoute =
-  AppDisponibilidadeMotoristasRouteImport.update({
-    id: '/motoristas',
-    path: '/motoristas',
-    getParentRoute: () => AppDisponibilidadeRoute,
-  } as any)
-const AppDisponibilidadeEmpresasRoute =
-  AppDisponibilidadeEmpresasRouteImport.update({
-    id: '/empresas',
-    path: '/empresas',
-    getParentRoute: () => AppDisponibilidadeRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/disponibilidade': typeof DisponibilidadeRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AppAdminRoute
   '/colaborador': typeof AppColaboradorRoute
   '/configuracoes': typeof AppConfiguracoesRoute
-  '/disponibilidade': typeof AppDisponibilidadeRouteWithChildren
   '/empresa': typeof AppEmpresaRoute
   '/mensagens-rapidas': typeof AppMensagensRapidasRoute
   '/metricas': typeof AppMetricasRoute
@@ -142,9 +141,9 @@ export interface FileRoutesByFullPath {
   '/usuarios': typeof AppUsuariosRoute
   '/cadastrar/caminhoneiro': typeof CadastrarCaminhoneiroRoute
   '/cadastrar/empresa': typeof CadastrarEmpresaRoute
-  '/disponibilidade/empresas': typeof AppDisponibilidadeEmpresasRoute
-  '/disponibilidade/motoristas': typeof AppDisponibilidadeMotoristasRoute
-  '/disponibilidade/': typeof AppDisponibilidadeIndexRoute
+  '/disponibilidade/empresas': typeof DisponibilidadeEmpresasRoute
+  '/disponibilidade/motoristas': typeof DisponibilidadeMotoristasRoute
+  '/disponibilidade/': typeof DisponibilidadeIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -161,20 +160,20 @@ export interface FileRoutesByTo {
   '/usuarios': typeof AppUsuariosRoute
   '/cadastrar/caminhoneiro': typeof CadastrarCaminhoneiroRoute
   '/cadastrar/empresa': typeof CadastrarEmpresaRoute
-  '/disponibilidade/empresas': typeof AppDisponibilidadeEmpresasRoute
-  '/disponibilidade/motoristas': typeof AppDisponibilidadeMotoristasRoute
-  '/disponibilidade': typeof AppDisponibilidadeIndexRoute
+  '/disponibilidade/empresas': typeof DisponibilidadeEmpresasRoute
+  '/disponibilidade/motoristas': typeof DisponibilidadeMotoristasRoute
+  '/disponibilidade': typeof DisponibilidadeIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/disponibilidade': typeof DisponibilidadeRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/_app/admin': typeof AppAdminRoute
   '/_app/colaborador': typeof AppColaboradorRoute
   '/_app/configuracoes': typeof AppConfiguracoesRoute
-  '/_app/disponibilidade': typeof AppDisponibilidadeRouteWithChildren
   '/_app/empresa': typeof AppEmpresaRoute
   '/_app/mensagens-rapidas': typeof AppMensagensRapidasRoute
   '/_app/metricas': typeof AppMetricasRoute
@@ -183,20 +182,20 @@ export interface FileRoutesById {
   '/_app/usuarios': typeof AppUsuariosRoute
   '/cadastrar/caminhoneiro': typeof CadastrarCaminhoneiroRoute
   '/cadastrar/empresa': typeof CadastrarEmpresaRoute
-  '/_app/disponibilidade/empresas': typeof AppDisponibilidadeEmpresasRoute
-  '/_app/disponibilidade/motoristas': typeof AppDisponibilidadeMotoristasRoute
-  '/_app/disponibilidade/': typeof AppDisponibilidadeIndexRoute
+  '/disponibilidade/empresas': typeof DisponibilidadeEmpresasRoute
+  '/disponibilidade/motoristas': typeof DisponibilidadeMotoristasRoute
+  '/disponibilidade/': typeof DisponibilidadeIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
+    | '/disponibilidade'
     | '/reset-password'
     | '/admin'
     | '/colaborador'
     | '/configuracoes'
-    | '/disponibilidade'
     | '/empresa'
     | '/mensagens-rapidas'
     | '/metricas'
@@ -232,11 +231,11 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/auth'
+    | '/disponibilidade'
     | '/reset-password'
     | '/_app/admin'
     | '/_app/colaborador'
     | '/_app/configuracoes'
-    | '/_app/disponibilidade'
     | '/_app/empresa'
     | '/_app/mensagens-rapidas'
     | '/_app/metricas'
@@ -245,15 +244,16 @@ export interface FileRouteTypes {
     | '/_app/usuarios'
     | '/cadastrar/caminhoneiro'
     | '/cadastrar/empresa'
-    | '/_app/disponibilidade/empresas'
-    | '/_app/disponibilidade/motoristas'
-    | '/_app/disponibilidade/'
+    | '/disponibilidade/empresas'
+    | '/disponibilidade/motoristas'
+    | '/disponibilidade/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRouteRoute: typeof AppRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  DisponibilidadeRoute: typeof DisponibilidadeRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   CadastrarCaminhoneiroRoute: typeof CadastrarCaminhoneiroRoute
   CadastrarEmpresaRoute: typeof CadastrarEmpresaRoute
@@ -266,6 +266,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/disponibilidade': {
+      id: '/disponibilidade'
+      path: '/disponibilidade'
+      fullPath: '/disponibilidade'
+      preLoaderRoute: typeof DisponibilidadeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -288,6 +295,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/disponibilidade/': {
+      id: '/disponibilidade/'
+      path: '/'
+      fullPath: '/disponibilidade/'
+      preLoaderRoute: typeof DisponibilidadeIndexRouteImport
+      parentRoute: typeof DisponibilidadeRoute
+    }
+    '/disponibilidade/motoristas': {
+      id: '/disponibilidade/motoristas'
+      path: '/motoristas'
+      fullPath: '/disponibilidade/motoristas'
+      preLoaderRoute: typeof DisponibilidadeMotoristasRouteImport
+      parentRoute: typeof DisponibilidadeRoute
+    }
+    '/disponibilidade/empresas': {
+      id: '/disponibilidade/empresas'
+      path: '/empresas'
+      fullPath: '/disponibilidade/empresas'
+      preLoaderRoute: typeof DisponibilidadeEmpresasRouteImport
+      parentRoute: typeof DisponibilidadeRoute
     }
     '/cadastrar/empresa': {
       id: '/cadastrar/empresa'
@@ -345,13 +373,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEmpresaRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/_app/disponibilidade': {
-      id: '/_app/disponibilidade'
-      path: '/disponibilidade'
-      fullPath: '/disponibilidade'
-      preLoaderRoute: typeof AppDisponibilidadeRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
     '/_app/configuracoes': {
       id: '/_app/configuracoes'
       path: '/configuracoes'
@@ -373,50 +394,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/_app/disponibilidade/': {
-      id: '/_app/disponibilidade/'
-      path: '/'
-      fullPath: '/disponibilidade/'
-      preLoaderRoute: typeof AppDisponibilidadeIndexRouteImport
-      parentRoute: typeof AppDisponibilidadeRoute
-    }
-    '/_app/disponibilidade/motoristas': {
-      id: '/_app/disponibilidade/motoristas'
-      path: '/motoristas'
-      fullPath: '/disponibilidade/motoristas'
-      preLoaderRoute: typeof AppDisponibilidadeMotoristasRouteImport
-      parentRoute: typeof AppDisponibilidadeRoute
-    }
-    '/_app/disponibilidade/empresas': {
-      id: '/_app/disponibilidade/empresas'
-      path: '/empresas'
-      fullPath: '/disponibilidade/empresas'
-      preLoaderRoute: typeof AppDisponibilidadeEmpresasRouteImport
-      parentRoute: typeof AppDisponibilidadeRoute
-    }
   }
 }
-
-interface AppDisponibilidadeRouteChildren {
-  AppDisponibilidadeEmpresasRoute: typeof AppDisponibilidadeEmpresasRoute
-  AppDisponibilidadeMotoristasRoute: typeof AppDisponibilidadeMotoristasRoute
-  AppDisponibilidadeIndexRoute: typeof AppDisponibilidadeIndexRoute
-}
-
-const AppDisponibilidadeRouteChildren: AppDisponibilidadeRouteChildren = {
-  AppDisponibilidadeEmpresasRoute: AppDisponibilidadeEmpresasRoute,
-  AppDisponibilidadeMotoristasRoute: AppDisponibilidadeMotoristasRoute,
-  AppDisponibilidadeIndexRoute: AppDisponibilidadeIndexRoute,
-}
-
-const AppDisponibilidadeRouteWithChildren =
-  AppDisponibilidadeRoute._addFileChildren(AppDisponibilidadeRouteChildren)
 
 interface AppRouteRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
   AppColaboradorRoute: typeof AppColaboradorRoute
   AppConfiguracoesRoute: typeof AppConfiguracoesRoute
-  AppDisponibilidadeRoute: typeof AppDisponibilidadeRouteWithChildren
   AppEmpresaRoute: typeof AppEmpresaRoute
   AppMensagensRapidasRoute: typeof AppMensagensRapidasRoute
   AppMetricasRoute: typeof AppMetricasRoute
@@ -429,7 +413,6 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppAdminRoute: AppAdminRoute,
   AppColaboradorRoute: AppColaboradorRoute,
   AppConfiguracoesRoute: AppConfiguracoesRoute,
-  AppDisponibilidadeRoute: AppDisponibilidadeRouteWithChildren,
   AppEmpresaRoute: AppEmpresaRoute,
   AppMensagensRapidasRoute: AppMensagensRapidasRoute,
   AppMetricasRoute: AppMetricasRoute,
@@ -442,10 +425,27 @@ const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
   AppRouteRouteChildren,
 )
 
+interface DisponibilidadeRouteChildren {
+  DisponibilidadeEmpresasRoute: typeof DisponibilidadeEmpresasRoute
+  DisponibilidadeMotoristasRoute: typeof DisponibilidadeMotoristasRoute
+  DisponibilidadeIndexRoute: typeof DisponibilidadeIndexRoute
+}
+
+const DisponibilidadeRouteChildren: DisponibilidadeRouteChildren = {
+  DisponibilidadeEmpresasRoute: DisponibilidadeEmpresasRoute,
+  DisponibilidadeMotoristasRoute: DisponibilidadeMotoristasRoute,
+  DisponibilidadeIndexRoute: DisponibilidadeIndexRoute,
+}
+
+const DisponibilidadeRouteWithChildren = DisponibilidadeRoute._addFileChildren(
+  DisponibilidadeRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRouteRoute: AppRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  DisponibilidadeRoute: DisponibilidadeRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   CadastrarCaminhoneiroRoute: CadastrarCaminhoneiroRoute,
   CadastrarEmpresaRoute: CadastrarEmpresaRoute,

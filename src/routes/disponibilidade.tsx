@@ -1,12 +1,27 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+import { Logo } from "@/components/brand/Logo";
 
-export const Route = createFileRoute("/_app/disponibilidade")({
+export const Route = createFileRoute("/disponibilidade")({
+  ssr: false,
   component: DisponibilidadeLayout,
 });
 
 function DisponibilidadeLayout() {
   return (
-    <div>
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-background/80 px-4 py-3 md:px-6">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+          <Link to="/">
+            <Logo />
+          </Link>
+          <Link
+            to="/auth"
+            className="rounded-md border border-input px-3 py-1.5 text-sm font-medium hover:bg-accent"
+          >
+            Entrar
+          </Link>
+        </div>
+      </header>
       <div className="border-b bg-background/60 px-4 pt-4 md:px-6">
         <div className="mx-auto flex max-w-5xl gap-2">
           <Link
