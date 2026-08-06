@@ -18,7 +18,7 @@ export function AppHeader({ user, accent }: { user: User; accent: string }) {
   return (
     <header className={`flex items-center gap-3 pl-12 pr-4 py-2 text-white ${accent}`}>
       <Link to="/admin" className="flex items-center">
-        <Logo iconClassName="h-6 w-6" textClassName="text-base" />
+        <Logo iconClassName="h-8" />
       </Link>
       <div className="ml-auto flex items-center gap-2">
         <Sheet>
