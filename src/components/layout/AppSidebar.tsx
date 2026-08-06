@@ -26,8 +26,12 @@ export function AppSidebar({ user }: { user: User }) {
   const items = [
     { title: "Início", url: home, icon: Home },
     { title: "Mensagens rápidas", url: "/mensagens-rapidas", icon: MessageSquareText },
-    { title: "Motoristas disponíveis", url: "/motorista/disponível", icon: Truck },
-    { title: "Empresas / fretes", url: "/fretes/disponivel", icon: Truck },
+    ...(user.type !== "colaborador"
+      ? [
+          { title: "Motoristas disponíveis", url: "/motorista/disponível", icon: Truck },
+          { title: "Empresas / fretes", url: "/fretes/disponivel", icon: Truck },
+        ]
+      : []),
     ...(user.type === "admin" ? [{ title: "Usuários", url: "/usuarios", icon: Users }] : []),
     ...(user.type === "admin" ? [{ title: "Métricas", url: "/metricas", icon: BarChart3 }] : []),
     ...(user.type !== "colaborador"
