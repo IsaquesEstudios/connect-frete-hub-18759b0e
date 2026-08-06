@@ -68,6 +68,15 @@ export function StaffPanel({ role }: { role: "admin" | "colaborador" }) {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [mobileChat, setMobileChat] = useState(false);
+  const search = useSearch({ strict: false }) as { u?: string };
+
+  // Abre direto a conversa quando vem da lista de usuários (?u=<id>)
+  useEffect(() => {
+    if (!search.u) return;
+    setSelected(search.u);
+    setMobileChat(true);
+  }, [search.u]);
+
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [unreadOnly, setUnreadOnly] = useState(false);
   const { pinned, isPinned, toggle: togglePin, max: maxPinned } = usePinnedConversations(user?.id ?? "anon");
