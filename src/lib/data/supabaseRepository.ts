@@ -941,9 +941,10 @@ class SupabaseRepository implements Repository {
     const toStaff = this.isStaff(this.getUser(toUserId));
     const conversationId = this.staffPairId(fromUserId, toUserId);
 
-    // Timestamp monotônico crescente para preservar ordem em envios rápidos
-    // dentro do mesmo milissegundo.
-    const now = Math.max(Date.now(), this.lastSendAt + 1);
+    // Timestamp otimista corrigido pelo desvio do relógio do servidor, e
+    // monotônico para envios rápidos dentro do mesmo milissegundo.
+    const localNow = Date.now();
+    const now = Math.max(localNow + this.clockOffset, this.lastSendAt + 1);
     this.lastSendAt = now;
 
     const tempId = `tmp_${now}_${Math.random().toString(36).slice(2, 7)}`;
