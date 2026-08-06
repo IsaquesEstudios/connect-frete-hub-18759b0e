@@ -155,10 +155,6 @@ function UsuariosPage() {
     }
   };
 
-  const csvEscape = (v: string | number) => {
-    const s = String(v ?? "");
-    return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  };
 
 
   useEffect(() => {
@@ -496,7 +492,7 @@ function UsuariosPage() {
             </h2>
             <div className="flex items-center gap-2">
               <Button size="sm" variant="outline" onClick={exportCsv}>
-                <FileSpreadsheet className="mr-2 h-4 w-4" /> Exportar (Excel/CSV)
+                <FileSpreadsheet className="mr-2 h-4 w-4" /> Exportar (Excel)
               </Button>
               <Button size="sm" variant="outline" onClick={exportWord}>
                 <FileType className="mr-2 h-4 w-4" /> Exportar (Word)

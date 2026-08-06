@@ -355,7 +355,7 @@ function MetricsPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={downloadReport}>
-                <FileSpreadsheet className="h-4 w-4 mr-2" /> Excel (CSV)
+                <FileSpreadsheet className="h-4 w-4 mr-2" /> Excel (.xlsx)
               </DropdownMenuItem>
               <DropdownMenuItem onClick={downloadPDF}>
                 <FileText className="h-4 w-4 mr-2" /> PDF
