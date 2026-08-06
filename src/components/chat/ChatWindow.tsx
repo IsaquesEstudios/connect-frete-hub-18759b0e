@@ -50,12 +50,14 @@ function perfilLabel(user: User) {
   return "";
 }
 
-function MessageTicks({ message, viewer }: { message: Message; viewer: "admin" | "user" }) {
+function MessageTicks({ message, recipientIsStaff }: { message: Message; recipientIsStaff: boolean }) {
   if (message.id.startsWith("tmp_")) return <Clock className="h-3 w-3 opacity-80" aria-label="Enviando" />;
-  const read = viewer === "admin" ? message.readByUser : message.readByAdmin;
+  // O flag do destinatário é quem define "lida".
+  const read = recipientIsStaff ? message.readByAdmin : message.readByUser;
   if (read) return <CheckCheck className="h-3.5 w-3.5 text-sky-300" aria-label="Lida" />;
   return <CheckCheck className="h-3.5 w-3.5 opacity-80" aria-label="Entregue" />;
 }
+
 
 function fmtTime(ts: number) {
   const d = new Date(ts);
