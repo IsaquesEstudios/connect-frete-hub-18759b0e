@@ -203,6 +203,20 @@ function ProfilePage() {
     }
   };
 
+  const removeAccount = async () => {
+    setDeleting(true);
+    try {
+      await deleteAuthUser({ data: { userId: user.id } });
+      await logout();
+      toast.success("Conta excluída permanentemente.");
+      navigate({ to: "/auth" });
+    } catch (error) {
+      toast.error((error as Error).message);
+      setDeleting(false);
+    }
+  };
+
+
 
   return (
     <main className="min-h-full bg-background p-4 md:p-8">
