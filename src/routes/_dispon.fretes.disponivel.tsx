@@ -25,7 +25,7 @@ function FretesPage() {
   return (
     <DisponibilidadeSection
       kind="frete"
-      heading="Empresas / fretes disponíveis"
+      heading="Fretes disponíveis"
       subtitle="Cargas e fretes disponíveis publicados pela equipe."
       defaultTitle="FRETE DISPONÍVEL"
       placeholder={"📍PE X SP / 40 T / SAIDER / 4 EIXO\n📍PE X MS / 25 T / GRANELEIRO ALTO / TOCO"}
