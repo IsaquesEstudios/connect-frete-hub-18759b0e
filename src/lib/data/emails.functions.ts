@@ -122,6 +122,7 @@ export const getExternalUserEmailsForIds = createServerFn({ method: "POST" })
     const key = process.env.EXT_SUPABASE_SERVICE_ROLE_KEY;
     if (!key) throw new Error("Configuração do servidor ausente: EXT_SUPABASE_SERVICE_ROLE_KEY não está definida no ambiente.");
     const currentProfile = await getCurrentProfile(key);
+    if (!currentProfile) return {};
     const ids = Array.from(new Set(data.userIds));
 
     if (!isStaff(currentProfile)) {
@@ -129,6 +130,7 @@ export const getExternalUserEmailsForIds = createServerFn({ method: "POST" })
       // (o perfil abre com o email visível). Limitamos apenas a perfis
       // existentes e ativos — sem bloquear conversas legítimas.
       const otherIds = ids.filter((id) => id !== currentProfile.id);
+
       if (otherIds.length > 0) {
         const encodedIds = otherIds.map(encodeURIComponent).join(",");
         const profileRes = await fetch(
