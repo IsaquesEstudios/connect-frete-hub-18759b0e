@@ -966,10 +966,22 @@ class SupabaseRepository implements Repository {
     const toStaff = this.isStaff(this.getUser(toUserId));
     const conversationId = this.staffPairId(fromUserId, toUserId);
 
-    // Timestamp otimista corrigido pelo desvio do relógio do servidor, e
-    // monotônico para envios rápidos dentro do mesmo milissegundo.
+    // A mensagem otimista precisa nascer DEPOIS de tudo que já está visível
+    // nesta conversa. Usar apenas o relógio local pode colocá-la antes de uma
+    // mensagem recém-recebida até o servidor devolver o created_at oficial.
     const localNow = Date.now();
-    const now = Math.max(localNow + this.clockOffset, this.lastSendAt + 1);
+    const lastConversationMessageAt = this.messages.reduce(
+      (latest, message) =>
+        message.conversationId === conversationId && message.createdAt > latest
+          ? message.createdAt
+          : latest,
+      0,
+    );
+    const now = Math.max(
+      localNow + this.clockOffset,
+      this.lastSendAt + 1,
+      lastConversationMessageAt + 1,
+    );
     this.lastSendAt = now;
 
     const tempId = `tmp_${now}_${Math.random().toString(36).slice(2, 7)}`;
