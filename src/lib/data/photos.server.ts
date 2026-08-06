@@ -35,14 +35,16 @@ export async function fetchProfilePhotos(): Promise<Record<string, string>> {
   const request = getRequest();
   const authHeader = request?.headers.get("authorization") ?? "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-  if (!token) throw new Error("Sessão inválida. Faça login novamente.");
+  // Sem sessão válida (SSR, token expirando, aba voltando do background) as
+  // fotos simplesmente não carregam agora — não é motivo para quebrar a tela.
+  if (!token) return {};
 
   const userRes = await fetch(`${EXT_SUPABASE_URL}/auth/v1/user`, {
     headers: apiHeaders(key, token),
   });
-  if (!userRes.ok) throw new Error("Sessão inválida. Faça login novamente.");
+  if (!userRes.ok) return {};
   const authUser = (await userRes.json()) as { id?: string };
-  if (!authUser.id) throw new Error("Sessão inválida. Faça login novamente.");
+  if (!authUser.id) return {};
 
   const res = await fetch(
     `${EXT_SUPABASE_URL}/rest/v1/profiles?select=id,foto_url&foto_url=not.is.null`,
