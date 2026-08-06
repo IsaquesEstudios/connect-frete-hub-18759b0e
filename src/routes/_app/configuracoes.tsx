@@ -81,7 +81,7 @@ function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="min-h-full bg-background p-8">
       <div className="mx-auto max-w-2xl space-y-8">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Configurações</h1>
