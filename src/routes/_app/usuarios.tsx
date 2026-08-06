@@ -309,7 +309,7 @@ function UsuariosPage() {
   };
 
 
-  const exportCsv = () => {
+  const exportCsv = async () => {
     const header = [
       "Nome",
       "Telefone",
@@ -342,15 +342,11 @@ function UsuariosPage() {
         tagsFor(u).map((t) => t.label).join(", "),
       ];
     });
-    const csv =
-      "\uFEFF" + [header, ...rows].map((r) => r.map(csvEscape).join(";")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `usuarios-svlogistica-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    await downloadXlsx("usuarios-svlogistica", [
+      { name: "Usuários", header, rows },
+    ]);
   };
+
 
   const exportWord = async () => {
     const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import("docx");
