@@ -49,7 +49,7 @@ export function DisponibilidadeSection({
   placeholder,
 }: Props) {
   const { user } = useAuth();
-  const isStaff = user?.type === "admin" || user?.type === "colaborador";
+  const isStaff = user?.type === "admin";
   const Icon = kind === "motorista" ? Truck : MapPin;
 
   const [items, setItems] = useState<DisponibilidadeItem[]>([]);
