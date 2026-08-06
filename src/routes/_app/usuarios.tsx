@@ -416,7 +416,7 @@ function UsuariosPage() {
 
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="min-h-full bg-background p-8">
       <div className="mx-auto max-w-6xl">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-white">

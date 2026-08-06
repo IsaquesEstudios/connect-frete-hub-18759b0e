@@ -332,7 +332,7 @@ function MetricsPage() {
 
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="min-h-full bg-background p-8">
       <div className="mx-auto max-w-5xl">
         <div className="flex items-start justify-between gap-4">
           <div>

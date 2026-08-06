@@ -85,14 +85,14 @@ export function UserChatPanel({ me }: Props) {
 
   if (staff.length === 0) {
     return (
-      <div className="h-screen flex items-center justify-center px-6 text-center text-sm text-muted-foreground">
+      <div className="h-full flex items-center justify-center px-6 text-center text-sm text-muted-foreground">
         Nenhum atendente ativo encontrado no momento.
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-full flex flex-col">
       <div className="flex-1 min-h-0 flex">
         {/* Sidebar */}
         <aside
