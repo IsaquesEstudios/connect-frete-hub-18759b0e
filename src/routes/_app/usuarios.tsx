@@ -175,18 +175,30 @@ function UsuariosPage() {
   }, [loading, user?.type]);
 
 
+  // Busca os emails uma única vez por sessão de usuário (não a cada refresh
+  // da tabela) — evita repetir a chamada e empilhar vários toasts iguais.
   useEffect(() => {
+    if (loading || !user?.id) return;
+    let cancelled = false;
     getExternalUserEmails()
-      .then((m) => setEmails(m || {}))
+      .then((m) => {
+        if (!cancelled) setEmails(m || {});
+      })
       .catch((error) => {
+        if (cancelled) return;
         setEmails({});
         console.warn("[emails] falha ao listar", error);
         toast.error("Não foi possível carregar os emails dos usuários", {
+          id: "emails-load-error",
           description: translateAuthError(error),
-          duration: 12000,
+          duration: 8000,
         });
       });
-  }, [v]);
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, user?.id]);
+
 
   const users = useMemo(() => repo.listUsers(), [v]);
   const allTags = useMemo(() => repo.listTags(), [v]);
