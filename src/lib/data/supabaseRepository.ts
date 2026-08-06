@@ -550,7 +550,7 @@ class SupabaseRepository implements Repository {
           // progress bar doesn't shrink as later pages come in.
           if (offset === 0) total = result.total || result.rows.length;
 
-          if (offset === 0 && total > 20) {
+          if (offset === 0 && total > 10) {
             this.setSync({ phase: "syncing", done: 0, total });
           }
           for (const row of result.rows) {
