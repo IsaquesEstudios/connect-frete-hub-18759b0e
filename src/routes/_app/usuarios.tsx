@@ -38,6 +38,7 @@ import { AdminEditUserDialog } from "@/components/admin/AdminEditUserDialog";
 import { TagBadges } from "@/components/chat/TagBadges";
 import { setExternalUserActive } from "@/lib/data/admin-users.functions";
 import { downloadXlsx } from "@/lib/export/xlsx";
+import { matchesSearch } from "@/lib/search";
 
 export const Route = createFileRoute("/_app/usuarios")({
   head: () => ({ meta: [{ title: "Usuários — SV Logística" }] }),
@@ -214,22 +215,28 @@ function UsuariosPage() {
       if (tab !== "todos" && resolveDisplayType(u) !== tab) return false;
       if (tagFilter && !repo.getConversationTagIds(u.number).includes(tagFilter)) return false;
       if (query) {
-        const q = normalizeSearchText(query);
-        const qDigits = onlyDigits(query);
-        const docUser = u as { cnpj?: string; cpf?: string; whatsapp?: string };
+        const docUser = u as {
+          cnpj?: string;
+          cpf?: string;
+          whatsapp?: string;
+          cidade?: string;
+          estado?: string;
+          nomeFantasia?: string;
+        };
         const email = (u.email || emails[u.id] || "").toLowerCase();
-        const searchableText = [u.name, u.number, docUser.cnpj, docUser.cpf, docUser.whatsapp, email]
-          .map(normalizeSearchText)
-          .filter(Boolean);
-        if (q && searchableText.some((value) => value.includes(q))) return true;
-        if (qDigits) {
-          const searchableDigits = [u.number, docUser.cnpj, docUser.cpf, docUser.whatsapp]
-            .map(onlyDigits)
-            .filter(Boolean);
-          if (searchableDigits.some((value) => value.includes(qDigits))) return true;
-        }
-        return false;
+        return matchesSearch(query, [
+          u.name,
+          docUser.nomeFantasia,
+          u.number,
+          docUser.cnpj,
+          docUser.cpf,
+          docUser.whatsapp,
+          docUser.cidade,
+          docUser.estado,
+          email,
+        ]);
       }
+
       return true;
     });
     if (sort) {

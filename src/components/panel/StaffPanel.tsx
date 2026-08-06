@@ -29,6 +29,7 @@ import { homeFor } from "@/lib/auth/session";
 import { useAuth } from "@/lib/auth/useAuth";
 import { useRepoVersion } from "@/lib/hooks/useRepo";
 import { usePinnedConversations } from "@/lib/chat/usePinnedConversations";
+import { matchesSearch } from "@/lib/search";
 
 type FilterTab = "todos" | "empresas" | "motoristas" | "colaboradores";
 
@@ -43,17 +44,6 @@ function lastSeenLabel(ts: number | null): string {
   return `há ${Math.floor(h / 24)}d`;
 }
 
-function normalizeSearchText(value: unknown): string {
-  return String(value ?? "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
-}
-
-function onlyDigits(value: unknown): string {
-  return String(value ?? "").replace(/\D/g, "");
-}
 
 export function StaffPanel({ role }: { role: "admin" | "colaborador" }) {
   const { user } = useAuth();
@@ -100,21 +90,28 @@ export function StaffPanel({ role }: { role: "admin" | "colaborador" }) {
       if (unreadOnly && !(c.unreadForAdmin > 0)) return false;
       if (tagFilter && !c.tagIds.includes(tagFilter)) return false;
       if (query) {
-        const q = normalizeSearchText(query);
-        const qDigits = onlyDigits(query);
-        const u = c.user as { cnpj?: string; cpf?: string; whatsapp?: string; email?: string };
-        const searchableText = [c.user.name, c.user.number, u.cnpj, u.cpf, u.email, u.whatsapp]
-          .map(normalizeSearchText)
-          .filter(Boolean);
-        if (q && searchableText.some((value) => value.includes(q))) return true;
-        if (qDigits) {
-          const searchableDigits = [u.cnpj, u.cpf, c.user.number, u.whatsapp]
-            .map(onlyDigits)
-            .filter(Boolean);
-          if (searchableDigits.some((value) => value.includes(qDigits))) return true;
-        }
-        return false;
+        const u = c.user as {
+          cnpj?: string;
+          cpf?: string;
+          whatsapp?: string;
+          email?: string;
+          cidade?: string;
+          estado?: string;
+          nomeFantasia?: string;
+        };
+        return matchesSearch(query, [
+          c.user.name,
+          u.nomeFantasia,
+          c.user.number,
+          u.cnpj,
+          u.cpf,
+          u.whatsapp,
+          u.email,
+          u.cidade,
+          u.estado,
+        ]);
       }
+
       return true;
     });
   }, [conversations, tab, query, tagFilter, unreadOnly]);
