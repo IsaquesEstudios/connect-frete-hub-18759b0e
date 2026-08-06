@@ -634,7 +634,9 @@ class SupabaseRepository implements Repository {
               if (queue.length === 0) this.pendingSendKeys.delete(key);
               if (tempIdx >= 0) {
                 const prev = this.messages[tempIdx];
-                this.messages[tempIdx] = { ...m, conversationId: prev.conversationId, fromUserId: prev.fromUserId, createdAt: prev.createdAt };
+                // Mantém o horário REAL do servidor (m.createdAt): é a única
+                // referência confiável de ordem entre participantes.
+                this.messages[tempIdx] = { ...m, conversationId: prev.conversationId, fromUserId: prev.fromUserId };
               } else {
                 this.messages.push(m);
               }
