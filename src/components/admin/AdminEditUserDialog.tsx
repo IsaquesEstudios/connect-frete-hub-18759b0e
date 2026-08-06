@@ -9,6 +9,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +30,7 @@ import { repo } from "@/lib/data";
 import { getExternalUserEmailsForIds } from "@/lib/data/emails.functions";
 import { reportEmailsUnavailable, EMAIL_UNAVAILABLE_LABEL } from "@/lib/data/emails-client";
 import { setExternalUserActive } from "@/lib/data/admin-users.functions";
+import { deleteAuthUser } from "@/lib/data/auth-cleanup.functions";
 import { translateAuthError } from "@/lib/auth/translate-error";
 import { formatPhone } from "@/lib/format-phone";
 import { formatDoc } from "@/lib/format-doc";
