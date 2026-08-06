@@ -1072,12 +1072,35 @@ class SupabaseRepository implements Repository {
       });
   }
 
+  /** Flag de leitura do lado de quem RECEBEU a mensagem. */
+  private readByRecipient(m: Message): boolean {
+    return this.isStaff(this.getUser(m.toUserId)) ? m.readByAdmin : m.readByUser;
+  }
+
+  /**
+   * Não lidas para um usuário específico: somente mensagens endereçadas a ele.
+   * Nunca conta as mensagens que ele mesmo enviou.
+   */
+  unreadForViewer(conversationId: string, viewerId: string): number {
+    if (!viewerId) return 0;
+    return this.messages.filter(
+      (m) =>
+        m.conversationId === conversationId &&
+        m.toUserId === viewerId &&
+        m.fromUserId !== viewerId &&
+        !this.readByRecipient(m),
+    ).length;
+  }
+
   unreadCount(conversationId: string, viewer: "admin" | "user"): number {
-    return this.messages.filter((m) => {
-      if (m.conversationId !== conversationId) return false;
-      if (viewer === "admin") return m.toUserId === this.adminAuthId && !m.readByAdmin;
-      return m.fromUserId === this.adminAuthId && !m.readByUser;
-    }).length;
+    if (viewer === "admin") return this.unreadForViewer(conversationId, this.adminAuthId ?? "");
+    return this.messages.filter(
+      (m) =>
+        m.conversationId === conversationId &&
+        m.fromUserId !== m.toUserId &&
+        !this.isStaff(this.getUser(m.toUserId)) &&
+        !m.readByUser,
+    ).length;
   }
 
   listConversations(options?: { staffId?: string }) {
@@ -1097,9 +1120,14 @@ class SupabaseRepository implements Repository {
           return m.fromUserId === user.id || m.toUserId === user.id;
         });
         const lastMessage = [...conv].sort((a, b) => b.createdAt - a.createdAt)[0];
-        const unreadForAdmin = conv.filter(
-          (m) => (staffId ? m.toUserId === staffId : this.isStaff(this.getUser(m.toUserId))) && !m.readByAdmin,
-        ).length;
+        const viewerId = staffId ?? this.adminAuthId ?? "";
+        // Só conta o que foi enviado PARA quem está vendo a lista.
+        const unreadForAdmin = viewerId
+          ? conv.filter(
+              (m) => m.toUserId === viewerId && m.fromUserId !== viewerId && !this.readByRecipient(m),
+            ).length
+          : 0;
+
         const tagIds = this.convTags
           .filter((c) => c.conversationId === user.number)
           .map((c) => c.tagId);
