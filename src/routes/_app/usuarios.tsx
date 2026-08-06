@@ -37,6 +37,7 @@ import { formatPhone } from "@/lib/format-phone";
 import { AdminEditUserDialog } from "@/components/admin/AdminEditUserDialog";
 import { TagBadges } from "@/components/chat/TagBadges";
 import { setExternalUserActive } from "@/lib/data/admin-users.functions";
+import { downloadXlsx } from "@/lib/export/xlsx";
 
 export const Route = createFileRoute("/_app/usuarios")({
   head: () => ({ meta: [{ title: "Usuários — SV Logística" }] }),
@@ -154,10 +155,6 @@ function UsuariosPage() {
     }
   };
 
-  const csvEscape = (v: string | number) => {
-    const s = String(v ?? "");
-    return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  };
 
 
   useEffect(() => {
@@ -309,7 +306,7 @@ function UsuariosPage() {
   };
 
 
-  const exportCsv = () => {
+  const exportCsv = async () => {
     const header = [
       "Nome",
       "Telefone",
@@ -342,15 +339,11 @@ function UsuariosPage() {
         tagsFor(u).map((t) => t.label).join(", "),
       ];
     });
-    const csv =
-      "\uFEFF" + [header, ...rows].map((r) => r.map(csvEscape).join(";")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `usuarios-svlogistica-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    await downloadXlsx("usuarios-svlogistica", [
+      { name: "Usuários", header, rows },
+    ]);
   };
+
 
   const exportWord = async () => {
     const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import("docx");
@@ -499,7 +492,7 @@ function UsuariosPage() {
             </h2>
             <div className="flex items-center gap-2">
               <Button size="sm" variant="outline" onClick={exportCsv}>
-                <FileSpreadsheet className="mr-2 h-4 w-4" /> Exportar (Excel/CSV)
+                <FileSpreadsheet className="mr-2 h-4 w-4" /> Exportar (Excel)
               </Button>
               <Button size="sm" variant="outline" onClick={exportWord}>
                 <FileType className="mr-2 h-4 w-4" /> Exportar (Word)

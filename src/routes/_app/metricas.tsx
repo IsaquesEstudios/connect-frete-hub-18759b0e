@@ -16,6 +16,7 @@ import { useAuth } from "@/lib/auth/useAuth";
 import { useRepoVersion } from "@/lib/hooks/useRepo";
 import { formatPhone } from "@/lib/format-phone";
 import { formatDoc } from "@/lib/format-doc";
+import { downloadXlsx } from "@/lib/export/xlsx";
 
 function docsOf(u: { cpf?: string; cnpj?: string }) {
   const cpf = (u.cpf || "").replace(/\D/g, "");
@@ -90,59 +91,64 @@ function MetricsPage() {
 
   if (!user || user.type !== "admin") return null;
 
-  function csvEscape(v: string | number) {
-    const s = String(v ?? "");
-    return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  }
-
   async function downloadReport() {
     const emailMap = await getExternalUserEmails().catch(() => ({}) as Record<string, string>);
-    const lines: string[] = [];
-    lines.push("Relatório SV Logística");
-    lines.push(`Gerado em;${new Date().toLocaleString()}`);
-    lines.push("");
-    lines.push("Resumo");
-    lines.push("Métrica;Valor");
-    lines.push(`Empresas;${stats.empresas}`);
-    lines.push(`Motoristas;${stats.motoristas}`);
-    lines.push(`Conversas ativas;${stats.active}`);
-    lines.push(`Não lidas;${stats.unread}`);
-    lines.push(`Tags cadastradas;${stats.tags}`);
-    lines.push("");
-    lines.push("Tags");
-    lines.push("Tag;Cor;Conversas;Empresas;Motoristas");
-    for (const r of tagReport) {
-      lines.push(
-        [r.tag.label, r.tag.color, r.total, r.empresas, r.motoristas].map(csvEscape).join(";"),
-      );
-    }
-    lines.push("");
-    lines.push("Conversas");
-    lines.push("Nome;Código;CPF;CNPJ;Telefone;Email;Tipo;Não lidas admin;Última mensagem;Tags");
     const tagsById = Object.fromEntries(tags.map((t) => [t.id, t.label] as const));
-    for (const c of conversations) {
-      const u = c.user as { whatsapp?: string; email?: string; cpf?: string; cnpj?: string };
-      const email = u.email || emailMap[c.user.id] || "";
-      const d = docsOf(u);
-      const tagLabels = c.tagIds.map((id) => tagsById[id] || id).join("|");
-      const last = c.lastMessage ? new Date(c.lastMessage.createdAt).toLocaleString() : "";
-      lines.push(
-        [c.user.name, c.user.number, d.cpf, d.cnpj, formatPhone(u.whatsapp || ""), email, c.user.type, c.unreadForAdmin, last, tagLabels]
-          .map(csvEscape)
-          .join(";"),
-      );
-    }
-    const csv = "\uFEFF" + lines.join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `relatorio-svlogistica-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+
+    const resumo = {
+      name: "Resumo",
+      header: ["Métrica", "Valor"],
+      rows: [
+        ["Gerado em", new Date().toLocaleString("pt-BR")],
+        ["Empresas", stats.empresas],
+        ["Motoristas", stats.motoristas],
+        ["Conversas ativas", stats.active],
+        ["Não lidas", stats.unread],
+        ["Tags cadastradas", stats.tags],
+      ] as (string | number)[][],
+    };
+
+    const tagsSheet = {
+      name: "Etiquetas",
+      header: ["Etiqueta", "Cor", "Conversas", "Empresas", "Motoristas"],
+      rows: tagReport.map((r) => [r.tag.label, r.tag.color, r.total, r.empresas, r.motoristas]),
+    };
+
+    const conversas = {
+      name: "Conversas",
+      header: [
+        "Nome",
+        "Código",
+        "CPF",
+        "CNPJ",
+        "Telefone",
+        "Email",
+        "Tipo",
+        "Não lidas admin",
+        "Última mensagem",
+        "Etiquetas",
+      ],
+      rows: conversations.map((c) => {
+        const u = c.user as { whatsapp?: string; email?: string; cpf?: string; cnpj?: string };
+        const d = docsOf(u);
+        return [
+          c.user.name,
+          c.user.number,
+          d.cpf,
+          d.cnpj,
+          formatPhone(u.whatsapp || ""),
+          u.email || emailMap[c.user.id] || "",
+          c.user.type,
+          c.unreadForAdmin,
+          c.lastMessage ? new Date(c.lastMessage.createdAt).toLocaleString("pt-BR") : "",
+          c.tagIds.map((id) => tagsById[id] || id).join(", "),
+        ];
+      }),
+    };
+
+    await downloadXlsx("relatorio-svlogistica", [resumo, tagsSheet, conversas]);
   }
+
 
   async function downloadPDF() {
     const { default: jsPDF } = await import("jspdf");
@@ -349,7 +355,7 @@ function MetricsPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={downloadReport}>
-                <FileSpreadsheet className="h-4 w-4 mr-2" /> Excel (CSV)
+                <FileSpreadsheet className="h-4 w-4 mr-2" /> Excel (.xlsx)
               </DropdownMenuItem>
               <DropdownMenuItem onClick={downloadPDF}>
                 <FileText className="h-4 w-4 mr-2" /> PDF
