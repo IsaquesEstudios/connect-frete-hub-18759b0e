@@ -29,6 +29,7 @@ import { homeFor } from "@/lib/auth/session";
 import { useAuth } from "@/lib/auth/useAuth";
 import { useRepoVersion } from "@/lib/hooks/useRepo";
 import { usePinnedConversations } from "@/lib/chat/usePinnedConversations";
+import { matchesSearch } from "@/lib/search";
 
 type FilterTab = "todos" | "empresas" | "motoristas" | "colaboradores";
 
