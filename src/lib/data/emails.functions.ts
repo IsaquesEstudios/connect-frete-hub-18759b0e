@@ -34,18 +34,21 @@ async function readError(res: Response): Promise<string> {
   }
 }
 
-async function getCurrentProfile(serviceKey: string): Promise<ProfileEmailAccess> {
+// Devolve null quando não há sessão válida na requisição (SSR, token expirado,
+// aba voltando do background). Nesse caso as telas apenas ficam sem email.
+async function getCurrentProfile(serviceKey: string): Promise<ProfileEmailAccess | null> {
   const request = getRequest();
   const authHeader = request?.headers.get("authorization") ?? "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-  if (!token) throw new Error("Sessão inválida. Faça login novamente.");
+  if (!token) return null;
 
   const userRes = await fetch(`${EXT_SUPABASE_URL}/auth/v1/user`, {
     headers: apiHeaders(serviceKey, token),
   });
-  if (!userRes.ok) throw new Error("Sessão inválida. Faça login novamente.");
+  if (!userRes.ok) return null;
   const authUser = (await userRes.json()) as { id?: string };
-  if (!authUser.id) throw new Error("Sessão inválida. Faça login novamente.");
+  if (!authUser.id) return null;
+
 
   const profileRes = await fetch(
     `${EXT_SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(authUser.id)}&select=id,type,active`,
