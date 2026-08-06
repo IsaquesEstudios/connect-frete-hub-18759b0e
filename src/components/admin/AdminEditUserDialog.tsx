@@ -9,6 +9,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +30,7 @@ import { repo } from "@/lib/data";
 import { getExternalUserEmailsForIds } from "@/lib/data/emails.functions";
 import { reportEmailsUnavailable, EMAIL_UNAVAILABLE_LABEL } from "@/lib/data/emails-client";
 import { setExternalUserActive } from "@/lib/data/admin-users.functions";
+import { deleteAuthUser } from "@/lib/data/auth-cleanup.functions";
 import { translateAuthError } from "@/lib/auth/translate-error";
 import { formatPhone } from "@/lib/format-phone";
 import { formatDoc } from "@/lib/format-doc";
@@ -53,6 +64,8 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
   const [authEmail, setAuthEmail] = useState("");
   const [active, setActive] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -190,7 +203,24 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
     }
   };
 
+  const handleDelete = async () => {
+    if (!user) return;
+    setDeleting(true);
+    try {
+      await deleteAuthUser({ data: { userId: user.id } });
+      toast.success("Conta excluída com sucesso.");
+      onSaved?.();
+      onOpenChange(false);
+    } catch (err) {
+      toast.error(translateAuthError(err));
+    } finally {
+      setDeleting(false);
+      setConfirmDeleteOpen(false);
+    }
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -272,12 +302,45 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={save} disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button>
+        <DialogFooter className="gap-2 sm:justify-between">
+          <Button
+            variant="destructive"
+            onClick={() => setConfirmDeleteOpen(true)}
+            disabled={deleting}
+            className="w-full sm:w-auto"
+          >
+            {deleting ? "Excluindo..." : "Excluir conta"}
+          </Button>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <Button onClick={save} disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir conta de {user.name}?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Essa ação é irreversível. Todas as conversas, mensagens e dados do usuário serão
+            permanentemente removidos e não será possível recuperá-los.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            disabled={deleting}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {deleting ? "Excluindo..." : "Sim, excluir conta"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
 
