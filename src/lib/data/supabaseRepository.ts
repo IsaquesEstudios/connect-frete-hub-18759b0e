@@ -972,9 +972,14 @@ class SupabaseRepository implements Repository {
         const { sendChatMessage } = await import("./messages.functions");
         const result = await sendChatMessage({ data: { toUserId, body } });
         const real = this.mapMessage(result.row as MessageRow);
+        // Ajusta o desvio do relógio local em relação ao servidor (o horário
+        // do servidor é sempre >= o instante local do envio).
+        const drift = real.createdAt - localNow;
+        if (drift < 0 || drift > 2000) this.clockOffset = drift;
         // Preserva conversationId/fromUserId do lado do cliente (o servidor
-        // pode canonizar o remetente para ADM-0001).
-        const displayReal: Message = { ...real, conversationId, fromUserId, createdAt: msg.createdAt };
+        // pode canonizar o remetente para ADM-0001), mas usa SEMPRE o
+        // created_at do servidor como horário oficial da mensagem.
+        const displayReal: Message = { ...real, conversationId, fromUserId };
         const realIdx = this.messages.findIndex((m) => m.id === real.id);
         const tempIdx = this.messages.findIndex((m) => m.id === tempId);
         if (realIdx >= 0) {
