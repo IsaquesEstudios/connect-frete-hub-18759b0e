@@ -1,4 +1,4 @@
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Megaphone, Pin, PinOff, Search, Settings2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
