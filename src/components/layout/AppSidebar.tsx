@@ -28,7 +28,7 @@ export function AppSidebar({ user }: { user: User }) {
     { title: "Mensagens rápidas", url: "/mensagens-rapidas", icon: MessageSquareText },
     ...(user.type !== "colaborador"
       ? [
-          { title: "Motoristas disponíveis", url: "/motorista/disponível", icon: Truck },
+          { title: "Motoristas disponíveis", url: "/motorista/disponivel", icon: Truck },
           { title: "Empresas / fretes", url: "/fretes/disponivel", icon: Truck },
         ]
       : []),
