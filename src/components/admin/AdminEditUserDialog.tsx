@@ -203,6 +203,22 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
     }
   };
 
+  const handleDelete = async () => {
+    if (!user) return;
+    setDeleting(true);
+    try {
+      await deleteAuthUser({ data: { userId: user.id } });
+      toast.success("Conta excluída com sucesso.");
+      onSaved?.();
+      onOpenChange(false);
+    } catch (err) {
+      toast.error(translateAuthError(err));
+    } finally {
+      setDeleting(false);
+      setConfirmDeleteOpen(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
