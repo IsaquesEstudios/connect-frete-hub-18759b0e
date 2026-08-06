@@ -44,17 +44,6 @@ function lastSeenLabel(ts: number | null): string {
   return `há ${Math.floor(h / 24)}d`;
 }
 
-function normalizeSearchText(value: unknown): string {
-  return String(value ?? "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
-}
-
-function onlyDigits(value: unknown): string {
-  return String(value ?? "").replace(/\D/g, "");
-}
 
 export function StaffPanel({ role }: { role: "admin" | "colaborador" }) {
   const { user } = useAuth();
