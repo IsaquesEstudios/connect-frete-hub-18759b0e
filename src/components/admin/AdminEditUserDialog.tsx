@@ -64,6 +64,8 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
   const [authEmail, setAuthEmail] = useState("");
   const [active, setActive] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!user) return;
