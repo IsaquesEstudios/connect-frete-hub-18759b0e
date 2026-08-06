@@ -1050,17 +1050,20 @@ class SupabaseRepository implements Repository {
     let changed = false;
     for (const m of this.messages) {
       if (!ids.includes(m.conversationId)) continue;
-      if (viewer === "admin" && !m.readByAdmin) {
+      // Marca como lida apenas o que foi recebido por quem está lendo.
+      const toStaff = this.isStaff(this.getUser(m.toUserId));
+      if (viewer === "admin") {
+        const mine = this.adminAuthId ? m.toUserId === this.adminAuthId : toStaff;
+        if (!mine || m.readByAdmin) continue;
         m.readByAdmin = true;
-        changed = true;
-        if (!m.id.startsWith("tmp_")) idsToUpdate.push(m.id);
-      }
-      if (viewer === "user" && !m.readByUser) {
+      } else {
+        if (toStaff || m.readByUser) continue;
         m.readByUser = true;
-        changed = true;
-        if (!m.id.startsWith("tmp_")) idsToUpdate.push(m.id);
       }
+      changed = true;
+      if (!m.id.startsWith("tmp_")) idsToUpdate.push(m.id);
     }
+
     if (changed) this.notify();
     if (idsToUpdate.length === 0) return;
     void supabase
