@@ -34,18 +34,21 @@ async function readError(res: Response): Promise<string> {
   }
 }
 
-async function getCurrentProfile(serviceKey: string): Promise<ProfileEmailAccess> {
+// Devolve null quando não há sessão válida na requisição (SSR, token expirado,
+// aba voltando do background). Nesse caso as telas apenas ficam sem email.
+async function getCurrentProfile(serviceKey: string): Promise<ProfileEmailAccess | null> {
   const request = getRequest();
   const authHeader = request?.headers.get("authorization") ?? "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-  if (!token) throw new Error("Sessão inválida. Faça login novamente.");
+  if (!token) return null;
 
   const userRes = await fetch(`${EXT_SUPABASE_URL}/auth/v1/user`, {
     headers: apiHeaders(serviceKey, token),
   });
-  if (!userRes.ok) throw new Error("Sessão inválida. Faça login novamente.");
+  if (!userRes.ok) return null;
   const authUser = (await userRes.json()) as { id?: string };
-  if (!authUser.id) throw new Error("Sessão inválida. Faça login novamente.");
+  if (!authUser.id) return null;
+
 
   const profileRes = await fetch(
     `${EXT_SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(authUser.id)}&select=id,type,active`,
@@ -82,7 +85,9 @@ export const getExternalUserEmails = createServerFn({ method: "GET" }).handler(
     const key = process.env.EXT_SUPABASE_SERVICE_ROLE_KEY;
     if (!key) throw new Error("Configuração do servidor ausente: EXT_SUPABASE_SERVICE_ROLE_KEY não está definida no ambiente.");
     const profile = await getCurrentProfile(key);
+    if (!profile) return {};
     if (!isStaff(profile)) throw new Error("Apenas equipe administrativa pode listar emails.");
+
 
     const map: Record<string, string> = {};
     for (let page = 1; page <= 20; page++) {
@@ -117,6 +122,7 @@ export const getExternalUserEmailsForIds = createServerFn({ method: "POST" })
     const key = process.env.EXT_SUPABASE_SERVICE_ROLE_KEY;
     if (!key) throw new Error("Configuração do servidor ausente: EXT_SUPABASE_SERVICE_ROLE_KEY não está definida no ambiente.");
     const currentProfile = await getCurrentProfile(key);
+    if (!currentProfile) return {};
     const ids = Array.from(new Set(data.userIds));
 
     if (!isStaff(currentProfile)) {
@@ -124,6 +130,7 @@ export const getExternalUserEmailsForIds = createServerFn({ method: "POST" })
       // (o perfil abre com o email visível). Limitamos apenas a perfis
       // existentes e ativos — sem bloquear conversas legítimas.
       const otherIds = ids.filter((id) => id !== currentProfile.id);
+
       if (otherIds.length > 0) {
         const encodedIds = otherIds.map(encodeURIComponent).join(",");
         const profileRes = await fetch(
