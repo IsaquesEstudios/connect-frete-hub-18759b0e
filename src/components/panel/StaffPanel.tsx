@@ -100,21 +100,28 @@ export function StaffPanel({ role }: { role: "admin" | "colaborador" }) {
       if (unreadOnly && !(c.unreadForAdmin > 0)) return false;
       if (tagFilter && !c.tagIds.includes(tagFilter)) return false;
       if (query) {
-        const q = normalizeSearchText(query);
-        const qDigits = onlyDigits(query);
-        const u = c.user as { cnpj?: string; cpf?: string; whatsapp?: string; email?: string };
-        const searchableText = [c.user.name, c.user.number, u.cnpj, u.cpf, u.email, u.whatsapp]
-          .map(normalizeSearchText)
-          .filter(Boolean);
-        if (q && searchableText.some((value) => value.includes(q))) return true;
-        if (qDigits) {
-          const searchableDigits = [u.cnpj, u.cpf, c.user.number, u.whatsapp]
-            .map(onlyDigits)
-            .filter(Boolean);
-          if (searchableDigits.some((value) => value.includes(qDigits))) return true;
-        }
-        return false;
+        const u = c.user as {
+          cnpj?: string;
+          cpf?: string;
+          whatsapp?: string;
+          email?: string;
+          cidade?: string;
+          estado?: string;
+          nomeFantasia?: string;
+        };
+        return matchesSearch(query, [
+          c.user.name,
+          u.nomeFantasia,
+          c.user.number,
+          u.cnpj,
+          u.cpf,
+          u.whatsapp,
+          u.email,
+          u.cidade,
+          u.estado,
+        ]);
       }
+
       return true;
     });
   }, [conversations, tab, query, tagFilter, unreadOnly]);
