@@ -225,6 +225,8 @@ class SupabaseRepository implements Repository {
   private cachePersistTimer: number | null = null;
   private pendingSendKeys = new Map<string, string[]>(); // key -> fila de tempIds
   private lastSendAt = 0;
+  /** Diferença estimada entre o relógio do servidor e o do navegador (ms). */
+  private clockOffset = 0;
 
   private authUserId: string | null | undefined = undefined;
 
