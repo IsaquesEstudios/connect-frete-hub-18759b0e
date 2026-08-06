@@ -934,6 +934,7 @@ class SupabaseRepository implements Repository {
   }): Message {
     const from = this.getUser(fromUserId);
     const fromStaff = this.isStaff(from);
+    const toStaff = this.isStaff(this.getUser(toUserId));
     const conversationId = this.staffPairId(fromUserId, toUserId);
 
     // Timestamp monotônico crescente para preservar ordem em envios rápidos
@@ -949,9 +950,13 @@ class SupabaseRepository implements Repository {
       toUserId,
       body,
       createdAt: now,
-      readByAdmin: fromStaff,
-      readByUser: !fromStaff,
+      // O flag do lado do destinatário nasce como "não lido"; o do remetente
+      // já nasce lido. Em conversas equipe↔equipe usamos read_by_admin como
+      // o flag do destinatário.
+      readByAdmin: toStaff ? false : fromStaff,
+      readByUser: toStaff ? true : !fromStaff,
     };
+
     this.messages.push(msg);
     const pendKey = this.pendingKey(fromUserId, toUserId, body);
     this.pendingSendKeys.set(pendKey, [...(this.pendingSendKeys.get(pendKey) ?? []), tempId]);
