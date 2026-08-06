@@ -1074,7 +1074,7 @@ class SupabaseRepository implements Repository {
 
   /** Flag de leitura do lado de quem RECEBEU a mensagem. */
   private readByRecipient(m: Message): boolean {
-    return this.isStaff(this.getUser(m.toUserId)) ? m.readByAdmin : m.readByUser;
+    return this.isStaff(this.getUser(m.toUserId)) ? m.readByAdmin === true : m.readByUser === true;
   }
 
   /**
