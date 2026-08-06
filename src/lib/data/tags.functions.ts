@@ -81,21 +81,24 @@ export const listStaffTagData = createServerFn({ method: "GET" }).handler(async 
   }
 
 
+  // select=* + 500 linhas com corpo pesado (imagens em base64) estourava o
+  // statement timeout do Postgres. Pedimos só as colunas usadas e menos linhas,
+  // e o histórico é opcional: se falhar, a página continua funcionando.
   const [tagsRes, broadcastRes] = await Promise.all([
     fetch(`${EXT_SUPABASE_URL}/rest/v1/conversation_tags?select=conversation_id,tag_id`, {
       headers: apiHeaders(key),
     }),
-    fetch(`${EXT_SUPABASE_URL}/rest/v1/broadcast_messages?select=*&order=sent_at.desc&limit=500`, {
-      headers: apiHeaders(key),
-    }),
+    fetch(
+      `${EXT_SUPABASE_URL}/rest/v1/broadcast_messages?select=id,body,audience,tag_id,sent_at,recipient_count&order=sent_at.desc&limit=100`,
+      { headers: apiHeaders(key) },
+    ).catch(() => null),
   ]);
   if (!tagsRes.ok) throw new Error(`Não foi possível carregar as etiquetas. ${await readError(tagsRes)}`.trim());
-  if (!broadcastRes.ok) {
-    throw new Error(`Não foi possível carregar os envios em massa. ${await readError(broadcastRes)}`.trim());
-  }
 
   const convTags = (await tagsRes.json()) as Array<{ conversation_id: string; tag_id: string }>;
-  const broadcasts = (await broadcastRes.json()) as BroadcastRecord[];
+  const broadcasts =
+    broadcastRes && broadcastRes.ok ? ((await broadcastRes.json()) as BroadcastRecord[]) : [];
+
   return {
     convTags: convTags.map((c) => ({ conversationId: c.conversation_id, tagId: c.tag_id })),
     broadcasts,
