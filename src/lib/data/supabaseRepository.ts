@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/loose-client";
 import { translateAuthError } from "@/lib/auth/translate-error";
 import type { BroadcastAudience, NewUserInput, Repository } from "./repository";
 import type { BroadcastMessage, Message, Tag, User, UserProfilePatch, UserType } from "./types";
+import { idbGet, idbSet } from "./idb-cache";
+
 
 function reportError(title: string, error: unknown) {
   const raw =
