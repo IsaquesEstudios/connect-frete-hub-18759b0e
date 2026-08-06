@@ -586,7 +586,13 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
                       className={`mt-1 text-[10px] flex items-center gap-1 justify-end ${mine ? "text-primary-foreground/70" : "text-muted-foreground"} ${isMedia ? "px-2 pb-1" : ""}`}
                     >
                       <span>{fmtTime(m.createdAt)}</span>
-                      {mine && <MessageTicks message={m} viewer={viewer} />}
+                      {mine && (
+                        <MessageTicks
+                          message={m}
+                          recipientIsStaff={other.type === "admin" || other.type === "colaborador"}
+                        />
+                      )}
+
                     </div>
                   </div>
                   {isAdmin && !mine && (
