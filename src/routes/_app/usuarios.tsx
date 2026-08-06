@@ -546,7 +546,12 @@ function UsuariosPage() {
                   const last = repo.getLastSeen(u.id);
                   const cidade = [u.cidade, u.estado].filter(Boolean).join(" / ") || "—";
                   return (
-                    <tr key={u.id} className="border-b last:border-0 hover:bg-accent/40">
+                     <tr
+                       key={u.id}
+                       className="border-b last:border-0 hover:bg-accent/40 cursor-pointer"
+                       title="Abrir conversa"
+                       onClick={() => navigate({ to: "/admin", search: { u: u.id } })}
+                     >
                       <td className="px-4 py-3 font-medium">
                         <div className="flex items-center gap-2.5">
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-[10px] font-semibold text-white">
