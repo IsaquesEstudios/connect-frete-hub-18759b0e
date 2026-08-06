@@ -74,6 +74,8 @@ async function loadProfile(authId: string, options: { fresh?: boolean } = {}): P
 /** Limpa todo o cache local do app (conversas, fotos, sessão). */
 export function clearLocalAppCache() {
   if (typeof window === "undefined") return;
+  void import("@/lib/data/idb-cache").then((m) => m.idbClearAll()).catch(() => undefined);
+
   try {
     const keys: string[] = [];
     for (let i = 0; i < window.localStorage.length; i++) {
