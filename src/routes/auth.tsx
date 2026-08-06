@@ -84,7 +84,7 @@ function AuthPage() {
           }}
         >
           <div className="flex flex-col items-center text-center mb-6">
-            <Logo className="mb-4" iconClassName="h-8 w-8" textClassName="text-xl" />
+            <Logo className="mb-4" iconClassName="h-14" />
             <h1 className="text-2xl font-semibold tracking-tight text-white">
               {mode === "login" ? "Bem-vindo de volta" : "Criar sua conta"}
             </h1>

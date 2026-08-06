@@ -58,7 +58,7 @@ function LandingPage() {
         {/* Nav */}
         <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
           <Link to="/" className="flex items-center">
-            <Logo iconClassName="h-7 w-7" textClassName="text-lg" />
+            <Logo iconClassName="h-11" />
           </Link>
           <Link
             to="/auth"
