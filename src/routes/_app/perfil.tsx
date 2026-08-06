@@ -140,6 +140,7 @@ function ProfilePage() {
   const navigate = useNavigate();
   const [form, setForm] = useState<ProfileForm>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [authEmail, setAuthEmail] = useState("");
   const [docTipo, setDocTipo] = useState<DocTipo>(user?.type === "empresa" ? "cnpj" : "cpf");
 
