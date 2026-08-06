@@ -340,6 +340,7 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+    </>
   );
 }
 
