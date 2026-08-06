@@ -471,7 +471,7 @@ class SupabaseRepository implements Repository {
 
 
     // 2. Hydrate from cache immediately — UI shows conversations right away.
-    const hadCache = sessionUserId ? this.hydrateFromCache(sessionUserId) : false;
+    const hadCache = sessionUserId ? await this.hydrateFromCache(sessionUserId) : false;
     if (hadCache) {
       this.bootstrapped = true;
       this.normalizeMessageConversationIds();
