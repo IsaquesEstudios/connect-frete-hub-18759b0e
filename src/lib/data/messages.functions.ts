@@ -217,6 +217,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     }
 
     const fromStaff = isStaff(from);
+    const toStaff = isStaff(to);
     const insertRes = await fetch(`${EXT_SUPABASE_URL}/rest/v1/messages`, {
       method: "POST",
       headers: {
@@ -229,10 +230,14 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         from_user_id: from.id,
         to_user_id: to.id,
         body: data.body,
-        read_by_admin: fromStaff,
-        read_by_user: !fromStaff,
+        // O flag do lado do destinatário nasce "não lido"; o do remetente já
+        // nasce lido. Em conversas equipe↔equipe, read_by_admin é o flag do
+        // destinatário.
+        read_by_admin: toStaff ? false : fromStaff,
+        read_by_user: toStaff ? true : !fromStaff,
       }),
     });
+
     if (!insertRes.ok) {
       throw new Error(`Não foi possível salvar a mensagem. ${await readError(insertRes)}`.trim());
     }

@@ -176,6 +176,18 @@ class LocalRepository implements Repository {
     }).length;
   }
 
+  unreadForViewer(conversationId: string, viewerId: string): number {
+    if (!viewerId) return 0;
+    return readJSON<Message[]>(K_MSGS, []).filter(
+      (m) =>
+        m.conversationId === conversationId &&
+        m.toUserId === viewerId &&
+        m.fromUserId !== viewerId &&
+        !(m.toUserId === ADMIN_ID ? m.readByAdmin : m.readByUser),
+    ).length;
+  }
+
+
   listConversations() {
     const users = this.listUsers().filter((u) => u.type !== "admin");
     const msgs = readJSON<Message[]>(K_MSGS, []);

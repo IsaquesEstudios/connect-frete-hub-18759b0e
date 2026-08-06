@@ -28,6 +28,9 @@ export interface Repository {
   deleteConversation(conversationId: string): void;
   markConversationRead(conversationId: string, viewer: "admin" | "user", options?: { staffInbox?: boolean }): void;
   unreadCount(conversationId: string, viewer: "admin" | "user"): number;
+  /** Não lidas endereçadas a um usuário específico (nunca as próprias). */
+  unreadForViewer(conversationId: string, viewerId: string): number;
+
   // conversations
   listConversations(options?: { staffId?: string }): {
     user: User;

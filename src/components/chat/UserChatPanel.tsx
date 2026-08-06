@@ -124,8 +124,10 @@ export function UserChatPanel({ me }: Props) {
               const last = messages[messages.length - 1];
               const unread = (() => {
                 void v;
-                return messages.filter((m) => m.fromUserId === s.id && !m.readByUser).length;
+                // Só conta o que foi enviado PARA mim (nunca as minhas próprias).
+                return repo.unreadForViewer(conversationId, me.id);
               })();
+
               const online = (() => {
                 void ev;
                 return repo.isOnline(s.id);

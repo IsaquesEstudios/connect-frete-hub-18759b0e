@@ -934,6 +934,7 @@ class SupabaseRepository implements Repository {
   }): Message {
     const from = this.getUser(fromUserId);
     const fromStaff = this.isStaff(from);
+    const toStaff = this.isStaff(this.getUser(toUserId));
     const conversationId = this.staffPairId(fromUserId, toUserId);
 
     // Timestamp monotônico crescente para preservar ordem em envios rápidos
@@ -949,9 +950,13 @@ class SupabaseRepository implements Repository {
       toUserId,
       body,
       createdAt: now,
-      readByAdmin: fromStaff,
-      readByUser: !fromStaff,
+      // O flag do lado do destinatário nasce como "não lido"; o do remetente
+      // já nasce lido. Em conversas equipe↔equipe usamos read_by_admin como
+      // o flag do destinatário.
+      readByAdmin: toStaff ? false : fromStaff,
+      readByUser: toStaff ? true : !fromStaff,
     };
+
     this.messages.push(msg);
     const pendKey = this.pendingKey(fromUserId, toUserId, body);
     this.pendingSendKeys.set(pendKey, [...(this.pendingSendKeys.get(pendKey) ?? []), tempId]);
@@ -1045,17 +1050,20 @@ class SupabaseRepository implements Repository {
     let changed = false;
     for (const m of this.messages) {
       if (!ids.includes(m.conversationId)) continue;
-      if (viewer === "admin" && !m.readByAdmin) {
+      // Marca como lida apenas o que foi recebido por quem está lendo.
+      const toStaff = this.isStaff(this.getUser(m.toUserId));
+      if (viewer === "admin") {
+        const mine = this.adminAuthId ? m.toUserId === this.adminAuthId : toStaff;
+        if (!mine || m.readByAdmin) continue;
         m.readByAdmin = true;
-        changed = true;
-        if (!m.id.startsWith("tmp_")) idsToUpdate.push(m.id);
-      }
-      if (viewer === "user" && !m.readByUser) {
+      } else {
+        if (toStaff || m.readByUser) continue;
         m.readByUser = true;
-        changed = true;
-        if (!m.id.startsWith("tmp_")) idsToUpdate.push(m.id);
       }
+      changed = true;
+      if (!m.id.startsWith("tmp_")) idsToUpdate.push(m.id);
     }
+
     if (changed) this.notify();
     if (idsToUpdate.length === 0) return;
     void supabase
@@ -1067,12 +1075,35 @@ class SupabaseRepository implements Repository {
       });
   }
 
+  /** Flag de leitura do lado de quem RECEBEU a mensagem. */
+  private readByRecipient(m: Message): boolean {
+    return this.isStaff(this.getUser(m.toUserId)) ? m.readByAdmin === true : m.readByUser === true;
+  }
+
+  /**
+   * Não lidas para um usuário específico: somente mensagens endereçadas a ele.
+   * Nunca conta as mensagens que ele mesmo enviou.
+   */
+  unreadForViewer(conversationId: string, viewerId: string): number {
+    if (!viewerId) return 0;
+    return this.messages.filter(
+      (m) =>
+        m.conversationId === conversationId &&
+        m.toUserId === viewerId &&
+        m.fromUserId !== viewerId &&
+        !this.readByRecipient(m),
+    ).length;
+  }
+
   unreadCount(conversationId: string, viewer: "admin" | "user"): number {
-    return this.messages.filter((m) => {
-      if (m.conversationId !== conversationId) return false;
-      if (viewer === "admin") return m.toUserId === this.adminAuthId && !m.readByAdmin;
-      return m.fromUserId === this.adminAuthId && !m.readByUser;
-    }).length;
+    if (viewer === "admin") return this.unreadForViewer(conversationId, this.adminAuthId ?? "");
+    return this.messages.filter(
+      (m) =>
+        m.conversationId === conversationId &&
+        m.fromUserId !== m.toUserId &&
+        !this.isStaff(this.getUser(m.toUserId)) &&
+        !m.readByUser,
+    ).length;
   }
 
   listConversations(options?: { staffId?: string }) {
@@ -1092,9 +1123,14 @@ class SupabaseRepository implements Repository {
           return m.fromUserId === user.id || m.toUserId === user.id;
         });
         const lastMessage = [...conv].sort((a, b) => b.createdAt - a.createdAt)[0];
-        const unreadForAdmin = conv.filter(
-          (m) => (staffId ? m.toUserId === staffId : this.isStaff(this.getUser(m.toUserId))) && !m.readByAdmin,
-        ).length;
+        const viewerId = staffId ?? this.adminAuthId ?? "";
+        // Só conta o que foi enviado PARA quem está vendo a lista.
+        const unreadForAdmin = viewerId
+          ? conv.filter(
+              (m) => m.toUserId === viewerId && m.fromUserId !== viewerId && !this.readByRecipient(m),
+            ).length
+          : 0;
+
         const tagIds = this.convTags
           .filter((c) => c.conversationId === user.number)
           .map((c) => c.tagId);
