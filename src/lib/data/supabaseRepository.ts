@@ -360,31 +360,42 @@ class SupabaseRepository implements Repository {
 
 
 
-  private hydrateFromCache(uid: string): boolean {
+  // O histórico fica no IndexedDB (aguenta o volume de mensagens com mídia).
+  // O localStorage continua sendo lido só para migrar caches antigos.
+  private async hydrateFromCache(uid: string): Promise<boolean> {
     if (typeof window === "undefined") return false;
     this.cacheKey = CACHE_PREFIX + uid;
+    let blob: CacheBlob | null = null;
     try {
-      const raw = window.localStorage.getItem(this.cacheKey);
-      if (!raw) return false;
-      const blob = JSON.parse(raw) as CacheBlob;
-      this.users = blob.users ?? [];
-      this.messages = blob.messages ?? [];
-      this.tags = blob.tags ?? [];
-      this.convTags = blob.convTags ?? [];
-      this.broadcasts = blob.broadcasts ?? [];
-      this.lastSeen = new Map(blob.lastSeen ?? []);
-      this.applyPhotoCache();
-      return this.messages.length > 0 || this.users.length > 0;
+      blob = await idbGet<CacheBlob>(this.cacheKey);
     } catch {
-      return false;
+      blob = null;
     }
+    if (!blob) {
+      try {
+        const raw = window.localStorage.getItem(this.cacheKey);
+        if (raw) blob = JSON.parse(raw) as CacheBlob;
+      } catch {
+        blob = null;
+      }
+    }
+    if (!blob) return false;
+    this.users = blob.users ?? [];
+    this.messages = blob.messages ?? [];
+    this.tags = blob.tags ?? [];
+    this.convTags = blob.convTags ?? [];
+    this.broadcasts = blob.broadcasts ?? [];
+    this.lastSeen = new Map(blob.lastSeen ?? []);
+    this.applyPhotoCache();
+    return this.messages.length > 0 || this.users.length > 0;
   }
 
   private persistCache() {
     if (!this.cacheKey || typeof window === "undefined") return;
     if (this.cachePersistTimer) window.clearTimeout(this.cachePersistTimer);
     this.cachePersistTimer = window.setTimeout(() => {
-      if (!this.cacheKey) return;
+      const key = this.cacheKey;
+      if (!key) return;
       this.persistPhotoCache();
       const build = (messageLimit?: number): CacheBlob => ({
         // Sem as fotos: elas vivem no cache dedicado acima.
@@ -395,17 +406,29 @@ class SupabaseRepository implements Repository {
         broadcasts: this.broadcasts,
         lastSeen: Array.from(this.lastSeen.entries()),
       });
-      const attempts: (number | undefined)[] = [undefined, 2000, 500];
-      for (const limit of attempts) {
-        try {
-          window.localStorage.setItem(this.cacheKey, JSON.stringify(build(limit)));
+      void idbSet(key, build()).then((ok) => {
+        if (ok) {
+          // Evita manter uma cópia velha (e pesada) no localStorage.
+          try {
+            window.localStorage.removeItem(key);
+          } catch {
+            /* noop */
+          }
           return;
-        } catch (err) {
-          console.warn("repo cache persist retry", limit, err);
         }
-      }
+        const attempts: (number | undefined)[] = [undefined, 2000, 500];
+        for (const limit of attempts) {
+          try {
+            window.localStorage.setItem(key, JSON.stringify(build(limit)));
+            return;
+          } catch (err) {
+            console.warn("repo cache persist retry", limit, err);
+          }
+        }
+      });
     }, 400);
   }
+
 
 
   private notify() {
