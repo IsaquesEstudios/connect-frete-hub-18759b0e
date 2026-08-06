@@ -301,12 +301,44 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={save} disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button>
+        <DialogFooter className="gap-2 sm:justify-between">
+          <Button
+            variant="destructive"
+            onClick={() => setConfirmDeleteOpen(true)}
+            disabled={deleting}
+            className="w-full sm:w-auto"
+          >
+            {deleting ? "Excluindo..." : "Excluir conta"}
+          </Button>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <Button onClick={save} disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir conta de {user.name}?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Essa ação é irreversível. Todas as conversas, mensagens e dados do usuário serão
+            permanentemente removidos e não será possível recuperá-los.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            disabled={deleting}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {deleting ? "Excluindo..." : "Sim, excluir conta"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
