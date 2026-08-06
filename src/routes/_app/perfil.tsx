@@ -15,6 +15,20 @@ import { formatPhone, phoneDigits } from "@/lib/format-phone";
 import { PhotoUploader } from "@/components/common/PhotoUploader";
 import { getExternalUserEmailsForIds } from "@/lib/data/emails.functions";
 import { reportEmailsUnavailable, EMAIL_UNAVAILABLE_LABEL } from "@/lib/data/emails-client";
+import { deleteAuthUser } from "@/lib/data/auth-cleanup.functions";
+import { logout } from "@/lib/auth/session";
+import { Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 
 
@@ -126,6 +140,7 @@ function ProfilePage() {
   const navigate = useNavigate();
   const [form, setForm] = useState<ProfileForm>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [authEmail, setAuthEmail] = useState("");
   const [docTipo, setDocTipo] = useState<DocTipo>(user?.type === "empresa" ? "cnpj" : "cpf");
 
@@ -187,6 +202,20 @@ function ProfilePage() {
       setSaving(false);
     }
   };
+
+  const removeAccount = async () => {
+    setDeleting(true);
+    try {
+      await deleteAuthUser({ data: { userId: user.id } });
+      await logout();
+      toast.success("Conta excluída permanentemente.");
+      navigate({ to: "/auth" });
+    } catch (error) {
+      toast.error((error as Error).message);
+      setDeleting(false);
+    }
+  };
+
 
 
   return (
@@ -300,6 +329,46 @@ function ProfilePage() {
               {saving ? "Salvando..." : "Salvar alterações"}
             </Button>
           </div>
+        </section>
+
+        <section className="space-y-4 rounded-md border border-destructive/40 bg-destructive/5 p-4 md:p-6">
+          <div>
+            <h2 className="text-lg font-semibold text-destructive">Excluir conta</h2>
+            <p className="text-sm text-muted-foreground">
+              Ao excluir sua conta, todas as suas conversas e mensagens serão apagadas permanentemente.
+            </p>
+          </div>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" disabled={deleting}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                {deleting ? "Excluindo..." : "Excluir minha conta"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Excluir sua conta permanentemente?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Você perderá <strong>todas as suas conversas</strong> e{" "}
+                  <strong>todas as suas mensagens</strong>. Esta ação é definitiva e{" "}
+                  <strong>não há como reverter</strong> depois de confirmada.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(event) => {
+                    event.preventDefault();
+                    void removeAccount();
+                  }}
+                  disabled={deleting}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {deleting ? "Excluindo..." : "Excluir definitivamente"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </section>
       </div>
     </main>
