@@ -74,3 +74,14 @@ export async function idbDel(key: string): Promise<void> {
     /* noop */
   }
 }
+
+/** Apaga todo o cache local (usado quando a conta é bloqueada/limpa). */
+export async function idbClearAll(): Promise<void> {
+  if (typeof window === "undefined" || !("indexedDB" in window)) return;
+  dbPromise = null;
+  try {
+    window.indexedDB.deleteDatabase(DB_NAME);
+  } catch {
+    /* noop */
+  }
+}
