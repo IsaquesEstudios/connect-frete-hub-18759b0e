@@ -225,6 +225,8 @@ class SupabaseRepository implements Repository {
   private cachePersistTimer: number | null = null;
   private pendingSendKeys = new Map<string, string[]>(); // key -> fila de tempIds
   private lastSendAt = 0;
+  /** Diferença estimada entre o relógio do servidor e o do navegador (ms). */
+  private clockOffset = 0;
 
   private authUserId: string | null | undefined = undefined;
 
@@ -632,7 +634,9 @@ class SupabaseRepository implements Repository {
               if (queue.length === 0) this.pendingSendKeys.delete(key);
               if (tempIdx >= 0) {
                 const prev = this.messages[tempIdx];
-                this.messages[tempIdx] = { ...m, conversationId: prev.conversationId, fromUserId: prev.fromUserId, createdAt: prev.createdAt };
+                // Mantém o horário REAL do servidor (m.createdAt): é a única
+                // referência confiável de ordem entre participantes.
+                this.messages[tempIdx] = { ...m, conversationId: prev.conversationId, fromUserId: prev.fromUserId };
               } else {
                 this.messages.push(m);
               }
@@ -937,9 +941,10 @@ class SupabaseRepository implements Repository {
     const toStaff = this.isStaff(this.getUser(toUserId));
     const conversationId = this.staffPairId(fromUserId, toUserId);
 
-    // Timestamp monotônico crescente para preservar ordem em envios rápidos
-    // dentro do mesmo milissegundo.
-    const now = Math.max(Date.now(), this.lastSendAt + 1);
+    // Timestamp otimista corrigido pelo desvio do relógio do servidor, e
+    // monotônico para envios rápidos dentro do mesmo milissegundo.
+    const localNow = Date.now();
+    const now = Math.max(localNow + this.clockOffset, this.lastSendAt + 1);
     this.lastSendAt = now;
 
     const tempId = `tmp_${now}_${Math.random().toString(36).slice(2, 7)}`;
@@ -967,9 +972,14 @@ class SupabaseRepository implements Repository {
         const { sendChatMessage } = await import("./messages.functions");
         const result = await sendChatMessage({ data: { toUserId, body } });
         const real = this.mapMessage(result.row as MessageRow);
+        // Ajusta o desvio do relógio local em relação ao servidor (o horário
+        // do servidor é sempre >= o instante local do envio).
+        const drift = real.createdAt - localNow;
+        if (drift < 0 || drift > 2000) this.clockOffset = drift;
         // Preserva conversationId/fromUserId do lado do cliente (o servidor
-        // pode canonizar o remetente para ADM-0001).
-        const displayReal: Message = { ...real, conversationId, fromUserId, createdAt: msg.createdAt };
+        // pode canonizar o remetente para ADM-0001), mas usa SEMPRE o
+        // created_at do servidor como horário oficial da mensagem.
+        const displayReal: Message = { ...real, conversationId, fromUserId };
         const realIdx = this.messages.findIndex((m) => m.id === real.id);
         const tempIdx = this.messages.findIndex((m) => m.id === tempId);
         if (realIdx >= 0) {
