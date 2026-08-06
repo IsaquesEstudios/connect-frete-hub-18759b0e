@@ -315,6 +315,46 @@ function ProfilePage() {
             </Button>
           </div>
         </section>
+
+        <section className="space-y-4 rounded-md border border-destructive/40 bg-destructive/5 p-4 md:p-6">
+          <div>
+            <h2 className="text-lg font-semibold text-destructive">Excluir conta</h2>
+            <p className="text-sm text-muted-foreground">
+              Ao excluir sua conta, todas as suas conversas e mensagens serão apagadas permanentemente.
+            </p>
+          </div>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" disabled={deleting}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                {deleting ? "Excluindo..." : "Excluir minha conta"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Excluir sua conta permanentemente?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Você perderá <strong>todas as suas conversas</strong> e{" "}
+                  <strong>todas as suas mensagens</strong>. Esta ação é definitiva e{" "}
+                  <strong>não há como reverter</strong> depois de confirmada.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(event) => {
+                    event.preventDefault();
+                    void removeAccount();
+                  }}
+                  disabled={deleting}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {deleting ? "Excluindo..." : "Excluir definitivamente"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </section>
       </div>
     </main>
   );
