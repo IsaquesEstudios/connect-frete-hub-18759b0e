@@ -16,6 +16,7 @@ import { useAuth } from "@/lib/auth/useAuth";
 import { useRepoVersion } from "@/lib/hooks/useRepo";
 import { formatPhone } from "@/lib/format-phone";
 import { formatDoc } from "@/lib/format-doc";
+import { downloadXlsx } from "@/lib/export/xlsx";
 
 function docsOf(u: { cpf?: string; cnpj?: string }) {
   const cpf = (u.cpf || "").replace(/\D/g, "");

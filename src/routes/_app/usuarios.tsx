@@ -37,6 +37,7 @@ import { formatPhone } from "@/lib/format-phone";
 import { AdminEditUserDialog } from "@/components/admin/AdminEditUserDialog";
 import { TagBadges } from "@/components/chat/TagBadges";
 import { setExternalUserActive } from "@/lib/data/admin-users.functions";
+import { downloadXlsx } from "@/lib/export/xlsx";
 
 export const Route = createFileRoute("/_app/usuarios")({
   head: () => ({ meta: [{ title: "Usuários — SV Logística" }] }),
