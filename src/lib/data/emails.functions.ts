@@ -85,7 +85,9 @@ export const getExternalUserEmails = createServerFn({ method: "GET" }).handler(
     const key = process.env.EXT_SUPABASE_SERVICE_ROLE_KEY;
     if (!key) throw new Error("Configuração do servidor ausente: EXT_SUPABASE_SERVICE_ROLE_KEY não está definida no ambiente.");
     const profile = await getCurrentProfile(key);
+    if (!profile) return {};
     if (!isStaff(profile)) throw new Error("Apenas equipe administrativa pode listar emails.");
+
 
     const map: Record<string, string> = {};
     for (let page = 1; page <= 20; page++) {
