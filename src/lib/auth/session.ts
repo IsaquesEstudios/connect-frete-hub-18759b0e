@@ -293,19 +293,8 @@ export async function createColaborador(input: {
   if (error) throw new Error(translateAuthError(error));
   if (!data.user) throw new Error("Não foi possível criar o usuário.");
 
-  const { data: existing } = await supabase
-    .from("profiles")
-    .select("user_number")
-    .eq("type", "colaborador");
-  const nums = (existing ?? []).map((r: { user_number: string }) =>
-    parseInt(r.user_number.split("-")[1] || "0", 10),
-  );
-  const next = (nums.length ? Math.max(...nums) : 0) + 1;
-  const user_number = `COL-${String(next).padStart(4, "0")}`;
-
-  const { error: insErr } = await supabase.from("profiles").insert({
+  const insErr = await insertProfileWithNumber("COL", {
     id: data.user.id,
-    user_number,
     type: "colaborador",
     name: input.name,
     // email vive em auth.users
@@ -313,6 +302,7 @@ export async function createColaborador(input: {
     cnpj: input.documentoTipo === "cnpj" ? input.documento || null : null,
     active: true,
   });
+
 
   // Restore admin session so the current user isn't logged out and redirected.
   if (adminSession) {
