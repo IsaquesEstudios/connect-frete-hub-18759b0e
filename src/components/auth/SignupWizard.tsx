@@ -261,10 +261,16 @@ export function SignupWizard({
       toast.success(`Cadastro criado: ${u.number}`);
       setCreatedUser(u);
     } catch (err) {
+      let description = formatSignupError(err);
+      if (/duplicate key|already exists|23505|unique|já cadastrad|já existe/i.test(description)) {
+        const conflict = await checkUniquenessForStep1();
+        if (conflict) description = `${conflict} (${description})`;
+      }
       toast.error("Não foi possível finalizar o cadastro", {
-        description: formatSignupError(err),
-        duration: 12000,
+        description,
+        duration: 15000,
       });
+
     } finally {
       setLoading(false);
     }
