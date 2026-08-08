@@ -71,6 +71,41 @@ async function loadProfile(authId: string, options: { fresh?: boolean } = {}): P
   return profileToUser(data as Parameters<typeof profileToUser>[0]);
 }
 
+type PgError = { code?: string; message?: string; details?: string; hint?: string };
+
+function isDuplicateUserNumber(error: unknown): boolean {
+  const e = (error ?? {}) as PgError;
+  const blob = `${e.message ?? ""} ${e.details ?? ""}`.toLowerCase();
+  return e.code === "23505" && blob.includes("user_number");
+}
+
+async function nextUserNumberSeq(prefix: string): Promise<number> {
+  const { data } = await supabase
+    .from("profiles")
+    .select("user_number")
+    .like("user_number", `${prefix}-%`);
+  const nums = (data ?? [])
+    .map((r: { user_number: string }) => parseInt(String(r.user_number).split("-")[1] || "0", 10))
+    .filter((n: number) => Number.isFinite(n));
+  return (nums.length ? Math.max(...nums) : 0) + 1;
+}
+
+/** Insere o perfil gerando o `user_number`; em caso de colisão tenta o próximo livre. */
+async function insertProfileWithNumber(
+  prefix: string,
+  row: Record<string, unknown>,
+): Promise<PgError | null> {
+  let seq = await nextUserNumberSeq(prefix);
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const user_number = `${prefix}-${String(seq).padStart(4, "0")}`;
+    const { error } = await supabase.from("profiles").insert({ ...row, user_number });
+    if (!error) return null;
+    if (!isDuplicateUserNumber(error)) return error as PgError;
+    seq += 1;
+  }
+  return { code: "23505", message: "Não foi possível gerar um código de usuário livre." };
+}
+
 /** Limpa todo o cache local do app (conversas, fotos, sessão). */
 export function clearLocalAppCache() {
   if (typeof window === "undefined") return;
