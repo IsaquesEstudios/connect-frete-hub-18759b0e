@@ -404,13 +404,33 @@ export async function signup(input: SignupInput): Promise<User> {
     notify();
 
     const raw = insErr as { code?: string; details?: string; hint?: string; message?: string };
+    const blob = `${raw.message ?? ""} ${raw.details ?? ""} ${raw.hint ?? ""}`.toLowerCase();
+    const FIELDS: Array<[RegExp, string]> = [
+      [/whatsapp/, "WhatsApp"],
+      [/\bcnpj\b/, "CNPJ"],
+      [/\bcpf\b/, "CPF"],
+      [/user_number/, "código do usuário"],
+      [/\bplaca\b/, "placa"],
+      [/\brntrc\b/, "RNTRC"],
+      [/nome_fantasia/, "nome fantasia"],
+      [/\bemail\b/, "email"],
+    ];
+    const field = FIELDS.find(([re]) => re.test(blob))?.[1];
+    const isDuplicate = /duplicate key|23505|unique/.test(blob);
+    const precise = field
+      ? isDuplicate
+        ? `O campo ${field} já está cadastrado em outra conta.`
+        : `Problema no campo ${field}.`
+      : "";
     const parts = [
+      precise,
       translateAuthError(insErr),
       raw.details ? `Detalhe: ${raw.details}` : "",
       raw.hint ? `Dica: ${raw.hint}` : "",
       raw.code ? `Código: ${raw.code}` : "",
     ].filter(Boolean);
     throw new Error(`Não foi possível salvar o perfil. ${parts.join(" ")} ${rollbackNote}`.trim());
+
   }
 
 
