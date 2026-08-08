@@ -14,6 +14,7 @@ import {
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { logout } from "@/lib/auth/session";
 import { homeFor } from "@/lib/auth/session";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { User } from "@/lib/data";
 
 const ICON_CLASS = "text-white";
