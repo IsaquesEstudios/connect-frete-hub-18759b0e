@@ -106,13 +106,15 @@ export function AppSidebar({ user }: { user: User }) {
   );
 }
 
-function CollapseToggle() {
+function CollapseToggle({ isMobile }: { isMobile: boolean }) {
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
   return (
     <SidebarMenuButton
       tooltip={collapsed ? "Expandir menu" : "Recolher menu"}
       onClick={toggleSidebar}
+      size={isMobile ? "lg" : "default"}
+      className={isMobile ? "text-base" : undefined}
     >
       {collapsed ? <PanelLeftOpen className={ICON_CLASS} /> : <PanelLeftClose className={ICON_CLASS} />}
       <span>{collapsed ? "Expandir" : "Recolher"}</span>
