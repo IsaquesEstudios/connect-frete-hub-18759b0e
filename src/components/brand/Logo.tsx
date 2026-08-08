@@ -17,7 +17,7 @@ export function Logo({
   return (
     <span className={cn("inline-flex items-center", className)}>
       <img
-        src={logoAsset.url}
+        src={LOGO_URL}
         alt="SV Logística"
         className={cn("h-8 w-auto object-contain", iconClassName)}
         loading="lazy"
