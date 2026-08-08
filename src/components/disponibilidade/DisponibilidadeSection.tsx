@@ -40,7 +40,7 @@ function LinkifiedText({ text }: { text: string }) {
   return (
     <>
       {parts.map((part, i) =>
-        URL_RE.test(part) && /^https?:\/\//.test(part) ? (
+        /^https?:\/\//.test(part) ? (
           <a
             key={i}
             href={part}
