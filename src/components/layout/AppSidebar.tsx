@@ -53,6 +53,8 @@ export function AppSidebar({ user }: { user: User }) {
                     asChild
                     isActive={currentPath === item.url}
                     tooltip={item.title}
+                    size={isMobile ? "lg" : "default"}
+                    className={isMobile ? "text-base" : undefined}
                   >
                     <Link to={item.url as "/admin"}>
                       <item.icon className={ICON_CLASS} />
