@@ -207,9 +207,8 @@ export function DisponibilidadeSection({
                 <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
                   {item.lines.map((l, i) => (
                     <li key={i} className="whitespace-pre-wrap break-words">
-                      {l}
+                      <LinkifiedText text={l} />
                     </li>
-                  ))}
                 </ul>
               </Card>
             ))}
