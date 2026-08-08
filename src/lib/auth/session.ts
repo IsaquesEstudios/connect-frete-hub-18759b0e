@@ -71,6 +71,41 @@ async function loadProfile(authId: string, options: { fresh?: boolean } = {}): P
   return profileToUser(data as Parameters<typeof profileToUser>[0]);
 }
 
+type PgError = { code?: string; message?: string; details?: string; hint?: string };
+
+function isDuplicateUserNumber(error: unknown): boolean {
+  const e = (error ?? {}) as PgError;
+  const blob = `${e.message ?? ""} ${e.details ?? ""}`.toLowerCase();
+  return e.code === "23505" && blob.includes("user_number");
+}
+
+async function nextUserNumberSeq(prefix: string): Promise<number> {
+  const { data } = await supabase
+    .from("profiles")
+    .select("user_number")
+    .like("user_number", `${prefix}-%`);
+  const nums = (data ?? [])
+    .map((r: { user_number: string }) => parseInt(String(r.user_number).split("-")[1] || "0", 10))
+    .filter((n: number) => Number.isFinite(n));
+  return (nums.length ? Math.max(...nums) : 0) + 1;
+}
+
+/** Insere o perfil gerando o `user_number`; em caso de colisão tenta o próximo livre. */
+async function insertProfileWithNumber(
+  prefix: string,
+  row: Record<string, unknown>,
+): Promise<PgError | null> {
+  let seq = await nextUserNumberSeq(prefix);
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const user_number = `${prefix}-${String(seq).padStart(4, "0")}`;
+    const { error } = await supabase.from("profiles").insert({ ...row, user_number });
+    if (!error) return null;
+    if (!isDuplicateUserNumber(error)) return error as PgError;
+    seq += 1;
+  }
+  return { code: "23505", message: "Não foi possível gerar um código de usuário livre." };
+}
+
 /** Limpa todo o cache local do app (conversas, fotos, sessão). */
 export function clearLocalAppCache() {
   if (typeof window === "undefined") return;
@@ -258,19 +293,8 @@ export async function createColaborador(input: {
   if (error) throw new Error(translateAuthError(error));
   if (!data.user) throw new Error("Não foi possível criar o usuário.");
 
-  const { data: existing } = await supabase
-    .from("profiles")
-    .select("user_number")
-    .eq("type", "colaborador");
-  const nums = (existing ?? []).map((r: { user_number: string }) =>
-    parseInt(r.user_number.split("-")[1] || "0", 10),
-  );
-  const next = (nums.length ? Math.max(...nums) : 0) + 1;
-  const user_number = `COL-${String(next).padStart(4, "0")}`;
-
-  const { error: insErr } = await supabase.from("profiles").insert({
+  const insErr = await insertProfileWithNumber("COL", {
     id: data.user.id,
-    user_number,
     type: "colaborador",
     name: input.name,
     // email vive em auth.users
@@ -278,6 +302,7 @@ export async function createColaborador(input: {
     cnpj: input.documentoTipo === "cnpj" ? input.documento || null : null,
     active: true,
   });
+
 
   // Restore admin session so the current user isn't logged out and redirected.
   if (adminSession) {
@@ -349,15 +374,6 @@ export async function signup(input: SignupInput): Promise<User> {
 
   // Generate user_number
   const prefix = input.type === "empresa" ? "EMP" : input.type === "motorista" ? "MOT" : "ADM";
-  const { data: existing } = await supabase
-    .from("profiles")
-    .select("user_number")
-    .eq("type", input.type);
-  const nums = (existing ?? []).map((r: { user_number: string }) =>
-    parseInt(r.user_number.split("-")[1] || "0", 10),
-  );
-  const next = (nums.length ? Math.max(...nums) : 0) + 1;
-  const user_number = `${prefix}-${String(next).padStart(4, "0")}`;
 
   if (!data.session) {
     await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
@@ -366,9 +382,8 @@ export async function signup(input: SignupInput): Promise<User> {
     );
   }
 
-  const { error: insErr } = await supabase.from("profiles").insert({
+  const insErr = await insertProfileWithNumber(prefix, {
     id: data.user.id,
-    user_number,
     type: input.type,
     name: input.name,
     // email vive em auth.users; não replicar em profiles
@@ -388,6 +403,7 @@ export async function signup(input: SignupInput): Promise<User> {
     perfil_empresa: input.perfilEmpresa ?? null,
     site_rede_social: input.siteRedeSocial ?? null,
   });
+
   if (insErr) {
     // Rollback: remove the just-created auth user so the email doesn't stay orphaned.
     let rollbackNote = "";
