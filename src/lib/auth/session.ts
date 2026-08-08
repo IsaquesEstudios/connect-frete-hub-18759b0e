@@ -374,15 +374,6 @@ export async function signup(input: SignupInput): Promise<User> {
 
   // Generate user_number
   const prefix = input.type === "empresa" ? "EMP" : input.type === "motorista" ? "MOT" : "ADM";
-  const { data: existing } = await supabase
-    .from("profiles")
-    .select("user_number")
-    .eq("type", input.type);
-  const nums = (existing ?? []).map((r: { user_number: string }) =>
-    parseInt(r.user_number.split("-")[1] || "0", 10),
-  );
-  const next = (nums.length ? Math.max(...nums) : 0) + 1;
-  const user_number = `${prefix}-${String(next).padStart(4, "0")}`;
 
   if (!data.session) {
     await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
@@ -391,9 +382,8 @@ export async function signup(input: SignupInput): Promise<User> {
     );
   }
 
-  const { error: insErr } = await supabase.from("profiles").insert({
+  const insErr = await insertProfileWithNumber(prefix, {
     id: data.user.id,
-    user_number,
     type: input.type,
     name: input.name,
     // email vive em auth.users; não replicar em profiles
@@ -413,6 +403,7 @@ export async function signup(input: SignupInput): Promise<User> {
     perfil_empresa: input.perfilEmpresa ?? null,
     site_rede_social: input.siteRedeSocial ?? null,
   });
+
   if (insErr) {
     // Rollback: remove the just-created auth user so the email doesn't stay orphaned.
     let rollbackNote = "";
