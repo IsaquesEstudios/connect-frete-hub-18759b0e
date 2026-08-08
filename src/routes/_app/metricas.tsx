@@ -57,6 +57,9 @@ function MetricsPage() {
 
   const conversations = useMemo(() => {
     return allConversations.filter((c) => {
+      // Métricas e relatórios consideram apenas usuários finais (empresas e motoristas),
+      // nunca admin/colaboradores — assim o relatório bate com os cards.
+      if (c.user.type !== "empresa" && c.user.type !== "motorista") return false;
       if (filterUf !== "todos") {
         const uf = ((c.user as { estado?: string }).estado || "").toUpperCase();
         if (uf !== filterUf) return false;
@@ -67,6 +70,7 @@ function MetricsPage() {
       return true;
     });
   }, [allConversations, filterUf, filterTag]);
+
 
   const stats = useMemo(() => {
     const empresas = conversations.filter((c) => c.user.type === "empresa").length;
