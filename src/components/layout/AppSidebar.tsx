@@ -22,6 +22,7 @@ const ICON_CLASS = "text-white";
 export function AppSidebar({ user }: { user: User }) {
   const navigate = useNavigate();
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
+  const isMobile = useIsMobile();
   const home = homeFor(user);
 
   const items = [
