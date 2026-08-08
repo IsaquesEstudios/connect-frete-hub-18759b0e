@@ -74,6 +74,8 @@ export function AppSidebar({ user }: { user: User }) {
               asChild
               isActive={currentPath === "/perfil"}
               tooltip="Perfil"
+              size={isMobile ? "lg" : "default"}
+              className={isMobile ? "text-base" : undefined}
             >
               <Link to="/perfil">
                 <UserIcon className={ICON_CLASS} />
@@ -88,13 +90,15 @@ export function AppSidebar({ user }: { user: User }) {
                 await logout();
                 navigate({ to: "/auth" });
               }}
+              size={isMobile ? "lg" : "default"}
+              className={isMobile ? "text-base" : undefined}
             >
               <LogOut className={ICON_CLASS} />
               <span>Sair</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <CollapseToggle />
+            <CollapseToggle isMobile={isMobile} />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
