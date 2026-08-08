@@ -209,6 +209,7 @@ export function DisponibilidadeSection({
                     <li key={i} className="whitespace-pre-wrap break-words">
                       <LinkifiedText text={l} />
                     </li>
+                  ))}
                 </ul>
               </Card>
             ))}
