@@ -1,5 +1,7 @@
 import { cn } from "@/lib/utils";
-import logoAsset from "@/assets/sv-logo.png.asset.json";
+
+// Servido a partir de /public para funcionar em qualquer hospedagem (VPS/Coolify).
+const LOGO_URL = "/sv-logo.png";
 
 export function Logo({
   className,
@@ -15,7 +17,7 @@ export function Logo({
   return (
     <span className={cn("inline-flex items-center", className)}>
       <img
-        src={logoAsset.url}
+        src={LOGO_URL}
         alt="SV Logística"
         className={cn("h-8 w-auto object-contain", iconClassName)}
         loading="lazy"
