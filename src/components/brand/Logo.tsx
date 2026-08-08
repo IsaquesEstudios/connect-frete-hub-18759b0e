@@ -1,5 +1,7 @@
 import { cn } from "@/lib/utils";
-import logoAsset from "@/assets/sv-logo.png.asset.json";
+
+// Servido a partir de /public para funcionar em qualquer hospedagem (VPS/Coolify).
+const LOGO_URL = "/sv-logo.png";
 
 export function Logo({
   className,
