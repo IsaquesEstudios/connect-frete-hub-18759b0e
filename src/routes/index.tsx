@@ -90,7 +90,71 @@ function LandingPage() {
               Criar conta ou entrar <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
+
+        {/* Quadro ao vivo — disponibilidade */}
+        <section className="mx-auto max-w-6xl px-6 pb-20">
+          <div className="relative overflow-hidden rounded-3xl border border-sky-400/20 bg-gradient-to-br from-sky-500/10 via-white/[0.02] to-transparent">
+            <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-sky-500/10 blur-3xl" />
+            <div className="relative grid md:grid-cols-[1fr_1.4fr] gap-8 p-8 md:p-10">
+              <div className="flex flex-col justify-center">
+                <span className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-200">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                  </span>
+                  Atualizado pela equipe
+                </span>
+                <h2 className="mt-4 text-2xl md:text-3xl font-bold text-white">
+                  Quadro de disponibilidade
+                </h2>
+                <p className="mt-3 text-sm md:text-base text-slate-400">
+                  Veja em tempo real quem está livre para rodar e quais cargas estão
+                  abertas. Acesso livre, sem login.
+                </p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Link
+                  to="/motorista/disponivel"
+                  className="group relative flex flex-col justify-between rounded-2xl border border-white/10 bg-[#070e20]/70 p-5 transition hover:-translate-y-1 hover:border-sky-400/50"
+                >
+                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl ring-1 ring-sky-400/40 bg-sky-500/20 text-sky-300">
+                    <Truck className="h-5 w-5" />
+                  </div>
+                  <div className="mt-4">
+                    <h3 className="text-base font-semibold text-white">Motoristas disponíveis</h3>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Veículos e origens prontos para carregar.
+                    </p>
+                  </div>
+                  <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-sky-300 group-hover:text-sky-200">
+                    Ver quadro <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                  </span>
+                </Link>
+
+                <Link
+                  to="/fretes/disponivel"
+                  className="group relative flex flex-col justify-between rounded-2xl border border-white/10 bg-[#070e20]/70 p-5 transition hover:-translate-y-1 hover:border-blue-400/50"
+                >
+                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl ring-1 ring-blue-400/40 bg-blue-500/20 text-blue-300">
+                    <Package className="h-5 w-5" />
+                  </div>
+                  <div className="mt-4">
+                    <h3 className="text-base font-semibold text-white">Fretes disponíveis</h3>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Cargas abertas publicadas pelas empresas.
+                    </p>
+                  </div>
+                  <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-blue-300 group-hover:text-blue-200">
+                    Ver quadro <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                  </span>
+                </Link>
+              </div>
+            </div>
+          </div>
         </section>
+
+
 
         {/* Atalhos de cadastro */}
         <section className="mx-auto max-w-6xl px-6 pb-16">
