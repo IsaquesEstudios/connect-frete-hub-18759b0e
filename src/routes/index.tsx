@@ -90,6 +90,9 @@ function LandingPage() {
               Criar conta ou entrar <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
+        </section>
+
+
 
         {/* Quadro ao vivo — disponibilidade */}
         <section className="mx-auto max-w-6xl px-6 pb-20">
