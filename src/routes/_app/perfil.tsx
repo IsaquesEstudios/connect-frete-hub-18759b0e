@@ -143,10 +143,14 @@ function ProfilePage() {
   const [deleting, setDeleting] = useState(false);
   const [authEmail, setAuthEmail] = useState("");
   const [docTipo, setDocTipo] = useState<DocTipo>(user?.type === "empresa" ? "cnpj" : "cpf");
+  const loadedForId = useRef<string | null>(null);
 
 
   useEffect(() => {
-    if (user) {
+    // Só carrega o formulário quando muda de usuário: atualizações vindas do
+    // servidor não podem apagar o que a pessoa está digitando.
+    if (user && loadedForId.current !== user.id) {
+      loadedForId.current = user.id;
       setForm(toProfileForm(user));
       const u = user as User & { cnpj?: string; cpf?: string };
       if (u.cnpj) setDocTipo("cnpj");
@@ -154,6 +158,7 @@ function ProfilePage() {
       else setDocTipo(user.type === "empresa" ? "cnpj" : "cpf");
     }
   }, [user]);
+
 
   // O email exibido deve ser o mesmo usado para login (auth), não o da tabela de perfis.
   useEffect(() => {
