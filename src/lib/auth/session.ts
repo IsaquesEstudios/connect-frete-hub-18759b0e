@@ -111,11 +111,15 @@ export function clearLocalAppCache() {
   if (typeof window === "undefined") return;
   void import("@/lib/data/idb-cache").then((m) => m.idbClearAll()).catch(() => undefined);
 
+  // Conversas fixadas são preferência do usuário: nunca limpar no logout/cache-clear.
+  const isPreserved = (k: string) => k.startsWith("sv:pinned-conversations:");
+
   try {
     const keys: string[] = [];
     for (let i = 0; i < window.localStorage.length; i++) {
       const k = window.localStorage.key(i);
-      if (k && (k.startsWith("svlogistica:") || k.startsWith("sv:") || k === EXTERNAL_AUTH_STORAGE_KEY)) keys.push(k);
+      if (k && !isPreserved(k) && (k.startsWith("svlogistica:") || k.startsWith("sv:") || k === EXTERNAL_AUTH_STORAGE_KEY))
+        keys.push(k);
     }
     keys.forEach((k) => window.localStorage.removeItem(k));
   } catch {
@@ -125,7 +129,7 @@ export function clearLocalAppCache() {
     const keys: string[] = [];
     for (let i = 0; i < window.sessionStorage.length; i++) {
       const k = window.sessionStorage.key(i);
-      if (k && (k.startsWith("svlogistica:") || k.startsWith("sv:"))) keys.push(k);
+      if (k && !isPreserved(k) && (k.startsWith("svlogistica:") || k.startsWith("sv:"))) keys.push(k);
     }
     keys.forEach((k) => window.sessionStorage.removeItem(k));
   } catch {
