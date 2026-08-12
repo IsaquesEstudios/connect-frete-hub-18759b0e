@@ -102,8 +102,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "A central de comunicação que aproxima transportadoras, embarcadores e motoristas. Entre nas nossas comunidades no WhatsApp.",
       },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/1linkkC623Tk01n4cngErQTbu7G3/social-images/social-1784123556118-truck_15950558.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/1linkkC623Tk01n4cngErQTbu7G3/social-images/social-1784123556118-truck_15950558.webp" },
+      { property: "og:image", content: "https://app.svlogisticatransportes.com.br/sv-logo.png" },
+      { name: "twitter:image", content: "https://app.svlogisticatransportes.com.br/sv-logo.png" },
     ],
     links: [
       {

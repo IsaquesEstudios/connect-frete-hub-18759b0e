@@ -16,7 +16,12 @@ export const Route = createFileRoute("/_dispon/fretes/disponivel")({
         content: "Veja os fretes disponíveis das empresas atualizados pela equipe da SV Logística.",
       },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
+      { property: "og:url", content: "https://app.svlogisticatransportes.com.br/fretes/disponivel" },
+      { property: "og:image", content: "https://app.svlogisticatransportes.com.br/sv-logo.png" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "https://app.svlogisticatransportes.com.br/sv-logo.png" },
     ],
   }),
 });
