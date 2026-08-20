@@ -12,6 +12,35 @@
 
 
 -- ----------------------------------------------------------------------------
+-- 0. Função auxiliar de papel (executar ANTES de tudo)
+-- ----------------------------------------------------------------------------
+-- Cria o schema privado e a função is_staff se ainda não existirem.
+-- SECURITY DEFINER + STABLE: o planejador executa uma vez por consulta.
+
+CREATE SCHEMA IF NOT EXISTS private;
+
+CREATE OR REPLACE FUNCTION private.is_staff(_user_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles p
+    WHERE p.id = _user_id
+      AND p.type IN ('admin', 'colaborador')
+  );
+$$;
+
+REVOKE ALL ON FUNCTION private.is_staff(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION private.is_staff(uuid) TO authenticated, service_role;
+GRANT USAGE ON SCHEMA private TO authenticated, service_role;
+
+CREATE INDEX IF NOT EXISTS profiles_id_type_idx ON public.profiles (id, type);
+
+
+-- ----------------------------------------------------------------------------
 -- 1. Índices nas chaves estrangeiras sinalizadas pelo Advisor
 -- ----------------------------------------------------------------------------
 -- Obs.: se preferir zero bloqueio de escrita, rode cada CREATE INDEX abaixo
