@@ -178,12 +178,13 @@ export const recordBroadcast = createServerFn({ method: "POST" })
         audience: z.string().min(1),
         tagId: z.string().uuid().nullable().optional(),
         recipientCount: z.number().int().min(0),
+        accessToken: z.string().optional(),
       })
       .parse(data),
   )
   .handler(async ({ data }) => {
     const key = serviceKey();
-    await requireStaff(key);
+    await requireStaff(key, data.accessToken);
 
     const res = await fetch(`${EXT_SUPABASE_URL}/rest/v1/broadcast_messages`, {
       method: "POST",
