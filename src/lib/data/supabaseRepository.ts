@@ -1360,12 +1360,16 @@ class SupabaseRepository implements Repository {
     this.notify();
     void (async () => {
       const { recordBroadcast } = await import("./tags.functions");
+      // Token explícito: se o header de autorização não chegar ao servidor
+      // (sessão renovada durante o envio), o registro ainda é aceito.
+      const { data: sessionData } = await supabase.auth.getSession();
       const data = await recordBroadcast({
         data: {
           body,
           audience: audience.kind,
           tagId: audience.kind === "tag" ? audience.tagId : null,
           recipientCount: recipients.length,
+          accessToken: sessionData.session?.access_token,
         },
       });
       if (data) {

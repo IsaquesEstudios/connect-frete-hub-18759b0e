@@ -44,10 +44,12 @@ function serviceKey(): string {
   return key;
 }
 
-async function requireStaff(key: string): Promise<StaffProfile> {
+async function requireStaff(key: string, fallbackToken?: string): Promise<StaffProfile> {
   const request = getRequest();
   const authHeader = request?.headers.get("authorization") ?? "";
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  // O header pode não chegar (middleware do cliente falhou ou token renovado
+  // no meio da requisição); nesse caso usamos o token enviado no payload.
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : (fallbackToken ?? "");
   if (!token) throw new Error("Sessão inválida. Faça login novamente.");
 
   const userRes = await fetch(`${EXT_SUPABASE_URL}/auth/v1/user`, { headers: apiHeaders(key, token) });
@@ -176,12 +178,13 @@ export const recordBroadcast = createServerFn({ method: "POST" })
         audience: z.string().min(1),
         tagId: z.string().uuid().nullable().optional(),
         recipientCount: z.number().int().min(0),
+        accessToken: z.string().optional(),
       })
       .parse(data),
   )
   .handler(async ({ data }) => {
     const key = serviceKey();
-    await requireStaff(key);
+    await requireStaff(key, data.accessToken);
 
     const res = await fetch(`${EXT_SUPABASE_URL}/rest/v1/broadcast_messages`, {
       method: "POST",
