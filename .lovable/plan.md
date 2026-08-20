@@ -1,36 +1,39 @@
-# Reduzir o consumo de CPU do banco (e destravar o login)
+# Script SQL para baixar a CPU do banco
 
-O diagnóstico que você recebeu é coerente com o que o app faz hoje: o banco está gastando CPU em cada requisição por causa de políticas de segurança reavaliadas linha a linha e chaves estrangeiras sem índice. Quando a CPU satura, as consultas batem timeout — e o login é justamente uma consulta ao perfil, por isso ele falha primeiro.
+O relatório aponta três custos que se somam a cada consulta: chaves estrangeiras sem índice, funções de autenticação (`auth.uid()`) reavaliadas linha a linha dentro das políticas de segurança e políticas permissivas duplicadas para a mesma ação. Com a CPU saturada, as consultas estouram o tempo limite — e o login, que lê o perfil, é o primeiro a falhar.
 
-Importante: o banco usado pelo app é o externo (projeto próprio), então eu não consigo aplicar migrações por aqui. Vou preparar um script SQL revisado e você roda uma vez no editor SQL do seu banco.
+Vou entregar um único arquivo, `docs/sql/performance-cpu.sql`, para você rodar uma vez no editor SQL do banco (blyx). Nenhuma alteração será aplicada daqui.
 
-## O que será feito
+## Conteúdo do script
 
-### 1. Script SQL de performance (`docs/sql/performance-cpu.sql`)
+**1. Índices nas chaves estrangeiras sinalizadas pelo Advisor**
+- `broadcast_messages.tag_id`
+- `conversation_tags.tag_id`
+- `messages.from_user_id` e `messages.to_user_id` (complementando os índices compostos que já existem)
 
-- Índices nas chaves estrangeiras apontadas pelo Advisor: `broadcast_messages` e `conversation_tags`.
-- Reescrita das políticas RLS que usam `auth.uid()` / `auth.role()` diretamente para a forma `(select auth.uid())`. Isso faz o Postgres avaliar o valor **uma vez por consulta** em vez de uma vez por linha — é o item de maior impacto quando as tabelas crescem.
-- Consolidação de políticas permissivas duplicadas (mesma ação + mesmo papel) em uma única política por ação, nas tabelas `profiles`, `messages`, `tags`, `conversation_tags` e `broadcast_messages`.
-- Índices de apoio para as consultas mais quentes (mensagens por conversa/destinatário, perfis por tipo/último login), complementando o que já existe em `docs/sql/messages-indexes.sql`.
-- `ANALYZE` nas tabelas alteradas ao final.
+**2. Índices de apoio para as telas mais pesadas**
+- `conversation_tags(conversation_id)` — filtro de etiquetas no painel
+- `profiles(type)` e `profiles(last_seen_at DESC)` — tabela de usuários e métricas
+- `broadcast_messages(sent_at DESC)` — histórico de envios em massa (hoje dá timeout)
 
-Antes de escrever as políticas definitivas eu preciso ler as políticas atuais do seu banco — o script incluirá, no topo, uma consulta de inspeção (`pg_policies`) para você me enviar o resultado, ou você me envia agora e eu já entrego o script final sem etapa intermediária.
+**3. Reescrita das políticas RLS**
 
-### 2. Reduzir a pressão vinda do app
+Todas as políticas de `profiles`, `messages`, `tags`, `conversation_tags` e `broadcast_messages` passam a usar `(select auth.uid())` no lugar de `auth.uid()`. O Postgres então avalia o valor uma única vez por consulta, em vez de uma vez por linha — é o item de maior ganho conforme a tabela de mensagens cresce.
 
-- Revisar as revalidações periódicas do painel (`refreshCurrentUser` a cada 60s por aba aberta) e alinhar com o realtime, evitando consulta redundante quando a aba está inativa.
-- Conferir se alguma listagem administrativa ainda faz varredura sem limite/índice (métricas, usuários, envios em massa) e ajustar a consulta para usar os novos índices.
+As regras de acesso permanecem exatamente as mesmas (dono do registro ou staff via `private.is_staff`); muda só a forma de avaliação.
 
-### 3. Verificação
+**4. Consolidação de políticas duplicadas**
 
-- Depois de aplicar o SQL, comparar novamente o `pg_stat_statements` (tempo total e média por consulta) e confirmar que os `statement timeout` sumiram dos logs.
-- Testar o login do cliente afetado.
+Em `tags` existem hoje duas políticas permissivas de SELECT para o mesmo papel (`tags_select_access` e o SELECT embutido em `tags_staff_manage`). O mesmo padrão aparece nas demais tabelas com política `ALL` + políticas específicas. O script substitui cada par por uma política única por ação, mantendo a permissão final idêntica.
 
-## Se a CPU continuar alta
+**5. Fechamento**
+- `ANALYZE` nas tabelas alteradas, para o planejador usar os novos índices imediatamente.
+- Uma consulta de verificação (`pg_stat_statements` ordenado por tempo total) para você comparar antes/depois.
 
-Se após os índices e o ajuste de RLS o uso continuar próximo do teto, o gargalo passa a ser tamanho da instância: aí o caminho é aumentar o plano/compute do banco. Isso é uma decisão sua, e eu aviso com base nos números pós-otimização.
+## Como rodar
 
-## Detalhes técnicos
+O script é idempotente (`IF NOT EXISTS` / `DROP POLICY IF EXISTS` seguido de `CREATE POLICY`) e pode ser executado inteiro de uma vez. Os índices usam `CREATE INDEX` normal (bloqueio curto); se preferir zero bloqueio, indico a variante `CONCURRENTLY` em comentário no próprio arquivo.
 
-- Alterações de schema no banco externo só podem ser aplicadas manualmente por você; nenhuma migração será executada daqui.
-- Os arquivos tocados no projeto: novo `docs/sql/performance-cpu.sql` e, se necessário, ajustes pontuais em `src/routes/_app/route.tsx` e nas funções de consulta em `src/lib/data/`.
+## Se a CPU não cair o suficiente
+
+Depois de aplicar, me envie de novo o topo do `pg_stat_statements`. Se o tempo continuar concentrado nas mesmas consultas mesmo com os índices, o gargalo é o tamanho da instância e o caminho passa a ser aumentar o compute do banco.
