@@ -1,13 +1,20 @@
 export function isImageBody(body: string) {
-  return typeof body === "string" && body.startsWith("data:image/");
+  return typeof body === "string" && (body.startsWith("data:image/") || body.startsWith("img:"));
 }
 
 export function isAudioBody(body: string) {
-  return typeof body === "string" && body.startsWith("data:audio/");
+  return typeof body === "string" && (body.startsWith("data:audio/") || body.startsWith("aud:"));
 }
 
 export function isFileBody(body: string) {
   return typeof body === "string" && body.startsWith("file:{");
+}
+
+/** Origem exibível da mídia (data URL antiga ou URL do Storage). */
+export function mediaSrc(body: string): string {
+  if (typeof body !== "string") return "";
+  if (body.startsWith("img:") || body.startsWith("aud:")) return body.slice(4);
+  return body;
 }
 
 export function parseFileBody(body: string): { name: string; url: string; mime?: string } | null {
