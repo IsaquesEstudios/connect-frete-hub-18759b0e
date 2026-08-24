@@ -1,4 +1,5 @@
 import { uploadChatMedia } from "@/lib/data/chat-media.functions";
+import { supabase } from "@/integrations/supabase/loose-client";
 
 /**
  * Envia o arquivo por multipart para o servidor, que grava no Storage e
