@@ -42,8 +42,8 @@ export const uploadChatMedia = createServerFn({ method: "POST" })
     const authUser = (await userRes.json()) as { id?: string };
     if (!authUser.id) throw new Error("Sessão inválida. Faça login novamente.");
 
-    const file = data.get("file");
-    if (!(file instanceof File) && !(file instanceof Blob)) {
+    const file = data.get("file") as Blob | null;
+    if (!file || typeof file === "string" || typeof file.arrayBuffer !== "function") {
       throw new Error("Arquivo não recebido.");
     }
     const name = (data.get("name") as string) || (file as File).name || "arquivo";
