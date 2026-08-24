@@ -74,10 +74,13 @@ async function readError(res: Response): Promise<string> {
   }
 }
 
-async function getCurrentProfile(serviceKey: string): Promise<ProfileForMessage | null> {
+async function getCurrentProfile(
+  serviceKey: string,
+  fallbackToken?: string,
+): Promise<ProfileForMessage | null> {
   const request = getRequest();
   const authHeader = request?.headers.get("authorization") ?? "";
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : fallbackToken ?? "";
   if (!token) return null;
 
   const userRes = await fetch(`${EXT_SUPABASE_URL}/auth/v1/user`, {
@@ -187,6 +190,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       .object({
         toUserId: z.string().uuid(),
         body: z.string().trim().min(1, "Mensagem vazia."),
+        accessToken: z.string().optional(),
       })
       .parse(data),
   )
@@ -194,7 +198,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     const serviceKey = process.env.EXT_SUPABASE_SERVICE_ROLE_KEY;
     if (!serviceKey) throw new Error("Configuração do servidor ausente.");
 
-    const currentProfile = requireProfile(await getCurrentProfile(serviceKey));
+    const currentProfile = requireProfile(await getCurrentProfile(serviceKey, data.accessToken));
     const senderProfile = await resolveSenderProfile(serviceKey, currentProfile);
     const ids = Array.from(new Set([senderProfile.id, data.toUserId])).map(encodeURIComponent).join(",");
     const profilesRes = await fetch(

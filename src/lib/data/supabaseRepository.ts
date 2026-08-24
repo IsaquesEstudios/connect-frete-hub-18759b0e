@@ -1007,7 +1007,12 @@ class SupabaseRepository implements Repository {
     void (async () => {
       try {
         const { sendChatMessage } = await import("./messages.functions");
-        const result = await sendChatMessage({ data: { toUserId, body } });
+        // Token explícito: se o header de autorização não chegar ao servidor,
+        // o envio ainda é aceito.
+        const { data: sessionData } = await supabase.auth.getSession();
+        const result = await sendChatMessage({
+          data: { toUserId, body, accessToken: sessionData.session?.access_token },
+        });
         const real = this.mapMessage(result.row as MessageRow);
         // Ajusta o desvio do relógio local em relação ao servidor (o horário
         // do servidor é sempre >= o instante local do envio).

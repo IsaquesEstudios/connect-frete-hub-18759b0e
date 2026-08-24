@@ -1,4 +1,5 @@
 import { uploadChatMedia } from "@/lib/data/chat-media.functions";
+import { supabase } from "@/integrations/supabase/loose-client";
 
 /**
  * Envia o arquivo por multipart para o servidor, que grava no Storage e
@@ -11,5 +12,9 @@ export async function uploadMedia(
   const form = new FormData();
   form.append("file", blob, name);
   form.append("name", name);
+  // Token explícito como fallback caso o header de autorização não chegue.
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (token) form.append("accessToken", token);
   return uploadChatMedia({ data: form });
 }

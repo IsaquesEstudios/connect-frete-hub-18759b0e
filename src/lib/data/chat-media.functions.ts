@@ -32,7 +32,8 @@ export const uploadChatMedia = createServerFn({ method: "POST" })
 
     const request = getRequest();
     const authHeader = request?.headers.get("authorization") ?? "";
-    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    const fallbackToken = (data.get("accessToken") as string | null) ?? "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : fallbackToken;
     if (!token) throw new Error("Sessão inválida. Faça login novamente.");
 
     const userRes = await fetch(`${EXT_SUPABASE_URL}/auth/v1/user`, {
