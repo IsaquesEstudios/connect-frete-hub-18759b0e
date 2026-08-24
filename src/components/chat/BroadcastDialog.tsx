@@ -347,12 +347,12 @@ export function BroadcastDialog({
                 </button>
                 {attachIsImage && (
                   <img
-                    src={attachment}
+                    src={mediaSrc(attachment)}
                     alt="prévia"
                     className="max-h-40 sm:max-h-48 w-auto rounded object-contain mx-auto"
                   />
                 )}
-                {attachIsAudio && <AudioMessage src={attachment} mine={false} />}
+                {attachIsAudio && <AudioMessage src={mediaSrc(attachment)} mine={false} />}
                 {attachIsFile && attachFileInfo && (
                   <div className="flex items-center gap-2 text-sm">
                     <FileText className="h-5 w-5 shrink-0" />
@@ -469,12 +469,12 @@ export function BroadcastDialog({
                   <div className="text-sm mt-1 whitespace-pre-wrap break-words">
                     {isImageBody(b.body) ? (
                       <img
-                        src={b.body}
+                        src={mediaSrc(b.body)}
                         alt="anexo"
                         className="max-h-40 rounded object-contain"
                       />
                     ) : isAudioBody(b.body) ? (
-                      <AudioMessage src={b.body} mine={false} />
+                      <AudioMessage src={mediaSrc(b.body)} mine={false} />
                     ) : isFileBody(b.body) ? (
                       (() => {
                         const f = parseFileBody(b.body);
