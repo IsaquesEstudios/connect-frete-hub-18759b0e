@@ -141,8 +141,12 @@ export function BroadcastDialog({
         if (blob.size > MAX_ATTACHMENT_BYTES) {
           toast.error("Áudio muito longo. Grave um trecho menor.");
         } else {
-          const dataUrl = await fileToDataUrl(blob);
-          setAttachment(dataUrl);
+          try {
+            const up = await uploadMedia(blob, "audio.webm");
+            setAttachment("aud:" + up.url);
+          } catch {
+            toast.error("Falha ao enviar o áudio.");
+          }
         }
         setRecordSeconds(0);
       };
