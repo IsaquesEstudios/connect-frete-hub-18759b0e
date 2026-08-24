@@ -74,10 +74,13 @@ async function readError(res: Response): Promise<string> {
   }
 }
 
-async function getCurrentProfile(serviceKey: string): Promise<ProfileForMessage | null> {
+async function getCurrentProfile(
+  serviceKey: string,
+  fallbackToken?: string,
+): Promise<ProfileForMessage | null> {
   const request = getRequest();
   const authHeader = request?.headers.get("authorization") ?? "";
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : fallbackToken ?? "";
   if (!token) return null;
 
   const userRes = await fetch(`${EXT_SUPABASE_URL}/auth/v1/user`, {
