@@ -581,9 +581,9 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
                       {mine ? me.name : other.name}
                     </div>
                     {isImage ? (
-                      <ImagePreview src={m.body} />
+                      <ImagePreview src={mediaSrc(m.body)} />
                     ) : isAudio ? (
-                      <AudioMessage src={m.body} mine={mine} />
+                      <AudioMessage src={mediaSrc(m.body)} mine={mine} />
                     ) : isFile ? (
                       <FileAttachment body={m.body} mine={mine} />
                     ) : (
