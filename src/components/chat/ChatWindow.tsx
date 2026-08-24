@@ -18,11 +18,12 @@ import {
 import { Camera, CheckCheck, Clock, Download, ExternalLink, FileText, ImagePlus, Mic, Paperclip, Pencil, Send, Square, Trash2, X } from "lucide-react";
 import { AdminEditUserDialog } from "@/components/admin/AdminEditUserDialog";
 import { AudioMessage } from "./AudioMessage";
-import { isAudioBody, isFileBody, isImageBody, parseFileBody } from "@/lib/chat/messagePreview";
+import { isAudioBody, isFileBody, isImageBody, mediaSrc, parseFileBody } from "@/lib/chat/messagePreview";
 import { getExternalUserEmailsForIds } from "@/lib/data/emails.functions";
 import { reportEmailsUnavailable, EMAIL_UNAVAILABLE_LABEL } from "@/lib/data/emails-client";
 import { formatPhone } from "@/lib/format-phone";
-import { optimizeImageToDataUrl } from "@/lib/media/optimize";
+import { optimizeImage } from "@/lib/media/optimize";
+import { uploadMedia } from "@/lib/media/upload";
 import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
