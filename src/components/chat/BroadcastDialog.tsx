@@ -98,10 +98,13 @@ export function BroadcastDialog({
       return;
     }
     try {
-      const dataUrl = await fileToDataUrl(file);
-      setAttachment(dataUrl);
+      const blob = file.type.startsWith("image/")
+        ? await optimizeImage(file, { maxDimension: 1600, targetBytes: 400_000 })
+        : file;
+      const up = await uploadMedia(blob, file.name || "imagem.jpg");
+      setAttachment("img:" + up.url);
     } catch {
-      toast.error("Falha ao ler o arquivo.");
+      toast.error("Falha ao enviar o arquivo.");
     }
   }
 
@@ -112,11 +115,11 @@ export function BroadcastDialog({
       return;
     }
     try {
-      const dataUrl = await fileToDataUrl(file);
-      const payload = JSON.stringify({ name: file.name, url: dataUrl, mime: file.type });
+      const up = await uploadMedia(file, file.name);
+      const payload = JSON.stringify({ name: up.name, url: up.url, mime: up.mime });
       setAttachment("file:" + payload);
     } catch {
-      toast.error("Falha ao ler o arquivo.");
+      toast.error("Falha ao enviar o arquivo.");
     }
   }
 
