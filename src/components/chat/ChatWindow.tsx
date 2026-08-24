@@ -18,11 +18,12 @@ import {
 import { Camera, CheckCheck, Clock, Download, ExternalLink, FileText, ImagePlus, Mic, Paperclip, Pencil, Send, Square, Trash2, X } from "lucide-react";
 import { AdminEditUserDialog } from "@/components/admin/AdminEditUserDialog";
 import { AudioMessage } from "./AudioMessage";
-import { isAudioBody, isFileBody, isImageBody, parseFileBody } from "@/lib/chat/messagePreview";
+import { isAudioBody, isFileBody, isImageBody, mediaSrc, parseFileBody } from "@/lib/chat/messagePreview";
 import { getExternalUserEmailsForIds } from "@/lib/data/emails.functions";
 import { reportEmailsUnavailable, EMAIL_UNAVAILABLE_LABEL } from "@/lib/data/emails-client";
 import { formatPhone } from "@/lib/format-phone";
-import { optimizeImageToDataUrl } from "@/lib/media/optimize";
+import { optimizeImage } from "@/lib/media/optimize";
+import { uploadMedia } from "@/lib/media/upload";
 import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
@@ -87,14 +88,6 @@ function isOwnMessage(message: Message, currentUserId: string, otherUserId: stri
 
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5MB
 
-function fileToDataUrl(file: File | Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result as string);
-    r.onerror = () => reject(r.error);
-    r.readAsDataURL(file);
-  });
-}
 
 interface Props {
   me: User;
@@ -277,14 +270,15 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
       return;
     }
     try {
-      // Otimiza imagens antes de enviar para economizar armazenamento.
-      const dataUrl = file.type.startsWith("image/")
-        ? await optimizeImageToDataUrl(file, { maxDimension: 1600, targetBytes: 400_000 })
-        : await fileToDataUrl(file);
-      sendBody(dataUrl);
+      // Otimiza imagens e envia para o Storage — a mensagem guarda só a URL.
+      const blob = file.type.startsWith("image/")
+        ? await optimizeImage(file, { maxDimension: 1600, targetBytes: 400_000 })
+        : file;
+      const up = await uploadMedia(blob, file.name || "imagem.jpg");
+      sendBody("img:" + up.url);
     } catch (e) {
       console.error(e);
-      alert("Falha ao ler o arquivo.");
+      alert("Falha ao enviar o arquivo.");
     }
   }
 
@@ -295,12 +289,12 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
       return;
     }
     try {
-      const dataUrl = await fileToDataUrl(file);
-      const payload = JSON.stringify({ name: file.name, url: dataUrl, mime: file.type });
+      const up = await uploadMedia(file, file.name);
+      const payload = JSON.stringify({ name: up.name, url: up.url, mime: up.mime });
       sendBody("file:" + payload);
     } catch (e) {
       console.error(e);
-      alert("Falha ao ler o arquivo.");
+      alert("Falha ao enviar o arquivo.");
     }
   }
 
@@ -328,8 +322,13 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
         if (blob.size > MAX_ATTACHMENT_BYTES) {
           alert("Áudio muito longo. Grave um trecho menor.");
         } else {
-          const dataUrl = await fileToDataUrl(blob);
-          sendBody(dataUrl);
+          try {
+            const up = await uploadMedia(blob, "audio.webm");
+            sendBody("aud:" + up.url);
+          } catch (err) {
+            console.error(err);
+            alert("Falha ao enviar o áudio.");
+          }
         }
         setRecordSeconds(0);
       };
@@ -574,9 +573,9 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
                       {mine ? me.name : other.name}
                     </div>
                     {isImage ? (
-                      <ImagePreview src={m.body} />
+                      <ImagePreview src={mediaSrc(m.body)} />
                     ) : isAudio ? (
-                      <AudioMessage src={m.body} mine={mine} />
+                      <AudioMessage src={mediaSrc(m.body)} mine={mine} />
                     ) : isFile ? (
                       <FileAttachment body={m.body} mine={mine} />
                     ) : (

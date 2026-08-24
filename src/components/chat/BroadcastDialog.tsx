@@ -23,7 +23,9 @@ import { repo } from "@/lib/data";
 import type { BroadcastAudience } from "@/lib/data/repository";
 import { useRepoVersion } from "@/lib/hooks/useRepo";
 import { AudioMessage } from "./AudioMessage";
-import { isAudioBody, isFileBody, isImageBody, messagePreview, parseFileBody } from "@/lib/chat/messagePreview";
+import { isAudioBody, isFileBody, isImageBody, mediaSrc, messagePreview, parseFileBody } from "@/lib/chat/messagePreview";
+import { optimizeImage } from "@/lib/media/optimize";
+import { uploadMedia } from "@/lib/media/upload";
 
 type AudienceKind = "all" | "empresas" | "motoristas" | "colaboradores" | "tag";
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
@@ -46,14 +48,6 @@ function timeAgo(ts: number) {
   return `${Math.floor(h / 24)}d atrás`;
 }
 
-function fileToDataUrl(file: File | Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result as string);
-    r.onerror = () => reject(r.error);
-    r.readAsDataURL(file);
-  });
-}
 
 export function BroadcastDialog({
   trigger,
@@ -106,10 +100,13 @@ export function BroadcastDialog({
       return;
     }
     try {
-      const dataUrl = await fileToDataUrl(file);
-      setAttachment(dataUrl);
+      const blob = file.type.startsWith("image/")
+        ? await optimizeImage(file, { maxDimension: 1600, targetBytes: 400_000 })
+        : file;
+      const up = await uploadMedia(blob, file.name || "imagem.jpg");
+      setAttachment("img:" + up.url);
     } catch {
-      toast.error("Falha ao ler o arquivo.");
+      toast.error("Falha ao enviar o arquivo.");
     }
   }
 
@@ -120,11 +117,11 @@ export function BroadcastDialog({
       return;
     }
     try {
-      const dataUrl = await fileToDataUrl(file);
-      const payload = JSON.stringify({ name: file.name, url: dataUrl, mime: file.type });
+      const up = await uploadMedia(file, file.name);
+      const payload = JSON.stringify({ name: up.name, url: up.url, mime: up.mime });
       setAttachment("file:" + payload);
     } catch {
-      toast.error("Falha ao ler o arquivo.");
+      toast.error("Falha ao enviar o arquivo.");
     }
   }
 
@@ -144,8 +141,12 @@ export function BroadcastDialog({
         if (blob.size > MAX_ATTACHMENT_BYTES) {
           toast.error("Áudio muito longo. Grave um trecho menor.");
         } else {
-          const dataUrl = await fileToDataUrl(blob);
-          setAttachment(dataUrl);
+          try {
+            const up = await uploadMedia(blob, "audio.webm");
+            setAttachment("aud:" + up.url);
+          } catch {
+            toast.error("Falha ao enviar o áudio.");
+          }
         }
         setRecordSeconds(0);
       };
@@ -346,12 +347,12 @@ export function BroadcastDialog({
                 </button>
                 {attachIsImage && (
                   <img
-                    src={attachment}
+                    src={mediaSrc(attachment)}
                     alt="prévia"
                     className="max-h-40 sm:max-h-48 w-auto rounded object-contain mx-auto"
                   />
                 )}
-                {attachIsAudio && <AudioMessage src={attachment} mine={false} />}
+                {attachIsAudio && <AudioMessage src={mediaSrc(attachment)} mine={false} />}
                 {attachIsFile && attachFileInfo && (
                   <div className="flex items-center gap-2 text-sm">
                     <FileText className="h-5 w-5 shrink-0" />
@@ -468,12 +469,12 @@ export function BroadcastDialog({
                   <div className="text-sm mt-1 whitespace-pre-wrap break-words">
                     {isImageBody(b.body) ? (
                       <img
-                        src={b.body}
+                        src={mediaSrc(b.body)}
                         alt="anexo"
                         className="max-h-40 rounded object-contain"
                       />
                     ) : isAudioBody(b.body) ? (
-                      <AudioMessage src={b.body} mine={false} />
+                      <AudioMessage src={mediaSrc(b.body)} mine={false} />
                     ) : isFileBody(b.body) ? (
                       (() => {
                         const f = parseFileBody(b.body);
