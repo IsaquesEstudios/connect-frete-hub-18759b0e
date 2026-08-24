@@ -330,8 +330,13 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
         if (blob.size > MAX_ATTACHMENT_BYTES) {
           alert("Áudio muito longo. Grave um trecho menor.");
         } else {
-          const dataUrl = await fileToDataUrl(blob);
-          sendBody(dataUrl);
+          try {
+            const up = await uploadMedia(blob, "audio.webm");
+            sendBody("aud:" + up.url);
+          } catch (err) {
+            console.error(err);
+            alert("Falha ao enviar o áudio.");
+          }
         }
         setRecordSeconds(0);
       };
