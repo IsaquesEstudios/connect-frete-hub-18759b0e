@@ -88,14 +88,6 @@ function isOwnMessage(message: Message, currentUserId: string, otherUserId: stri
 
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5MB
 
-function fileToDataUrl(file: File | Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result as string);
-    r.onerror = () => reject(r.error);
-    r.readAsDataURL(file);
-  });
-}
 
 interface Props {
   me: User;
