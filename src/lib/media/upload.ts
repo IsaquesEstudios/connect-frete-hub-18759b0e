@@ -18,4 +18,3 @@ export async function uploadMedia(
   if (token) form.append("accessToken", token);
   return uploadChatMedia({ data: form });
 }
-}
