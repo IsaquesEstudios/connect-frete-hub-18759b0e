@@ -46,14 +46,6 @@ function timeAgo(ts: number) {
   return `${Math.floor(h / 24)}d atrás`;
 }
 
-function fileToDataUrl(file: File | Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result as string);
-    r.onerror = () => reject(r.error);
-    r.readAsDataURL(file);
-  });
-}
 
 export function BroadcastDialog({
   trigger,
