@@ -277,14 +277,15 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
       return;
     }
     try {
-      // Otimiza imagens antes de enviar para economizar armazenamento.
-      const dataUrl = file.type.startsWith("image/")
-        ? await optimizeImageToDataUrl(file, { maxDimension: 1600, targetBytes: 400_000 })
-        : await fileToDataUrl(file);
-      sendBody(dataUrl);
+      // Otimiza imagens e envia para o Storage — a mensagem guarda só a URL.
+      const blob = file.type.startsWith("image/")
+        ? await optimizeImage(file, { maxDimension: 1600, targetBytes: 400_000 })
+        : file;
+      const up = await uploadMedia(blob, file.name || "imagem.jpg");
+      sendBody("img:" + up.url);
     } catch (e) {
       console.error(e);
-      alert("Falha ao ler o arquivo.");
+      alert("Falha ao enviar o arquivo.");
     }
   }
 
@@ -295,12 +296,12 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
       return;
     }
     try {
-      const dataUrl = await fileToDataUrl(file);
-      const payload = JSON.stringify({ name: file.name, url: dataUrl, mime: file.type });
+      const up = await uploadMedia(file, file.name);
+      const payload = JSON.stringify({ name: up.name, url: up.url, mime: up.mime });
       sendBody("file:" + payload);
     } catch (e) {
       console.error(e);
-      alert("Falha ao ler o arquivo.");
+      alert("Falha ao enviar o arquivo.");
     }
   }
 
