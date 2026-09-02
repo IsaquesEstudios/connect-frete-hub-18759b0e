@@ -335,9 +335,10 @@ export function BroadcastDialog({
               ref={fileInputRef}
               type="file"
               accept="image/*"
+              multiple
               className="hidden"
               onChange={(e) => {
-                void handleFile(e.target.files?.[0]);
+                void handleFiles(e.target.files);
                 e.target.value = "";
               }}
             />
@@ -348,7 +349,7 @@ export function BroadcastDialog({
               capture="environment"
               className="hidden"
               onChange={(e) => {
-                void handleFile(e.target.files?.[0]);
+                void handleFiles(e.target.files);
                 e.target.value = "";
               }}
             />
@@ -358,7 +359,7 @@ export function BroadcastDialog({
               className="hidden"
               id="broadcast-audio-file"
               onChange={(e) => {
-                void handleFile(e.target.files?.[0]);
+                void handleFiles(e.target.files);
                 e.target.value = "";
               }}
             />
@@ -373,30 +374,54 @@ export function BroadcastDialog({
               }}
             />
 
-            {attachment && (
-              <div className="rounded-md border p-2 relative bg-muted/40">
-                <button
-                  type="button"
-                  onClick={() => setAttachment(null)}
-                  className="absolute top-1 right-1 h-6 w-6 rounded-full bg-background/80 hover:bg-background flex items-center justify-center border"
-                  aria-label="Remover anexo"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-                {attachIsImage && (
-                  <img
-                    src={mediaSrc(attachment)}
-                    alt="prévia"
-                    className="max-h-40 sm:max-h-48 w-auto rounded object-contain mx-auto"
-                  />
-                )}
-                {attachIsAudio && <AudioMessage src={mediaSrc(attachment)} mine={false} />}
-                {attachIsFile && attachFileInfo && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <FileText className="h-5 w-5 shrink-0" />
-                    <span className="truncate">{attachFileInfo.name}</span>
-                  </div>
-                )}
+            {uploading && (
+              <div className="text-xs text-muted-foreground">Enviando anexos…</div>
+            )}
+
+            {attachments.length > 0 && (
+              <div className="space-y-2">
+                <div className="text-xs text-muted-foreground">
+                  {attachments.length}/{MAX_ATTACHMENTS} anexo(s) — serão enviados nesta ordem
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                  {attachments.map((att, i) => {
+                    const fileInfo = isFileBody(att) ? parseFileBody(att) : null;
+                    return (
+                      <div
+                        key={`${att}-${i}`}
+                        className="relative rounded-md border p-1.5 bg-muted/40"
+                      >
+                        <span className="absolute top-1 left-1 z-10 rounded bg-background/90 border px-1 text-[10px] font-medium">
+                          {i + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setAttachments((prev) => prev.filter((_, idx) => idx !== i))
+                          }
+                          className="absolute top-1 right-1 z-10 h-5 w-5 rounded-full bg-background/90 hover:bg-background flex items-center justify-center border"
+                          aria-label={`Remover anexo ${i + 1}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                        {isImageBody(att) && (
+                          <img
+                            src={mediaSrc(att)}
+                            alt={`prévia ${i + 1}`}
+                            className="h-20 w-full rounded object-cover"
+                          />
+                        )}
+                        {isAudioBody(att) && <AudioMessage src={mediaSrc(att)} mine={false} />}
+                        {fileInfo && (
+                          <div className="flex items-center gap-1 text-xs pt-5">
+                            <FileText className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{fileInfo.name}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
