@@ -29,6 +29,7 @@ import { uploadMedia } from "@/lib/media/upload";
 
 type AudienceKind = "all" | "empresas" | "motoristas" | "colaboradores" | "tag";
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+const MAX_ATTACHMENTS = 10;
 
 function audienceLabel(kind: AudienceKind, tagLabel?: string) {
   if (kind === "all") return "Todos os usuários";
@@ -67,7 +68,8 @@ export function BroadcastDialog({
   const [kind, setKind] = useState<AudienceKind>("all");
   const [tagId, setTagId] = useState<string>("");
   const [text, setText] = useState("");
-  const [attachment, setAttachment] = useState<string | null>(null); // data URL
+  const [attachments, setAttachments] = useState<string[]>([]); // até 10, na ordem de envio
+  const [uploading, setUploading] = useState(false);
   const [tab, setTab] = useState<"compose" | "history">("compose");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -93,20 +95,45 @@ export function BroadcastDialog({
 
   const recipients = audience ? repo.resolveBroadcastRecipients(audience) : [];
 
-  async function handleFile(file: File | undefined | null) {
-    if (!file) return;
-    if (file.size > MAX_ATTACHMENT_BYTES) {
-      toast.error("Arquivo muito grande. Limite 5MB.");
+  function addAttachment(body: string): boolean {
+    let added = false;
+    setAttachments((prev) => {
+      if (prev.length >= MAX_ATTACHMENTS) return prev;
+      added = true;
+      return [...prev, body];
+    });
+    return added;
+  }
+
+  async function handleFiles(files: FileList | File[] | null | undefined) {
+    const list = Array.from(files ?? []);
+    if (list.length === 0) return;
+    const room = MAX_ATTACHMENTS - attachments.length;
+    if (room <= 0) {
+      toast.error(`Limite de ${MAX_ATTACHMENTS} anexos por envio.`);
       return;
     }
+    if (list.length > room) toast.error(`Só cabem mais ${room} anexo(s) neste envio.`);
+    setUploading(true);
     try {
-      const blob = file.type.startsWith("image/")
-        ? await optimizeImage(file, { maxDimension: 1600, targetBytes: 400_000 })
-        : file;
-      const up = await uploadMedia(blob, file.name || "imagem.jpg");
-      setAttachment("img:" + up.url);
-    } catch {
-      toast.error("Falha ao enviar o arquivo.");
+      // Sequencial para preservar a ordem escolhida pelo usuário.
+      for (const file of list.slice(0, room)) {
+        if (file.size > MAX_ATTACHMENT_BYTES) {
+          toast.error(`"${file.name}" é maior que 5MB.`);
+          continue;
+        }
+        try {
+          const blob = file.type.startsWith("image/")
+            ? await optimizeImage(file, { maxDimension: 1600, targetBytes: 400_000 })
+            : file;
+          const up = await uploadMedia(blob, file.name || "imagem.jpg");
+          addAttachment("img:" + up.url);
+        } catch {
+          toast.error(`Falha ao enviar "${file.name}".`);
+        }
+      }
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -116,12 +143,19 @@ export function BroadcastDialog({
       toast.error("Arquivo muito grande. Limite 5MB.");
       return;
     }
+    if (attachments.length >= MAX_ATTACHMENTS) {
+      toast.error(`Limite de ${MAX_ATTACHMENTS} anexos por envio.`);
+      return;
+    }
+    setUploading(true);
     try {
       const up = await uploadMedia(file, file.name);
       const payload = JSON.stringify({ name: up.name, url: up.url, mime: up.mime });
-      setAttachment("file:" + payload);
+      addAttachment("file:" + payload);
     } catch {
       toast.error("Falha ao enviar o arquivo.");
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -143,7 +177,8 @@ export function BroadcastDialog({
         } else {
           try {
             const up = await uploadMedia(blob, "audio.webm");
-            setAttachment("aud:" + up.url);
+            if (!addAttachment("aud:" + up.url))
+              toast.error(`Limite de ${MAX_ATTACHMENTS} anexos por envio.`);
           } catch {
             toast.error("Falha ao enviar o áudio.");
           }
@@ -185,25 +220,28 @@ export function BroadcastDialog({
       toast.error("Nenhum destinatário para essa seleção.");
       return;
     }
-    const bodies: string[] = [];
-    if (attachment) bodies.push(attachment);
+    // Ordem de envio: anexos na sequência em que foram adicionados, texto por último.
+    const bodies: string[] = [...attachments];
     if (text.trim()) bodies.push(text.trim());
     if (bodies.length === 0) return;
 
     for (const body of bodies) {
       repo.sendBroadcast({ body, audience, fromUserId: adminId });
     }
-    toast.success(`Broadcast enviado para ${recipients.length} usuário(s).`);
+    toast.success(
+      `${bodies.length} mensagem(ns) enviada(s) para ${recipients.length} usuário(s).`,
+    );
     setText("");
-    setAttachment(null);
+    setAttachments([]);
     setTab("history");
   };
 
-  const attachIsImage = attachment ? isImageBody(attachment) : false;
-  const attachIsAudio = attachment ? isAudioBody(attachment) : false;
-  const attachIsFile = attachment ? isFileBody(attachment) : false;
-  const attachFileInfo = attachment && attachIsFile ? parseFileBody(attachment) : null;
-  const canSend = (!!attachment || !!text.trim()) && recipients.length > 0 && !recording;
+  const canSend =
+    (attachments.length > 0 || !!text.trim()) &&
+    recipients.length > 0 &&
+    !recording &&
+    !uploading;
+  const attachFull = attachments.length >= MAX_ATTACHMENTS;
 
   return (
     <Dialog>
@@ -297,9 +335,10 @@ export function BroadcastDialog({
               ref={fileInputRef}
               type="file"
               accept="image/*"
+              multiple
               className="hidden"
               onChange={(e) => {
-                void handleFile(e.target.files?.[0]);
+                void handleFiles(e.target.files);
                 e.target.value = "";
               }}
             />
@@ -310,7 +349,7 @@ export function BroadcastDialog({
               capture="environment"
               className="hidden"
               onChange={(e) => {
-                void handleFile(e.target.files?.[0]);
+                void handleFiles(e.target.files);
                 e.target.value = "";
               }}
             />
@@ -320,7 +359,7 @@ export function BroadcastDialog({
               className="hidden"
               id="broadcast-audio-file"
               onChange={(e) => {
-                void handleFile(e.target.files?.[0]);
+                void handleFiles(e.target.files);
                 e.target.value = "";
               }}
             />
@@ -335,30 +374,54 @@ export function BroadcastDialog({
               }}
             />
 
-            {attachment && (
-              <div className="rounded-md border p-2 relative bg-muted/40">
-                <button
-                  type="button"
-                  onClick={() => setAttachment(null)}
-                  className="absolute top-1 right-1 h-6 w-6 rounded-full bg-background/80 hover:bg-background flex items-center justify-center border"
-                  aria-label="Remover anexo"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-                {attachIsImage && (
-                  <img
-                    src={mediaSrc(attachment)}
-                    alt="prévia"
-                    className="max-h-40 sm:max-h-48 w-auto rounded object-contain mx-auto"
-                  />
-                )}
-                {attachIsAudio && <AudioMessage src={mediaSrc(attachment)} mine={false} />}
-                {attachIsFile && attachFileInfo && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <FileText className="h-5 w-5 shrink-0" />
-                    <span className="truncate">{attachFileInfo.name}</span>
-                  </div>
-                )}
+            {uploading && (
+              <div className="text-xs text-muted-foreground">Enviando anexos…</div>
+            )}
+
+            {attachments.length > 0 && (
+              <div className="space-y-2">
+                <div className="text-xs text-muted-foreground">
+                  {attachments.length}/{MAX_ATTACHMENTS} anexo(s) — serão enviados nesta ordem
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                  {attachments.map((att, i) => {
+                    const fileInfo = isFileBody(att) ? parseFileBody(att) : null;
+                    return (
+                      <div
+                        key={`${att}-${i}`}
+                        className="relative rounded-md border p-1.5 bg-muted/40"
+                      >
+                        <span className="absolute top-1 left-1 z-10 rounded bg-background/90 border px-1 text-[10px] font-medium">
+                          {i + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setAttachments((prev) => prev.filter((_, idx) => idx !== i))
+                          }
+                          className="absolute top-1 right-1 z-10 h-5 w-5 rounded-full bg-background/90 hover:bg-background flex items-center justify-center border"
+                          aria-label={`Remover anexo ${i + 1}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                        {isImageBody(att) && (
+                          <img
+                            src={mediaSrc(att)}
+                            alt={`prévia ${i + 1}`}
+                            className="h-20 w-full rounded object-cover"
+                          />
+                        )}
+                        {isAudioBody(att) && <AudioMessage src={mediaSrc(att)} mine={false} />}
+                        {fileInfo && (
+                          <div className="flex items-center gap-1 text-xs pt-5">
+                            <FileText className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{fileInfo.name}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
@@ -383,7 +446,7 @@ export function BroadcastDialog({
                   variant="outline"
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={!!attachment}
+                  disabled={attachFull || uploading}
                 >
                   <ImagePlus className="h-4 w-4 mr-1" /> Imagem
                 </Button>
@@ -392,7 +455,7 @@ export function BroadcastDialog({
                   variant="outline"
                   size="sm"
                   onClick={() => cameraInputRef.current?.click()}
-                  disabled={!!attachment}
+                  disabled={attachFull || uploading}
                 >
                   <Camera className="h-4 w-4 mr-1" /> Foto
                 </Button>
@@ -401,7 +464,7 @@ export function BroadcastDialog({
                   variant="outline"
                   size="sm"
                   onClick={() => document.getElementById("broadcast-audio-file")?.click()}
-                  disabled={!!attachment}
+                  disabled={attachFull || uploading}
                 >
                   <ImagePlus className="h-4 w-4 mr-1" /> Áudio (arquivo)
                 </Button>
@@ -410,7 +473,7 @@ export function BroadcastDialog({
                   variant="outline"
                   size="sm"
                   onClick={() => docInputRef.current?.click()}
-                  disabled={!!attachment}
+                  disabled={attachFull || uploading}
                 >
                   <Paperclip className="h-4 w-4 mr-1" /> Arquivo
                 </Button>
@@ -419,7 +482,7 @@ export function BroadcastDialog({
                   variant="outline"
                   size="sm"
                   onClick={startRecording}
-                  disabled={!!attachment}
+                  disabled={attachFull || uploading}
                 >
                   <Mic className="h-4 w-4 mr-1" /> Gravar áudio
                 </Button>
