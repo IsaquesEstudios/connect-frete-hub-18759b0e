@@ -29,6 +29,7 @@ import { uploadMedia } from "@/lib/media/upload";
 
 type AudienceKind = "all" | "empresas" | "motoristas" | "colaboradores" | "tag";
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+const MAX_ATTACHMENTS = 10;
 
 function audienceLabel(kind: AudienceKind, tagLabel?: string) {
   if (kind === "all") return "Todos os usuários";
@@ -176,7 +177,8 @@ export function BroadcastDialog({
         } else {
           try {
             const up = await uploadMedia(blob, "audio.webm");
-            setAttachment("aud:" + up.url);
+            if (!addAttachment("aud:" + up.url))
+              toast.error(`Limite de ${MAX_ATTACHMENTS} anexos por envio.`);
           } catch {
             toast.error("Falha ao enviar o áudio.");
           }
@@ -218,25 +220,28 @@ export function BroadcastDialog({
       toast.error("Nenhum destinatário para essa seleção.");
       return;
     }
-    const bodies: string[] = [];
-    if (attachment) bodies.push(attachment);
+    // Ordem de envio: anexos na sequência em que foram adicionados, texto por último.
+    const bodies: string[] = [...attachments];
     if (text.trim()) bodies.push(text.trim());
     if (bodies.length === 0) return;
 
     for (const body of bodies) {
       repo.sendBroadcast({ body, audience, fromUserId: adminId });
     }
-    toast.success(`Broadcast enviado para ${recipients.length} usuário(s).`);
+    toast.success(
+      `${bodies.length} mensagem(ns) enviada(s) para ${recipients.length} usuário(s).`,
+    );
     setText("");
-    setAttachment(null);
+    setAttachments([]);
     setTab("history");
   };
 
-  const attachIsImage = attachment ? isImageBody(attachment) : false;
-  const attachIsAudio = attachment ? isAudioBody(attachment) : false;
-  const attachIsFile = attachment ? isFileBody(attachment) : false;
-  const attachFileInfo = attachment && attachIsFile ? parseFileBody(attachment) : null;
-  const canSend = (!!attachment || !!text.trim()) && recipients.length > 0 && !recording;
+  const canSend =
+    (attachments.length > 0 || !!text.trim()) &&
+    recipients.length > 0 &&
+    !recording &&
+    !uploading;
+  const attachFull = attachments.length >= MAX_ATTACHMENTS;
 
   return (
     <Dialog>
