@@ -67,7 +67,8 @@ export function BroadcastDialog({
   const [kind, setKind] = useState<AudienceKind>("all");
   const [tagId, setTagId] = useState<string>("");
   const [text, setText] = useState("");
-  const [attachment, setAttachment] = useState<string | null>(null); // data URL
+  const [attachments, setAttachments] = useState<string[]>([]); // até 10, na ordem de envio
+  const [uploading, setUploading] = useState(false);
   const [tab, setTab] = useState<"compose" | "history">("compose");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
