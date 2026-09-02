@@ -212,6 +212,8 @@ class SupabaseRepository implements Repository {
   private tags: Tag[] = [];
   private convTags: { conversationId: string; tagId: string }[] = [];
   private broadcasts: BroadcastMessage[] = [];
+  /** Fila serial: garante que envios em massa cheguem ao banco na ordem disparada. */
+  private broadcastQueue: Promise<unknown> = Promise.resolve();
   private subs = new Set<() => void>();
   private syncSubs = new Set<(s: SyncState) => void>();
   private sync: SyncState = { phase: "idle", done: 0, total: 0 };
