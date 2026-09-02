@@ -94,20 +94,45 @@ export function BroadcastDialog({
 
   const recipients = audience ? repo.resolveBroadcastRecipients(audience) : [];
 
-  async function handleFile(file: File | undefined | null) {
-    if (!file) return;
-    if (file.size > MAX_ATTACHMENT_BYTES) {
-      toast.error("Arquivo muito grande. Limite 5MB.");
+  function addAttachment(body: string): boolean {
+    let added = false;
+    setAttachments((prev) => {
+      if (prev.length >= MAX_ATTACHMENTS) return prev;
+      added = true;
+      return [...prev, body];
+    });
+    return added;
+  }
+
+  async function handleFiles(files: FileList | File[] | null | undefined) {
+    const list = Array.from(files ?? []);
+    if (list.length === 0) return;
+    const room = MAX_ATTACHMENTS - attachments.length;
+    if (room <= 0) {
+      toast.error(`Limite de ${MAX_ATTACHMENTS} anexos por envio.`);
       return;
     }
+    if (list.length > room) toast.error(`Só cabem mais ${room} anexo(s) neste envio.`);
+    setUploading(true);
     try {
-      const blob = file.type.startsWith("image/")
-        ? await optimizeImage(file, { maxDimension: 1600, targetBytes: 400_000 })
-        : file;
-      const up = await uploadMedia(blob, file.name || "imagem.jpg");
-      setAttachment("img:" + up.url);
-    } catch {
-      toast.error("Falha ao enviar o arquivo.");
+      // Sequencial para preservar a ordem escolhida pelo usuário.
+      for (const file of list.slice(0, room)) {
+        if (file.size > MAX_ATTACHMENT_BYTES) {
+          toast.error(`"${file.name}" é maior que 5MB.`);
+          continue;
+        }
+        try {
+          const blob = file.type.startsWith("image/")
+            ? await optimizeImage(file, { maxDimension: 1600, targetBytes: 400_000 })
+            : file;
+          const up = await uploadMedia(blob, file.name || "imagem.jpg");
+          addAttachment("img:" + up.url);
+        } catch {
+          toast.error(`Falha ao enviar "${file.name}".`);
+        }
+      }
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -117,12 +142,19 @@ export function BroadcastDialog({
       toast.error("Arquivo muito grande. Limite 5MB.");
       return;
     }
+    if (attachments.length >= MAX_ATTACHMENTS) {
+      toast.error(`Limite de ${MAX_ATTACHMENTS} anexos por envio.`);
+      return;
+    }
+    setUploading(true);
     try {
       const up = await uploadMedia(file, file.name);
       const payload = JSON.stringify({ name: up.name, url: up.url, mime: up.mime });
-      setAttachment("file:" + payload);
+      addAttachment("file:" + payload);
     } catch {
       toast.error("Falha ao enviar o arquivo.");
+    } finally {
+      setUploading(false);
     }
   }
 
