@@ -1341,20 +1341,25 @@ class SupabaseRepository implements Repository {
       read_by_user: false,
     }));
 
-    if (rows.length > 0)
-      void supabase
-        .from("messages")
-        .insert(rows)
-        .select("*")
-        .then(({ data }) => {
-          if (data) {
-            for (const row of data as MessageRow[]) {
-              const m = this.mapMessage(row);
-              if (!this.messages.find((x) => x.id === m.id)) this.messages.push(m);
-            }
-            this.notify();
+    if (rows.length > 0) {
+      // Serializa os envios: várias imagens/textos disparados juntos chegam ao
+      // banco na mesma ordem em que foram compostos.
+      this.broadcastQueue = this.broadcastQueue.then(async () => {
+        const { data, error } = await supabase.from("messages").insert(rows).select("*");
+        if (error) {
+          reportError("Não foi possível enviar a mensagem em massa", error);
+          return;
+        }
+        if (data) {
+          for (const row of data as MessageRow[]) {
+            const m = this.mapMessage(row);
+            if (!this.messages.find((x) => x.id === m.id)) this.messages.push(m);
           }
-        });
+          this.notify();
+        }
+      });
+      void this.broadcastQueue.catch(() => undefined);
+    }
     const record: BroadcastMessage = {
       id: `tmp_${now}`,
       body,
