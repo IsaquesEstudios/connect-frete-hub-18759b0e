@@ -446,7 +446,7 @@ export function BroadcastDialog({
                   variant="outline"
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={!!attachment}
+                  disabled={attachFull || uploading}
                 >
                   <ImagePlus className="h-4 w-4 mr-1" /> Imagem
                 </Button>
@@ -455,7 +455,7 @@ export function BroadcastDialog({
                   variant="outline"
                   size="sm"
                   onClick={() => cameraInputRef.current?.click()}
-                  disabled={!!attachment}
+                  disabled={attachFull || uploading}
                 >
                   <Camera className="h-4 w-4 mr-1" /> Foto
                 </Button>
@@ -464,7 +464,7 @@ export function BroadcastDialog({
                   variant="outline"
                   size="sm"
                   onClick={() => document.getElementById("broadcast-audio-file")?.click()}
-                  disabled={!!attachment}
+                  disabled={attachFull || uploading}
                 >
                   <ImagePlus className="h-4 w-4 mr-1" /> Áudio (arquivo)
                 </Button>
@@ -473,7 +473,7 @@ export function BroadcastDialog({
                   variant="outline"
                   size="sm"
                   onClick={() => docInputRef.current?.click()}
-                  disabled={!!attachment}
+                  disabled={attachFull || uploading}
                 >
                   <Paperclip className="h-4 w-4 mr-1" /> Arquivo
                 </Button>
@@ -482,7 +482,7 @@ export function BroadcastDialog({
                   variant="outline"
                   size="sm"
                   onClick={startRecording}
-                  disabled={!!attachment}
+                  disabled={attachFull || uploading}
                 >
                   <Mic className="h-4 w-4 mr-1" /> Gravar áudio
                 </Button>
