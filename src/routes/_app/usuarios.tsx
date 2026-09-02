@@ -206,7 +206,7 @@ function UsuariosPage() {
     const byId = new Map(allTags.map((t) => [t.id, t]));
     return (u: User) =>
       repo
-        .getConversationTagIds(u.number)
+        .getConversationTagIds(u.id)
         .map((id) => byId.get(id))
         .filter(Boolean) as typeof allTags;
   }, [allTags, v]);
@@ -225,7 +225,7 @@ function UsuariosPage() {
       const emailForUser = (u.email || emails[u.id] || "").toLowerCase();
       if (u.type === "admin" && emailForUser === "sharlysongomes@gmail.com") return false;
       if (tab !== "todos" && resolveDisplayType(u) !== tab) return false;
-      if (tagFilter && !repo.getConversationTagIds(u.number).includes(tagFilter)) return false;
+      if (tagFilter && !repo.getConversationTagIds(u.id).includes(tagFilter)) return false;
       if (query) {
         const docUser = u as {
           cnpj?: string;
