@@ -385,7 +385,7 @@ export function StaffPanel({ role }: { role: "admin" | "colaborador" }) {
               </div>
               <div className="border-b bg-card px-4 py-2 flex items-center gap-2">
                 <div className="flex-1 min-w-0">
-                  <ConversationTagPicker conversationId={selectedUser.number} />
+                  <ConversationTagPicker conversationId={selectedUser.id} />
                 </div>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>

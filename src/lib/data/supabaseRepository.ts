@@ -1184,7 +1184,7 @@ class SupabaseRepository implements Repository {
           : 0;
 
         const tagIds = this.convTags
-          .filter((c) => c.conversationId === user.number)
+          .filter((c) => c.conversationId === user.id)
           .map((c) => c.tagId);
         return { user, lastMessage, unreadForAdmin, tagIds };
       })
@@ -1314,7 +1314,7 @@ class SupabaseRepository implements Repository {
     const nums = new Set(
       this.convTags.filter((c) => c.tagId === a.tagId).map((c) => c.conversationId),
     );
-    return nonAdmins.filter((u) => nums.has(u.number));
+    return nonAdmins.filter((u) => nums.has(u.id));
   }
   sendBroadcast({
     body,
