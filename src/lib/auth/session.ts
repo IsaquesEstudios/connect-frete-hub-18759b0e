@@ -80,6 +80,16 @@ function isDuplicateUserNumber(error: unknown): boolean {
 }
 
 async function nextUserNumberSeq(prefix: string): Promise<number> {
+  // Preferencial: cálculo no servidor (chave de serviço), pois o RLS esconde
+  // os perfis de outras contas do usuário recém-criado.
+  try {
+    const { nextUserNumber } = await import("@/lib/data/user-number.functions");
+    const res = await nextUserNumber({ data: { prefix } });
+    if (res?.seq && res.seq > 0) return res.seq;
+  } catch (err) {
+    console.warn("Falha ao obter código no servidor; usando cálculo local", err);
+  }
+
   const { data } = await supabase
     .from("profiles")
     .select("user_number")
