@@ -106,7 +106,7 @@ async function insertProfileWithNumber(
   row: Record<string, unknown>,
 ): Promise<PgError | null> {
   let seq = await nextUserNumberSeq(prefix);
-  for (let attempt = 0; attempt < 30; attempt++) {
+  for (let attempt = 0; attempt < 100; attempt++) {
     const user_number = `${prefix}-${String(seq).padStart(4, "0")}`;
     const { error } = await supabase.from("profiles").insert({ ...row, user_number });
     if (!error) return null;
