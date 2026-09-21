@@ -4,6 +4,7 @@ import { profileToUser } from "@/lib/data/supabaseRepository";
 import { translateAuthError } from "@/lib/auth/translate-error";
 import { setExternalUserActive } from "@/lib/data/admin-users.functions";
 import { deleteAuthUser } from "@/lib/data/auth-cleanup.functions";
+import type { SignupProfileInsert } from "@/lib/data/user-number.functions";
 import type { User, UserProfilePatch, UserType } from "@/lib/data";
 import type { Session } from "@supabase/supabase-js";
 
@@ -82,7 +83,7 @@ async function insertProfileWithNumber(
   const result = await createSignupProfile({
     data: {
       accessToken,
-      profile: row as Parameters<typeof createSignupProfile>[0]["data"]["profile"],
+      profile: row as SignupProfileInsert,
     },
   });
   return result.error;

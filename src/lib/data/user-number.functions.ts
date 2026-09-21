@@ -26,6 +26,8 @@ const signupProfileSchema = z.object({
   }),
 });
 
+export type SignupProfileInsert = z.infer<typeof signupProfileSchema>["profile"];
+
 type ProfileInsertError = {
   code?: string;
   message?: string;
