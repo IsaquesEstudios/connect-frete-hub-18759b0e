@@ -73,40 +73,11 @@ async function loadProfile(authId: string, options: { fresh?: boolean } = {}): P
 
 type PgError = { code?: string; message?: string; details?: string; hint?: string };
 
-function isDuplicateUserNumber(error: unknown): boolean {
-  const e = (error ?? {}) as PgError;
-  const blob = `${e.message ?? ""} ${e.details ?? ""}`.toLowerCase();
-  return e.code === "23505" && blob.includes("user_number");
-}
-
-async function nextUserNumberSeq(prefix: string): Promise<number> {
-  // Preferencial: cálculo no servidor (chave de serviço), pois o RLS esconde
-  // os perfis de outras contas do usuário recém-criado.
-  try {
-    const { nextUserNumber } = await import("@/lib/data/user-number.functions");
-    const res = await nextUserNumber({ data: { prefix } });
-    if (res?.seq && res.seq > 0) return res.seq;
-  } catch (err) {
-    console.warn("Falha ao obter código no servidor; usando cálculo local", err);
-  }
-
-  const { data } = await supabase
-    .from("profiles")
-    .select("user_number")
-    .like("user_number", `${prefix}-%`);
-  const nums = (data ?? [])
-    .map((r: { user_number: string }) => parseInt(String(r.user_number).split("-")[1] || "0", 10))
-    .filter((n: number) => Number.isFinite(n));
-  return (nums.length ? Math.max(...nums) : 0) + 1;
-}
-
 /** Insere o perfil gerando o `user_number`; em caso de colisão tenta o próximo livre. */
 async function insertProfileWithNumber(
-  prefix: string,
   row: Record<string, unknown>,
   accessToken: string,
 ): Promise<PgError | null> {
-  void prefix;
   const { createSignupProfile } = await import("@/lib/data/user-number.functions");
   const result = await createSignupProfile({
     data: {
@@ -309,7 +280,7 @@ export async function createColaborador(input: {
   if (!data.user) throw new Error("Não foi possível criar o usuário.");
 
   if (!data.session?.access_token) throw new Error("Sessão do novo colaborador não foi criada.");
-  const insErr = await insertProfileWithNumber("COL", {
+  const insErr = await insertProfileWithNumber({
     id: data.user.id,
     type: "colaborador",
     name: input.name,
@@ -398,7 +369,7 @@ export async function signup(input: SignupInput): Promise<User> {
     );
   }
 
-  const insErr = await insertProfileWithNumber(prefix, {
+  const insErr = await insertProfileWithNumber({
     id: data.user.id,
     type: input.type,
     name: input.name,
