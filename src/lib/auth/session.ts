@@ -104,16 +104,17 @@ async function nextUserNumberSeq(prefix: string): Promise<number> {
 async function insertProfileWithNumber(
   prefix: string,
   row: Record<string, unknown>,
+  accessToken: string,
 ): Promise<PgError | null> {
-  let seq = await nextUserNumberSeq(prefix);
-  for (let attempt = 0; attempt < 100; attempt++) {
-    const user_number = `${prefix}-${String(seq).padStart(4, "0")}`;
-    const { error } = await supabase.from("profiles").insert({ ...row, user_number });
-    if (!error) return null;
-    if (!isDuplicateUserNumber(error)) return error as PgError;
-    seq += 1;
-  }
-  return { code: "23505", message: "Não foi possível gerar um código de usuário livre." };
+  void prefix;
+  const { createSignupProfile } = await import("@/lib/data/user-number.functions");
+  const result = await createSignupProfile({
+    data: {
+      accessToken,
+      profile: row as Parameters<typeof createSignupProfile>[0]["data"]["profile"],
+    },
+  });
+  return result.error;
 }
 
 /** Limpa todo o cache local do app (conversas, fotos, sessão). */
@@ -307,6 +308,7 @@ export async function createColaborador(input: {
   if (error) throw new Error(translateAuthError(error));
   if (!data.user) throw new Error("Não foi possível criar o usuário.");
 
+  if (!data.session?.access_token) throw new Error("Sessão do novo colaborador não foi criada.");
   const insErr = await insertProfileWithNumber("COL", {
     id: data.user.id,
     type: "colaborador",
@@ -315,7 +317,7 @@ export async function createColaborador(input: {
     cpf: input.documentoTipo === "cpf" ? input.documento || null : null,
     cnpj: input.documentoTipo === "cnpj" ? input.documento || null : null,
     active: true,
-  });
+  }, data.session.access_token);
 
 
   // Restore admin session so the current user isn't logged out and redirected.
@@ -416,7 +418,7 @@ export async function signup(input: SignupInput): Promise<User> {
     nome_fantasia: input.nomeFantasia ?? null,
     perfil_empresa: input.perfilEmpresa ?? null,
     site_rede_social: input.siteRedeSocial ?? null,
-  });
+  }, data.session.access_token);
 
   if (insErr) {
     // Rollback: remove the just-created auth user so the email doesn't stay orphaned.
