@@ -359,9 +359,6 @@ export async function signup(input: SignupInput): Promise<User> {
   if (error) throw new Error(translateAuthError(error));
   if (!data.user) throw new Error("Não foi possível criar a conta.");
 
-  // Generate user_number
-  const prefix = input.type === "empresa" ? "EMP" : input.type === "motorista" ? "MOT" : "ADM";
-
   if (!data.session) {
     await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
     throw new Error(
