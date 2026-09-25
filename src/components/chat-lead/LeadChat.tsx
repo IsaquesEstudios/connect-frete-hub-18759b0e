@@ -117,29 +117,45 @@ export function LeadChat({ kind, questions, title }: { kind: "motorista" | "carg
     } else setStep(step + 1);
   };
 
+  const answered = Math.min(step, questions.length);
   return (
     <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-[#050b1a] text-slate-100">
-      <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 0%, #0f2447 0%, #071228 45%, #030814 100%)" }} />
-      <header className="relative z-10 flex items-center gap-3 border-b border-white/10 bg-white/[0.04] px-4 py-3 backdrop-blur-xl">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-b from-sky-300 to-sky-500 text-slate-900">
-          <Truck className="h-5 w-5" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="truncate font-semibold text-white">{title}</div>
-          <div className="text-xs text-emerald-300">{typing ? "digitando..." : "online"}</div>
-        </div>
+      <header className="relative z-10 grid grid-cols-[auto_1fr_auto] items-center gap-4 border-b border-white/10 px-4 py-3 sm:px-8">
         <Logo iconClassName="h-8" />
+        <div className="hidden items-center justify-center sm:flex" title={title}>
+          {questions.map((_, i) => (
+            <div key={i} className="flex items-center">
+              {i > 0 && <div className={`h-px w-6 md:w-10 ${i <= answered ? "bg-sky-400" : "bg-white/15"}`} />}
+              <div
+                className={`h-2.5 w-2.5 rounded-full transition ${
+                  i < answered ? "bg-sky-400" : i === answered ? "bg-sky-300 ring-4 ring-sky-400/20" : "bg-white/20"
+                }`}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="col-start-3 text-right">
+          <span className="text-2xl font-semibold text-white">{answered}</span>
+          <span className="ml-1 text-xs text-slate-400">de {questions.length}</span>
+        </div>
+        <div className="col-span-3 h-1 overflow-hidden rounded-full bg-white/10 sm:hidden">
+          <div className="h-full bg-sky-400 transition-all" style={{ width: `${(answered / questions.length) * 100}%` }} />
+        </div>
       </header>
 
-      <main className="relative z-10 flex-1 overflow-y-auto px-3 py-4">
-        <div className="mx-auto flex max-w-2xl flex-col gap-2">
+      <main className="relative z-10 flex-1 overflow-y-auto px-3 py-6">
+        <div className="mx-auto flex max-w-2xl flex-col gap-4">
+          <p className="text-center text-xs text-slate-500">
+            {title} · suas respostas são usadas apenas para contato da SV Logística.
+          </p>
           {history.map((b, i) => (
-            <div key={i} className={b.from === "bot" ? "flex justify-start" : "flex justify-end"}>
+            <div key={i} className={b.from === "bot" ? "flex items-start gap-3" : "flex justify-end"}>
+              {b.from === "bot" && <BotAvatar />}
               <div
                 className={
                   b.from === "bot"
-                    ? "max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-tl-sm border border-white/10 bg-white/[0.07] px-4 py-2.5 text-sm"
-                    : "max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-tr-sm bg-sky-500 px-4 py-2.5 text-sm text-slate-950"
+                    ? "max-w-[80%] whitespace-pre-wrap rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-[15px] text-white"
+                    : "max-w-[80%] whitespace-pre-wrap rounded-2xl bg-sky-500 px-4 py-3 text-[15px] font-medium text-slate-950"
                 }
               >
                 {b.text}
@@ -147,10 +163,11 @@ export function LeadChat({ kind, questions, title }: { kind: "motorista" | "carg
             </div>
           ))}
           {typing && (
-            <div className="flex justify-start">
-              <div className="flex gap-1 rounded-2xl rounded-tl-sm border border-white/10 bg-white/[0.07] px-4 py-3">
+            <div className="flex items-center gap-3">
+              <BotAvatar />
+              <div className="flex gap-1 rounded-xl rounded-bl-sm bg-sky-500 px-3 py-2.5">
                 {[0, 1, 2].map((d) => (
-                  <span key={d} className="h-2 w-2 animate-bounce rounded-full bg-slate-300" style={{ animationDelay: `${d * 150}ms` }} />
+                  <span key={d} className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-950" style={{ animationDelay: `${d * 150}ms` }} />
                 ))}
               </div>
             </div>
@@ -165,7 +182,7 @@ export function LeadChat({ kind, questions, title }: { kind: "motorista" | "carg
         </div>
       </main>
 
-      <footer className="relative z-10 border-t border-white/10 bg-white/[0.04] p-3 backdrop-blur-xl">
+      <footer className="relative z-10 border-t border-white/10 p-3">
         <div className="mx-auto max-w-2xl">
           {step >= questions.length ? (
             !done && !saving ? (
@@ -284,6 +301,14 @@ function OptionPicker({ groups, onPick }: { groups: { grupo: string; opcoes: str
         {!filtered.length && <div className="p-3 text-sm text-slate-400">Nada encontrado.</div>}
       </div>
       <SearchBox value={q} onChange={setQ} placeholder="Buscar..." />
+    </div>
+  );
+}
+
+function BotAvatar() {
+  return (
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-sky-300/30 bg-gradient-to-b from-sky-400/30 to-sky-600/30 text-sky-200">
+      <Truck className="h-4 w-4" />
     </div>
   );
 }
