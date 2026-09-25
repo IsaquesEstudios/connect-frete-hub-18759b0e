@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { FileSpreadsheet, MessageCirclePlus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,7 +67,7 @@ function LeadsPage() {
     return leads.filter((l) => {
       if (kind !== "todos" && l.kind !== kind) return false;
       if (!search.trim()) return true;
-      return matchesSearch(search, [l.nome, l.whatsapp, l.origem, l.destino, l.tipo_veiculo, l.carroceria, l.material]);
+      return matchesSearch(search, [l.nome, l.whatsapp, l.origem, l.tipo_veiculo, l.carroceria, l.material]);
     });
   }, [leads, kind, search]);
 
@@ -76,7 +77,6 @@ function LeadsPage() {
       l.nome,
       l.whatsapp,
       l.origem ?? "",
-      l.destino ?? "",
       l.tipo_veiculo ?? "",
       l.carroceria ?? "",
       l.peso ?? "",
@@ -89,7 +89,7 @@ function LeadsPage() {
     void downloadXlsx("contatos-chat", [
       {
         name: "Contatos",
-        header: ["Tipo", "Nome", "WhatsApp", "Origem", "Destino", "Veículo", "Carroceria", "Peso", "Valor", "Material", "Pagamento", "Info extra", "Data"],
+        header: ["Tipo", "Nome", "WhatsApp", "Origem", "Veículo", "Carroceria", "Peso", "Valor", "Material", "Pagamento", "Info extra", "Data"],
         rows,
       },
     ]);
@@ -111,13 +111,18 @@ function LeadsPage() {
     }
   };
 
+  const waLink = (phone: string) => {
+    const digits = phone.replace(/\D/g, "");
+    return `https://wa.me/${digits.length === 11 || digits.length === 10 ? "55" + digits : digits}`;
+  };
+
   return (
     <div className="flex h-full flex-col gap-4 p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <MessageCirclePlus className="h-6 w-6 text-sky-400" />
           <h1 className="text-xl font-semibold">Contatos do chat</h1>
-          <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs text-slate-300">{filtered.length}</span>
+          <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-medium text-slate-700">{filtered.length}</span>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
@@ -145,51 +150,61 @@ function LeadsPage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto rounded-xl border border-white/10">
+      <div className="flex-1 overflow-auto rounded-xl border border-slate-200">
         <table className="w-full min-w-[900px] text-sm">
-          <thead className="sticky top-0 bg-[#0a1630] text-left text-xs uppercase tracking-wider text-slate-400">
+          <thead className="sticky top-0 bg-slate-100 text-left text-xs uppercase tracking-wider text-slate-600">
             <tr>
               <th className="px-4 py-3">Tipo</th>
               <th className="px-4 py-3">Nome</th>
               <th className="px-4 py-3">WhatsApp</th>
               <th className="px-4 py-3">Origem</th>
-              <th className="px-4 py-3">Destino</th>
               <th className="px-4 py-3">Veículo / Carroceria</th>
               <th className="px-4 py-3">Detalhes</th>
               <th className="px-4 py-3">Data</th>
-              <th className="px-4 py-3" />
+              <th className="whitespace-nowrap px-4 py-3 text-right">Ações</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={9} className="px-4 py-10 text-center text-slate-400">Carregando contatos...</td></tr>
+              <tr><td colSpan={8} className="px-4 py-10 text-center text-slate-500">Carregando contatos...</td></tr>
             ) : !filtered.length ? (
-              <tr><td colSpan={9} className="px-4 py-10 text-center text-slate-400">Nenhum contato encontrado.</td></tr>
+              <tr><td colSpan={8} className="px-4 py-10 text-center text-slate-500">Nenhum contato encontrado.</td></tr>
             ) : (
               filtered.map((l) => (
-                <tr key={l.id} className="border-t border-white/5 hover:bg-white/[0.03]">
+                <tr key={l.id} className="border-t border-slate-100 hover:bg-slate-50">
                   <td className="px-4 py-3">
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${l.kind === "motorista" ? "bg-sky-500/20 text-sky-300" : "bg-amber-500/20 text-amber-300"}`}>
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${l.kind === "motorista" ? "bg-sky-100 text-sky-700" : "bg-amber-100 text-amber-700"}`}>
                       {l.kind === "motorista" ? "Motorista" : "Carga"}
                     </span>
                   </td>
-                  <td className="px-4 py-3 font-medium text-white">{l.nome}</td>
-                  <td className="px-4 py-3">{l.whatsapp}</td>
-                  <td className="px-4 py-3">{l.origem ?? "—"}</td>
-                  <td className="px-4 py-3">{l.destino ?? "—"}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 font-medium text-black">{l.nome}</td>
+                  <td className="px-4 py-3 text-black">{l.whatsapp}</td>
+                  <td className="px-4 py-3 text-black">{l.origem ?? "—"}</td>
+                  <td className="px-4 py-3 text-black">
                     {[l.tipo_veiculo, l.carroceria].filter(Boolean).join(" · ") || "—"}
                   </td>
                   <td className="max-w-64 px-4 py-3">
-                    <div className="truncate text-slate-300" title={[l.peso && `Peso: ${l.peso}`, l.valor && `Valor: ${l.valor}`, l.material && `Material: ${l.material}`, l.forma_pagamento && `Pagamento: ${l.forma_pagamento}`, l.info_extra && `Extra: ${l.info_extra}`].filter(Boolean).join("\n")}>
+                    <div className="truncate text-black" title={[l.peso && `Peso: ${l.peso}`, l.valor && `Valor: ${l.valor}`, l.material && `Material: ${l.material}`, l.forma_pagamento && `Pagamento: ${l.forma_pagamento}`, l.info_extra && `Extra: ${l.info_extra}`].filter(Boolean).join("\n")}>
                       {[l.peso && `Peso: ${l.peso}`, l.valor && `Valor: ${l.valor}`, l.material, l.forma_pagamento, l.info_extra].filter(Boolean).join(" · ") || "—"}
                     </div>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-slate-400">{formatDateTime(l.created_at)}</td>
-                  <td className="px-4 py-3 text-right">
-                    <button onClick={() => setToDelete(l)} className="rounded-lg p-2 text-slate-400 hover:bg-red-500/10 hover:text-red-400" aria-label="Excluir">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                  <td className="whitespace-nowrap px-4 py-3 text-black">{formatDateTime(l.created_at)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <a
+                        href={waLink(l.whatsapp)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-600"
+                        aria-label="Falar no WhatsApp"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        <span className="hidden sm:inline">WhatsApp</span>
+                      </a>
+                      <button onClick={() => setToDelete(l)} className="rounded-lg p-2 text-slate-500 hover:bg-red-50 hover:text-red-600" aria-label="Excluir">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
