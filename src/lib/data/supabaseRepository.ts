@@ -480,6 +480,21 @@ class SupabaseRepository implements Repository {
       this.notify();
     }
 
+    // Rede de segurança: se qualquer etapa abaixo travar (rede lenta, servidor
+    // sem resposta), libera a interface mesmo assim em vez de deixar o usuário
+    // preso na tela de carregamento.
+    const watchdog =
+      typeof window === "undefined"
+        ? null
+        : window.setTimeout(() => {
+            if (this.bootstrapped) return;
+            this.bootstrapped = true;
+            this.setSync({ phase: "idle", done: 0, total: 0 });
+            this.notify();
+          }, 10000);
+
+
+
     try {
       // 3. Cold datasets fetch in parallel with the delta sync.
       const coldLoads = Promise.all([
@@ -508,7 +523,9 @@ class SupabaseRepository implements Repository {
     } catch (error) {
       console.error("bootstrap failed", error);
     } finally {
+      if (watchdog !== null) window.clearTimeout(watchdog);
       this.bootstrapped = true;
+      if (this.sync.phase === "syncing") this.setSync({ phase: "idle", done: 0, total: 0 });
       this.notify();
     }
   }
@@ -570,8 +587,11 @@ class SupabaseRepository implements Repository {
         const pageSize = 100;
         let offset = 0;
         let total = 0;
+        // Trava de segurança: nunca mais de 200 páginas (20 mil mensagens) por
+        // sincronização, para não existir a chance de um laço infinito.
+        let guard = 0;
         const seenIds = new Set(this.messages.map((m) => m.id));
-        while (true) {
+        while (guard++ < 200) {
           const result = await listVisibleMessages({
             data: { since: sinceIso, offset, limit: pageSize },
           });
