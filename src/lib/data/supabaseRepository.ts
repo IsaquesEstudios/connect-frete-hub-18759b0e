@@ -523,7 +523,9 @@ class SupabaseRepository implements Repository {
     } catch (error) {
       console.error("bootstrap failed", error);
     } finally {
+      if (watchdog !== null) window.clearTimeout(watchdog);
       this.bootstrapped = true;
+      if (this.sync.phase === "syncing") this.setSync({ phase: "idle", done: 0, total: 0 });
       this.notify();
     }
   }
