@@ -100,13 +100,24 @@ export function LeadChat({ kind, questions, title }: { kind: "motorista" | "carg
     }
   };
 
+  const showError = (msg: string) => {
+    toast.error(msg);
+    setHistory((h) => [...h, { from: "bot", text: `⚠️ ${msg}` }]);
+  };
+
   const answer = (raw: string, display?: string) => {
     if (!q) return;
     const text = raw.trim();
-    if (q.input === "text" && text.length < 2) return toast.error("Digite uma resposta válida.");
-    if (q.input === "phone" && phoneDigits(text).length < 10) return toast.error("Informe DDD + número.");
-    if ((q.input === "weight" || q.input === "money") && !/\d/.test(text)) return toast.error("Informe um valor.");
-    if ((q.input === "city" || q.input === "options") && !text) return;
+    if (q.key === "nome") {
+      const words = text.split(/\s+/).filter((w) => w.length >= 2);
+      if (words.length < 2)
+        return showError("Preciso do seu nome completo: nome e sobrenome. Exemplo: João Silva.");
+    }
+    if (q.input === "text" && text.length < 2) return showError("Digite uma resposta válida.");
+    if (q.input === "phone" && phoneDigits(text).length < 10) return showError("Informe o WhatsApp com DDD + número. Exemplo: (11) 98765-4321.");
+    if ((q.input === "weight" || q.input === "money") && !/\d/.test(text)) return showError("Informe um valor numérico.");
+    if ((q.input === "city" || q.input === "options") && !text)
+      return showError(q.input === "city" ? "Escolha a cidade na lista abaixo para continuar." : "Escolha uma das opções abaixo para continuar.");
     const next = { ...answers, [q.key]: text };
     setAnswers(next);
     setHistory((h) => [...h, { from: "user", text: display ?? (text || "Sem informações extras") }]);
