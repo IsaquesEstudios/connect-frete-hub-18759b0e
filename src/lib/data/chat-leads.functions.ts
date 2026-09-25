@@ -86,3 +86,34 @@ export const submitChatLead = createServerFn({ method: "POST" })
       return { ok: false, error: "Falha de conexão. Tente novamente." };
     }
   });
+
+export const listChatLeads = createServerFn({ method: "POST" })
+  .inputValidator((data) =>
+    z.object({ accessToken: z.string().optional(), kind: z.enum(["motorista", "carga"]).optional() }).parse(data ?? {}),
+  )
+  .handler(async ({ data }): Promise<ChatLead[]> => {
+    const key = process.env.EXT_SUPABASE_SERVICE_ROLE_KEY;
+    if (!key) throw new Error("Servidor não configurado.");
+    await requireStaff(key, data.accessToken);
+    const kindFilter = data.kind ? `&kind=eq.${data.kind}` : "";
+    const res = await fetch(
+      `${EXT_SUPABASE_URL}/rest/v1/chat_leads?select=*&order=created_at.desc&limit=2000${kindFilter}`,
+      { headers: { apikey: key, Authorization: `Bearer ${key}` } },
+    );
+    if (!res.ok) throw new Error("Não foi possível carregar os contatos.");
+    return (await res.json()) as ChatLead[];
+  });
+
+export const deleteChatLead = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({ id: z.string().uuid(), accessToken: z.string().optional() }).parse(data))
+  .handler(async ({ data }): Promise<{ ok: boolean }> => {
+    const key = process.env.EXT_SUPABASE_SERVICE_ROLE_KEY;
+    if (!key) throw new Error("Servidor não configurado.");
+    await requireStaff(key, data.accessToken);
+    const res = await fetch(`${EXT_SUPABASE_URL}/rest/v1/chat_leads?id=eq.${data.id}`, {
+      method: "DELETE",
+      headers: { apikey: key, Authorization: `Bearer ${key}` },
+    });
+    if (!res.ok) throw new Error("Não foi possível excluir.");
+    return { ok: true };
+  });
