@@ -16,6 +16,7 @@ export interface LeadQuestion {
   input: InputKind;
   options?: { grupo: string; opcoes: string[] }[];
   placeholder?: string;
+  multi?: boolean;
 }
 
 export const MOTORISTA_QUESTIONS: LeadQuestion[] = [
@@ -34,7 +35,7 @@ export const CARGA_QUESTIONS: LeadQuestion[] = [
   { key: "origem", question: "Qual a cidade e estado de ORIGEM da carga?", input: "city" },
   { key: "destino", question: "E a cidade e estado de DESTINO?", input: "city" },
   { key: "tipo_veiculo", question: "Qual tipo de veículo você precisa?", input: "options", options: TIPOS_VEICULO },
-  { key: "carroceria", question: "Qual tipo de carroceria?", input: "options", options: CARROCERIAS },
+  { key: "carroceria", question: "Qual tipo de carroceria? Você pode escolher mais de uma.", input: "options", options: CARROCERIAS, multi: true },
   { key: "peso", question: "Qual o peso da carga (kg)?", input: "weight" },
   { key: "valor", question: "Qual o valor do frete?", input: "money" },
   { key: "material", question: "Qual o material desta carga?", input: "text", placeholder: "Ex.: grãos, madeira, máquinas" },
@@ -205,6 +206,8 @@ export function LeadChat({ kind, questions, title }: { kind: "motorista" | "carg
             <div className="h-12" />
           ) : q.input === "city" ? (
             <CityPicker municipios={municipios} onPick={(v) => answer(v)} />
+          ) : q.input === "options" && q.multi ? (
+            <MultiOptionPicker groups={q.options ?? []} onPick={(v) => answer(v)} />
           ) : q.input === "options" ? (
             <OptionPicker groups={q.options ?? []} onPick={(v) => answer(v)} />
           ) : (
@@ -321,6 +324,72 @@ function OptionPicker({ groups, onPick }: { groups: { grupo: string; opcoes: str
         {!filtered.length && <div className="p-3 text-sm text-slate-400">Nada encontrado.</div>}
       </div>
       <SearchBox value={q} onChange={setQ} placeholder="Buscar..." />
+    </div>
+  );
+}
+
+function MultiOptionPicker({ groups, onPick }: { groups: { grupo: string; opcoes: string[] }[]; onPick: (v: string) => void }) {
+  const [q, setQ] = useState("");
+  const [selected, setSelected] = useState<string[]>([]);
+  const t = norm(q.trim());
+  const filtered = groups
+    .map((g) => ({ ...g, opcoes: g.opcoes.filter((o) => !t || norm(o).includes(t)) }))
+    .filter((g) => g.opcoes.length);
+
+  const toggle = (o: string) =>
+    setSelected((prev) => (prev.includes(o) ? prev.filter((x) => x !== o) : [...prev, o]));
+
+  return (
+    <div className="space-y-2">
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 rounded-xl border border-sky-400/30 bg-sky-500/10 p-2">
+          {selected.map((o) => (
+            <button
+              key={o}
+              onClick={() => toggle(o)}
+              className="rounded-full bg-sky-500 px-3 py-1.5 text-sm font-medium text-slate-950"
+            >
+              {o} ✕
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="max-h-56 overflow-y-auto rounded-xl border border-white/10 bg-[#0a1630] p-2">
+        {filtered.map((g) => (
+          <div key={g.grupo} className="mb-2">
+            <div className="px-2 py-1 text-[11px] uppercase tracking-wider text-slate-400">{g.grupo}</div>
+            <div className="flex flex-wrap gap-1.5">
+              {g.opcoes.map((o) => {
+                const on = selected.includes(o);
+                return (
+                  <button
+                    key={o}
+                    onClick={() => toggle(o)}
+                    className={
+                      on
+                        ? "rounded-full border border-sky-400 bg-sky-500 px-3 py-1.5 text-sm font-medium text-slate-950"
+                        : "rounded-full border border-white/15 px-3 py-1.5 text-sm hover:border-sky-300 hover:bg-sky-500/20"
+                    }
+                  >
+                    {o}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+        {!filtered.length && <div className="p-3 text-sm text-slate-400">Nada encontrado.</div>}
+      </div>
+      <div className="flex items-center gap-2">
+        <SearchBox value={q} onChange={setQ} placeholder="Buscar..." />
+        <button
+          disabled={selected.length === 0}
+          onClick={() => onPick(selected.join(", "))}
+          className="h-12 shrink-0 rounded-xl bg-sky-500 px-5 text-sm font-medium text-slate-950 disabled:opacity-40"
+        >
+          Enviar
+        </button>
+      </div>
     </div>
   );
 }
