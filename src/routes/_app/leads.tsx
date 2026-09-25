@@ -116,6 +116,30 @@ function LeadsPage() {
     return `https://wa.me/${digits.length === 11 || digits.length === 10 ? "55" + digits : digits}`;
   };
 
+  const copyLead = async (l: ChatLead) => {
+    const parts = [
+      `Tipo: ${l.kind === "motorista" ? "Motorista" : "Carga"}`,
+      `Nome: ${l.nome}`,
+      `WhatsApp: ${l.whatsapp}`,
+      l.origem && `Origem: ${l.origem}`,
+      l.destino && `Destino: ${l.destino}`,
+      l.tipo_veiculo && `Veículo: ${l.tipo_veiculo}`,
+      l.carroceria && `Carroceria: ${l.carroceria}`,
+      l.peso && `Peso: ${l.peso}`,
+      l.valor && `Valor: ${l.valor}`,
+      l.material && `Material: ${l.material}`,
+      l.forma_pagamento && `Pagamento: ${l.forma_pagamento}`,
+      l.info_extra && `Info extra: ${l.info_extra}`,
+      `Data: ${formatDateTime(l.created_at)}`,
+    ].filter(Boolean);
+    try {
+      await navigator.clipboard.writeText(parts.join("\n"));
+      toast.success("Contato copiado.");
+    } catch {
+      toast.error("Não foi possível copiar.");
+    }
+  };
+
   return (
     <div className="flex h-full flex-col gap-4 p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
