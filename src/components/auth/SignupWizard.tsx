@@ -115,7 +115,7 @@ export function SignupWizard({
 
 
   const isEmpresa = data.kind === "empresa";
-  const totalSteps = isEmpresa ? 5 : 8;
+  const totalSteps = isEmpresa ? 4 : 7;
 
   const update = <K extends keyof WizardData>(k: K, v: WizardData[K]) =>
     setData((d) => ({ ...d, [k]: v }));
@@ -145,14 +145,12 @@ export function SignupWizard({
         if (!waOk) return "WhatsApp inválido. Inclua DDD + número (mín. 10 dígitos).";
         return null;
       }
-      if (step === 2) return null;
-      if (step === 3) return data.perfilEmpresa ? null : "Selecione o perfil da empresa.";
-      if (step === 4) {
+      if (step === 2) return data.perfilEmpresa ? null : "Selecione o perfil da empresa.";
+      if (step === 3) {
         if (!data.estado) return "Selecione o estado.";
         if (!data.cidade) return "Selecione a cidade.";
         return null;
       }
-      if (step === 5) return null;
       return null;
     }
 
@@ -168,21 +166,19 @@ export function SignupWizard({
       if (!senhaOk) return "A senha precisa ter no mínimo 6 caracteres.";
       return null;
     }
-    if (step === 2) return null;
-    if (step === 3) {
+    if (step === 2) {
       if (!data.estado) return "Selecione o estado.";
       if (!data.cidade) return "Selecione a cidade.";
       return null;
     }
-    if (step === 4) return data.placa.trim().length >= 5 ? null : "Informe a placa do veículo (mín. 5 caracteres).";
-    if (step === 5) return data.tipoVeiculo ? null : "Selecione o tipo de veículo.";
-    if (step === 6) return null;
-    if (step === 7) {
+    if (step === 3) return data.placa.trim().length >= 5 ? null : "Informe a placa do veículo (mín. 5 caracteres).";
+    if (step === 4) return data.tipoVeiculo ? null : "Selecione o tipo de veículo.";
+    if (step === 5) return null;
+    if (step === 6) {
       if (!data.carroceria) return "Selecione o tipo de carroceria.";
       if (data.peso.replace(/\D/g, "").length === 0) return "Informe o peso (kg).";
       return null;
     }
-    if (step === 8) return null;
     return null;
   };
 
@@ -322,19 +318,17 @@ export function SignupWizard({
       {step === 0 && <StepKind data={data} update={update} />}
 
       {isEmpresa && step === 1 && <StepBasicEmpresa data={data} update={update} />}
-      {isEmpresa && step === 2 && <StepFoto data={data} update={update} />}
-      {isEmpresa && step === 3 && <StepDetalhesEmpresa data={data} update={update} />}
-      {isEmpresa && step === 4 && <StepLocalByEstado data={data} update={update} />}
-      {isEmpresa && step === 5 && <StepRedesSociais data={data} update={update} />}
+      {isEmpresa && step === 2 && <StepDetalhesEmpresa data={data} update={update} />}
+      {isEmpresa && step === 3 && <StepLocalByEstado data={data} update={update} />}
+      {isEmpresa && step === 4 && <StepRedesSociais data={data} update={update} />}
 
       {!isEmpresa && step === 1 && <StepBasic data={data} update={update} />}
-      {!isEmpresa && step === 2 && <StepFoto data={data} update={update} />}
-      {!isEmpresa && step === 3 && <StepLocalByEstado data={data} update={update} />}
-      {!isEmpresa && step === 4 && <StepPlaca data={data} update={update} />}
-      {!isEmpresa && step === 5 && <StepTipoVeiculo data={data} update={update} />}
-      {!isEmpresa && step === 6 && <StepRntrc data={data} update={update} />}
-      {!isEmpresa && step === 7 && <StepCarroceria data={data} update={update} />}
-      {!isEmpresa && step === 8 && <StepRedesSociais data={data} update={update} />}
+      {!isEmpresa && step === 2 && <StepLocalByEstado data={data} update={update} />}
+      {!isEmpresa && step === 3 && <StepPlaca data={data} update={update} />}
+      {!isEmpresa && step === 4 && <StepTipoVeiculo data={data} update={update} />}
+      {!isEmpresa && step === 5 && <StepRntrc data={data} update={update} />}
+      {!isEmpresa && step === 6 && <StepCarroceria data={data} update={update} />}
+      {!isEmpresa && step === 7 && <StepRedesSociais data={data} update={update} />}
 
       <div className="flex items-center gap-2 pt-2">
         <Button
