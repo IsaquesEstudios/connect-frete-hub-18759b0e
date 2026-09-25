@@ -66,8 +66,7 @@ function LeadsPage() {
     return leads.filter((l) => {
       if (kind !== "todos" && l.kind !== kind) return false;
       if (!search.trim()) return true;
-      return [l.nome, l.whatsapp, l.origem, l.destino, l.tipo_veiculo, l.carroceria, l.material]
-        .some((v) => matchesSearch(v ?? "", search));
+      return matchesSearch(search, [l.nome, l.whatsapp, l.origem, l.destino, l.tipo_veiculo, l.carroceria, l.material]);
     });
   }, [leads, kind, search]);
 
