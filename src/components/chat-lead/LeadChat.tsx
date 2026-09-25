@@ -117,6 +117,7 @@ export function LeadChat({ kind, questions, title }: { kind: "motorista" | "carg
     } else setStep(step + 1);
   };
 
+  const answered = Math.min(step, questions.length);
   return (
     <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-[#050b1a] text-slate-100">
       <header className="relative z-10 grid grid-cols-[auto_1fr_auto] items-center gap-4 border-b border-white/10 px-4 py-3 sm:px-8">
