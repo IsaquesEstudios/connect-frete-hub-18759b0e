@@ -182,7 +182,7 @@ export function LeadChat({ kind, questions, title }: { kind: "motorista" | "carg
         </div>
       </main>
 
-      <footer className="relative z-10 border-t border-white/10 bg-white/[0.04] p-3 backdrop-blur-xl">
+      <footer className="relative z-10 border-t border-white/10 p-3">
         <div className="mx-auto max-w-2xl">
           {step >= questions.length ? (
             !done && !saving ? (
@@ -301,6 +301,14 @@ function OptionPicker({ groups, onPick }: { groups: { grupo: string; opcoes: str
         {!filtered.length && <div className="p-3 text-sm text-slate-400">Nada encontrado.</div>}
       </div>
       <SearchBox value={q} onChange={setQ} placeholder="Buscar..." />
+    </div>
+  );
+}
+
+function BotAvatar() {
+  return (
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-sky-300/30 bg-gradient-to-b from-sky-400/30 to-sky-600/30 text-sky-200">
+      <Truck className="h-4 w-4" />
     </div>
   );
 }
