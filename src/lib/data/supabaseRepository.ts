@@ -587,8 +587,11 @@ class SupabaseRepository implements Repository {
         const pageSize = 100;
         let offset = 0;
         let total = 0;
+        // Trava de segurança: nunca mais de 200 páginas (20 mil mensagens) por
+        // sincronização, para não existir a chance de um laço infinito.
+        let guard = 0;
         const seenIds = new Set(this.messages.map((m) => m.id));
-        while (true) {
+        while (guard++ < 200) {
           const result = await listVisibleMessages({
             data: { since: sinceIso, offset, limit: pageSize },
           });
