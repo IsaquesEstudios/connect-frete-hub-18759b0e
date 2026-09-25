@@ -16,6 +16,7 @@ export interface LeadQuestion {
   input: InputKind;
   options?: { grupo: string; opcoes: string[] }[];
   placeholder?: string;
+  multi?: boolean;
 }
 
 export const MOTORISTA_QUESTIONS: LeadQuestion[] = [
