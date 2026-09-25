@@ -27,6 +27,7 @@ import { Route as AppPerfilRouteImport } from './routes/_app/perfil'
 import { Route as AppMotoristaRouteImport } from './routes/_app/motorista'
 import { Route as AppMetricasRouteImport } from './routes/_app/metricas'
 import { Route as AppMensagensRapidasRouteImport } from './routes/_app/mensagens-rapidas'
+import { Route as AppLeadsRouteImport } from './routes/_app/leads'
 import { Route as AppEmpresaRouteImport } from './routes/_app/empresa'
 import { Route as AppConfiguracoesRouteImport } from './routes/_app/configuracoes'
 import { Route as AppColaboradorRouteImport } from './routes/_app/colaborador'
@@ -123,6 +124,11 @@ const AppMensagensRapidasRoute = AppMensagensRapidasRouteImport.update({
   path: '/mensagens-rapidas',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppLeadsRoute = AppLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppEmpresaRoute = AppEmpresaRouteImport.update({
   id: '/empresa',
   path: '/empresa',
@@ -164,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/colaborador': typeof AppColaboradorRoute
   '/configuracoes': typeof AppConfiguracoesRoute
   '/empresa': typeof AppEmpresaRoute
+  '/leads': typeof AppLeadsRoute
   '/mensagens-rapidas': typeof AppMensagensRapidasRoute
   '/metricas': typeof AppMetricasRoute
   '/motorista': typeof AppMotoristaRoute
@@ -187,6 +194,7 @@ export interface FileRoutesByTo {
   '/colaborador': typeof AppColaboradorRoute
   '/configuracoes': typeof AppConfiguracoesRoute
   '/empresa': typeof AppEmpresaRoute
+  '/leads': typeof AppLeadsRoute
   '/mensagens-rapidas': typeof AppMensagensRapidasRoute
   '/metricas': typeof AppMetricasRoute
   '/motorista': typeof AppMotoristaRoute
@@ -214,6 +222,7 @@ export interface FileRoutesById {
   '/_app/colaborador': typeof AppColaboradorRoute
   '/_app/configuracoes': typeof AppConfiguracoesRoute
   '/_app/empresa': typeof AppEmpresaRoute
+  '/_app/leads': typeof AppLeadsRoute
   '/_app/mensagens-rapidas': typeof AppMensagensRapidasRoute
   '/_app/metricas': typeof AppMetricasRoute
   '/_app/motorista': typeof AppMotoristaRoute
@@ -240,6 +249,7 @@ export interface FileRouteTypes {
     | '/colaborador'
     | '/configuracoes'
     | '/empresa'
+    | '/leads'
     | '/mensagens-rapidas'
     | '/metricas'
     | '/motorista'
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/colaborador'
     | '/configuracoes'
     | '/empresa'
+    | '/leads'
     | '/mensagens-rapidas'
     | '/metricas'
     | '/motorista'
@@ -289,6 +300,7 @@ export interface FileRouteTypes {
     | '/_app/colaborador'
     | '/_app/configuracoes'
     | '/_app/empresa'
+    | '/_app/leads'
     | '/_app/mensagens-rapidas'
     | '/_app/metricas'
     | '/_app/motorista'
@@ -446,6 +458,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMensagensRapidasRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/_app/leads': {
+      id: '/_app/leads'
+      path: '/leads'
+      fullPath: '/leads'
+      preLoaderRoute: typeof AppLeadsRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/_app/empresa': {
       id: '/_app/empresa'
       path: '/empresa'
@@ -496,6 +515,7 @@ interface AppRouteRouteChildren {
   AppColaboradorRoute: typeof AppColaboradorRoute
   AppConfiguracoesRoute: typeof AppConfiguracoesRoute
   AppEmpresaRoute: typeof AppEmpresaRoute
+  AppLeadsRoute: typeof AppLeadsRoute
   AppMensagensRapidasRoute: typeof AppMensagensRapidasRoute
   AppMetricasRoute: typeof AppMetricasRoute
   AppMotoristaRoute: typeof AppMotoristaRoute
@@ -508,6 +528,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppColaboradorRoute: AppColaboradorRoute,
   AppConfiguracoesRoute: AppConfiguracoesRoute,
   AppEmpresaRoute: AppEmpresaRoute,
+  AppLeadsRoute: AppLeadsRoute,
   AppMensagensRapidasRoute: AppMensagensRapidasRoute,
   AppMetricasRoute: AppMetricasRoute,
   AppMotoristaRoute: AppMotoristaRoute,
