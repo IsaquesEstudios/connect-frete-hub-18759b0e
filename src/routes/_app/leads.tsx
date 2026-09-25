@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { FileSpreadsheet, MessageCirclePlus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { FileSpreadsheet, MessageCirclePlus, RefreshCw, Search, Trash2, Copy } from "lucide-react";
 import { MessageCircle } from "lucide-react";
 import {
   AlertDialog,
@@ -116,6 +116,30 @@ function LeadsPage() {
     return `https://wa.me/${digits.length === 11 || digits.length === 10 ? "55" + digits : digits}`;
   };
 
+  const copyLead = async (l: ChatLead) => {
+    const parts = [
+      `Tipo: ${l.kind === "motorista" ? "Motorista" : "Carga"}`,
+      `Nome: ${l.nome}`,
+      `WhatsApp: ${l.whatsapp}`,
+      l.origem && `Origem: ${l.origem}`,
+      l.destino && `Destino: ${l.destino}`,
+      l.tipo_veiculo && `Veículo: ${l.tipo_veiculo}`,
+      l.carroceria && `Carroceria: ${l.carroceria}`,
+      l.peso && `Peso: ${l.peso}`,
+      l.valor && `Valor: ${l.valor}`,
+      l.material && `Material: ${l.material}`,
+      l.forma_pagamento && `Pagamento: ${l.forma_pagamento}`,
+      l.info_extra && `Info extra: ${l.info_extra}`,
+      `Data: ${formatDateTime(l.created_at)}`,
+    ].filter(Boolean);
+    try {
+      await navigator.clipboard.writeText(parts.join("\n"));
+      toast.success("Contato copiado.");
+    } catch {
+      toast.error("Não foi possível copiar.");
+    }
+  };
+
   return (
     <div className="flex h-full flex-col gap-4 p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -201,6 +225,9 @@ function LeadsPage() {
                         <MessageCircle className="h-4 w-4" />
                         <span className="hidden sm:inline">WhatsApp</span>
                       </a>
+                      <button onClick={() => void copyLead(l)} className="rounded-lg p-2 text-slate-500 hover:bg-sky-50 hover:text-sky-600" aria-label="Copiar informações" title="Copiar informações">
+                        <Copy className="h-4 w-4" />
+                      </button>
                       <button onClick={() => setToDelete(l)} className="rounded-lg p-2 text-slate-500 hover:bg-red-50 hover:text-red-600" aria-label="Excluir">
                         <Trash2 className="h-4 w-4" />
                       </button>
