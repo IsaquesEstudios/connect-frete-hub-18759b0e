@@ -35,6 +35,9 @@ export function AppSidebar({ user }: { user: User }) {
         ]
       : []),
     ...(user.type === "admin" ? [{ title: "Usuários", url: "/usuarios", icon: Users }] : []),
+    ...(user.type === "admin" || user.type === "colaborador"
+      ? [{ title: "Contatos do chat", url: "/leads", icon: MessageCirclePlus }]
+      : []),
     ...(user.type === "admin" ? [{ title: "Métricas", url: "/metricas", icon: BarChart3 }] : []),
     ...(user.type !== "colaborador"
       ? [{ title: "Configurações", url: "/configuracoes", icon: Settings }]
