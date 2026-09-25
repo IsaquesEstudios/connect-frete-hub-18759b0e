@@ -480,6 +480,21 @@ class SupabaseRepository implements Repository {
       this.notify();
     }
 
+    // Rede de segurança: se qualquer etapa abaixo travar (rede lenta, servidor
+    // sem resposta), libera a interface mesmo assim em vez de deixar o usuário
+    // preso na tela de carregamento.
+    const watchdog =
+      typeof window === "undefined"
+        ? null
+        : window.setTimeout(() => {
+            if (this.bootstrapped) return;
+            this.bootstrapped = true;
+            this.setSync({ phase: "idle", done: 0, total: 0 });
+            this.notify();
+          }, 10000);
+
+
+
     try {
       // 3. Cold datasets fetch in parallel with the delta sync.
       const coldLoads = Promise.all([
