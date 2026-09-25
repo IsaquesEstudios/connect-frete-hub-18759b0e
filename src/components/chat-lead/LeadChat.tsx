@@ -272,6 +272,7 @@ function CityPicker({ municipios, onPick }: { municipios: Municipio[]; onPick: (
     if (t.length < 2) return [];
     return municipios.filter((m) => norm(`${m.nome} ${m.uf}`).includes(t)).slice(0, 30);
   }, [q, municipios]);
+  const typed = norm(q.trim());
   return (
     <div className="space-y-2">
       {results.length > 0 && (
@@ -282,6 +283,14 @@ function CityPicker({ municipios, onPick }: { municipios: Municipio[]; onPick: (
             </button>
           ))}
         </div>
+      )}
+      {typed.length >= 2 && results.length === 0 && municipios.length > 0 && (
+        <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-2.5 text-sm text-amber-200">
+          Nenhuma cidade encontrada com “{q.trim()}”. Verifique a grafia e escolha a cidade na lista.
+        </div>
+      )}
+      {typed.length > 0 && typed.length < 2 && (
+        <div className="px-1 text-xs text-slate-400">Digite pelo menos 2 letras e toque na cidade correta na lista.</div>
       )}
       <SearchBox value={q} onChange={setQ} placeholder={municipios.length ? "Digite a cidade..." : "Carregando cidades..."} />
     </div>
