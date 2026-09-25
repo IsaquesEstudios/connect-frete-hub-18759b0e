@@ -225,6 +225,9 @@ function LeadsPage() {
                         <MessageCircle className="h-4 w-4" />
                         <span className="hidden sm:inline">WhatsApp</span>
                       </a>
+                      <button onClick={() => void copyLead(l)} className="rounded-lg p-2 text-slate-500 hover:bg-sky-50 hover:text-sky-600" aria-label="Copiar informações" title="Copiar informações">
+                        <Copy className="h-4 w-4" />
+                      </button>
                       <button onClick={() => setToDelete(l)} className="rounded-lg p-2 text-slate-500 hover:bg-red-50 hover:text-red-600" aria-label="Excluir">
                         <Trash2 className="h-4 w-4" />
                       </button>
