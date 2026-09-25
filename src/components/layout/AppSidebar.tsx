@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { BarChart3, Home, LogOut, MessageSquareText, Package, Settings, Truck, User as UserIcon, Users } from "lucide-react";
+import { BarChart3, Home, LogOut, MessageCirclePlus, MessageSquareText, Package, Settings, Truck, User as UserIcon, Users } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -35,6 +35,9 @@ export function AppSidebar({ user }: { user: User }) {
         ]
       : []),
     ...(user.type === "admin" ? [{ title: "Usuários", url: "/usuarios", icon: Users }] : []),
+    ...(user.type === "admin" || user.type === "colaborador"
+      ? [{ title: "Contatos do chat", url: "/leads", icon: MessageCirclePlus }]
+      : []),
     ...(user.type === "admin" ? [{ title: "Métricas", url: "/metricas", icon: BarChart3 }] : []),
     ...(user.type !== "colaborador"
       ? [{ title: "Configurações", url: "/configuracoes", icon: Settings }]
