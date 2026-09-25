@@ -100,13 +100,24 @@ export function LeadChat({ kind, questions, title }: { kind: "motorista" | "carg
     }
   };
 
+  const showError = (msg: string) => {
+    toast.error(msg);
+    setHistory((h) => [...h, { from: "bot", text: `⚠️ ${msg}` }]);
+  };
+
   const answer = (raw: string, display?: string) => {
     if (!q) return;
     const text = raw.trim();
-    if (q.input === "text" && text.length < 2) return toast.error("Digite uma resposta válida.");
-    if (q.input === "phone" && phoneDigits(text).length < 10) return toast.error("Informe DDD + número.");
-    if ((q.input === "weight" || q.input === "money") && !/\d/.test(text)) return toast.error("Informe um valor.");
-    if ((q.input === "city" || q.input === "options") && !text) return;
+    if (q.key === "nome") {
+      const words = text.split(/\s+/).filter((w) => w.length >= 2);
+      if (words.length < 2)
+        return showError("Preciso do seu nome completo: nome e sobrenome. Exemplo: João Silva.");
+    }
+    if (q.input === "text" && text.length < 2) return showError("Digite uma resposta válida.");
+    if (q.input === "phone" && phoneDigits(text).length < 10) return showError("Informe o WhatsApp com DDD + número. Exemplo: (11) 98765-4321.");
+    if ((q.input === "weight" || q.input === "money") && !/\d/.test(text)) return showError("Informe um valor numérico.");
+    if ((q.input === "city" || q.input === "options") && !text)
+      return showError(q.input === "city" ? "Escolha a cidade na lista abaixo para continuar." : "Escolha uma das opções abaixo para continuar.");
     const next = { ...answers, [q.key]: text };
     setAnswers(next);
     setHistory((h) => [...h, { from: "user", text: display ?? (text || "Sem informações extras") }]);
@@ -261,6 +272,7 @@ function CityPicker({ municipios, onPick }: { municipios: Municipio[]; onPick: (
     if (t.length < 2) return [];
     return municipios.filter((m) => norm(`${m.nome} ${m.uf}`).includes(t)).slice(0, 30);
   }, [q, municipios]);
+  const typed = norm(q.trim());
   return (
     <div className="space-y-2">
       {results.length > 0 && (
@@ -271,6 +283,14 @@ function CityPicker({ municipios, onPick }: { municipios: Municipio[]; onPick: (
             </button>
           ))}
         </div>
+      )}
+      {typed.length >= 2 && results.length === 0 && municipios.length > 0 && (
+        <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-2.5 text-sm text-amber-200">
+          Nenhuma cidade encontrada com “{q.trim()}”. Verifique a grafia e escolha a cidade na lista.
+        </div>
+      )}
+      {typed.length > 0 && typed.length < 2 && (
+        <div className="px-1 text-xs text-slate-400">Digite pelo menos 2 letras e toque na cidade correta na lista.</div>
       )}
       <SearchBox value={q} onChange={setQ} placeholder={municipios.length ? "Digite a cidade..." : "Carregando cidades..."} />
     </div>
