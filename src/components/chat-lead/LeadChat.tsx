@@ -87,7 +87,7 @@ export function LeadChat({ kind, questions, title }: { kind: "motorista" | "carg
     setSaving(true);
     setTyping(true);
     try {
-      const res = await submitChatLead({ data: { kind, ...(final as ChatLeadInput) } });
+      const res = await submitChatLead({ data: { ...(final as ChatLeadInput), kind } });
       if (!res.ok) throw new Error(res.error);
       setHistory((h) => [...h, { from: "bot", text: "Pronto! ✅ Recebemos suas informações. Nossa equipe entrará em contato pelo WhatsApp em breve." }]);
       setDone(true);
