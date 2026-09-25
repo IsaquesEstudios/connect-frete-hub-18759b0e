@@ -18,6 +18,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as DisponibilidadeIndexRouteImport } from './routes/disponibilidade.index'
 import { Route as DisponibilidadeMotoristasRouteImport } from './routes/disponibilidade.motoristas'
 import { Route as DisponibilidadeEmpresasRouteImport } from './routes/disponibilidade.empresas'
+import { Route as ChatMotoristaRouteImport } from './routes/chat.motorista'
+import { Route as ChatCargaRouteImport } from './routes/chat.carga'
 import { Route as CadastrarEmpresaRouteImport } from './routes/cadastrar.empresa'
 import { Route as CadastrarCaminhoneiroRouteImport } from './routes/cadastrar.caminhoneiro'
 import { Route as AppUsuariosRouteImport } from './routes/_app/usuarios'
@@ -75,6 +77,16 @@ const DisponibilidadeEmpresasRoute = DisponibilidadeEmpresasRouteImport.update({
   id: '/empresas',
   path: '/empresas',
   getParentRoute: () => DisponibilidadeRoute,
+} as any)
+const ChatMotoristaRoute = ChatMotoristaRouteImport.update({
+  id: '/chat/motorista',
+  path: '/chat/motorista',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatCargaRoute = ChatCargaRouteImport.update({
+  id: '/chat/carga',
+  path: '/chat/carga',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CadastrarEmpresaRoute = CadastrarEmpresaRouteImport.update({
   id: '/cadastrar/empresa',
@@ -159,6 +171,8 @@ export interface FileRoutesByFullPath {
   '/usuarios': typeof AppUsuariosRoute
   '/cadastrar/caminhoneiro': typeof CadastrarCaminhoneiroRoute
   '/cadastrar/empresa': typeof CadastrarEmpresaRoute
+  '/chat/carga': typeof ChatCargaRoute
+  '/chat/motorista': typeof ChatMotoristaRoute
   '/disponibilidade/empresas': typeof DisponibilidadeEmpresasRoute
   '/disponibilidade/motoristas': typeof DisponibilidadeMotoristasRoute
   '/disponibilidade/': typeof DisponibilidadeIndexRoute
@@ -180,6 +194,8 @@ export interface FileRoutesByTo {
   '/usuarios': typeof AppUsuariosRoute
   '/cadastrar/caminhoneiro': typeof CadastrarCaminhoneiroRoute
   '/cadastrar/empresa': typeof CadastrarEmpresaRoute
+  '/chat/carga': typeof ChatCargaRoute
+  '/chat/motorista': typeof ChatMotoristaRoute
   '/disponibilidade/empresas': typeof DisponibilidadeEmpresasRoute
   '/disponibilidade/motoristas': typeof DisponibilidadeMotoristasRoute
   '/disponibilidade': typeof DisponibilidadeIndexRoute
@@ -205,6 +221,8 @@ export interface FileRoutesById {
   '/_app/usuarios': typeof AppUsuariosRoute
   '/cadastrar/caminhoneiro': typeof CadastrarCaminhoneiroRoute
   '/cadastrar/empresa': typeof CadastrarEmpresaRoute
+  '/chat/carga': typeof ChatCargaRoute
+  '/chat/motorista': typeof ChatMotoristaRoute
   '/disponibilidade/empresas': typeof DisponibilidadeEmpresasRoute
   '/disponibilidade/motoristas': typeof DisponibilidadeMotoristasRoute
   '/disponibilidade/': typeof DisponibilidadeIndexRoute
@@ -229,6 +247,8 @@ export interface FileRouteTypes {
     | '/usuarios'
     | '/cadastrar/caminhoneiro'
     | '/cadastrar/empresa'
+    | '/chat/carga'
+    | '/chat/motorista'
     | '/disponibilidade/empresas'
     | '/disponibilidade/motoristas'
     | '/disponibilidade/'
@@ -250,6 +270,8 @@ export interface FileRouteTypes {
     | '/usuarios'
     | '/cadastrar/caminhoneiro'
     | '/cadastrar/empresa'
+    | '/chat/carga'
+    | '/chat/motorista'
     | '/disponibilidade/empresas'
     | '/disponibilidade/motoristas'
     | '/disponibilidade'
@@ -274,6 +296,8 @@ export interface FileRouteTypes {
     | '/_app/usuarios'
     | '/cadastrar/caminhoneiro'
     | '/cadastrar/empresa'
+    | '/chat/carga'
+    | '/chat/motorista'
     | '/disponibilidade/empresas'
     | '/disponibilidade/motoristas'
     | '/disponibilidade/'
@@ -290,6 +314,8 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   CadastrarCaminhoneiroRoute: typeof CadastrarCaminhoneiroRoute
   CadastrarEmpresaRoute: typeof CadastrarEmpresaRoute
+  ChatCargaRoute: typeof ChatCargaRoute
+  ChatMotoristaRoute: typeof ChatMotoristaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -356,6 +382,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/disponibilidade/empresas'
       preLoaderRoute: typeof DisponibilidadeEmpresasRouteImport
       parentRoute: typeof DisponibilidadeRoute
+    }
+    '/chat/motorista': {
+      id: '/chat/motorista'
+      path: '/chat/motorista'
+      fullPath: '/chat/motorista'
+      preLoaderRoute: typeof ChatMotoristaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat/carga': {
+      id: '/chat/carga'
+      path: '/chat/carga'
+      fullPath: '/chat/carga'
+      preLoaderRoute: typeof ChatCargaRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/cadastrar/empresa': {
       id: '/cadastrar/empresa'
@@ -517,6 +557,8 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   CadastrarCaminhoneiroRoute: CadastrarCaminhoneiroRoute,
   CadastrarEmpresaRoute: CadastrarEmpresaRoute,
+  ChatCargaRoute: ChatCargaRoute,
+  ChatMotoristaRoute: ChatMotoristaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
