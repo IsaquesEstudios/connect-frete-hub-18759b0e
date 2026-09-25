@@ -35,7 +35,7 @@ export const CARGA_QUESTIONS: LeadQuestion[] = [
   { key: "origem", question: "Qual a cidade e estado de ORIGEM da carga?", input: "city" },
   { key: "destino", question: "E a cidade e estado de DESTINO?", input: "city" },
   { key: "tipo_veiculo", question: "Qual tipo de veículo você precisa?", input: "options", options: TIPOS_VEICULO },
-  { key: "carroceria", question: "Qual tipo de carroceria?", input: "options", options: CARROCERIAS },
+  { key: "carroceria", question: "Qual tipo de carroceria? Você pode escolher mais de uma.", input: "options", options: CARROCERIAS, multi: true },
   { key: "peso", question: "Qual o peso da carga (kg)?", input: "weight" },
   { key: "valor", question: "Qual o valor do frete?", input: "money" },
   { key: "material", question: "Qual o material desta carga?", input: "text", placeholder: "Ex.: grãos, madeira, máquinas" },
