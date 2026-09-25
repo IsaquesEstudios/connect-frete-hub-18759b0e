@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { FileSpreadsheet, MessageCirclePlus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { FileSpreadsheet, MessageCirclePlus, RefreshCw, Search, Trash2, Copy } from "lucide-react";
 import { MessageCircle } from "lucide-react";
 import {
   AlertDialog,
