@@ -328,6 +328,72 @@ function OptionPicker({ groups, onPick }: { groups: { grupo: string; opcoes: str
   );
 }
 
+function MultiOptionPicker({ groups, onPick }: { groups: { grupo: string; opcoes: string[] }[]; onPick: (v: string) => void }) {
+  const [q, setQ] = useState("");
+  const [selected, setSelected] = useState<string[]>([]);
+  const t = norm(q.trim());
+  const filtered = groups
+    .map((g) => ({ ...g, opcoes: g.opcoes.filter((o) => !t || norm(o).includes(t)) }))
+    .filter((g) => g.opcoes.length);
+
+  const toggle = (o: string) =>
+    setSelected((prev) => (prev.includes(o) ? prev.filter((x) => x !== o) : [...prev, o]));
+
+  return (
+    <div className="space-y-2">
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 rounded-xl border border-sky-400/30 bg-sky-500/10 p-2">
+          {selected.map((o) => (
+            <button
+              key={o}
+              onClick={() => toggle(o)}
+              className="rounded-full bg-sky-500 px-3 py-1.5 text-sm font-medium text-slate-950"
+            >
+              {o} ✕
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="max-h-56 overflow-y-auto rounded-xl border border-white/10 bg-[#0a1630] p-2">
+        {filtered.map((g) => (
+          <div key={g.grupo} className="mb-2">
+            <div className="px-2 py-1 text-[11px] uppercase tracking-wider text-slate-400">{g.grupo}</div>
+            <div className="flex flex-wrap gap-1.5">
+              {g.opcoes.map((o) => {
+                const on = selected.includes(o);
+                return (
+                  <button
+                    key={o}
+                    onClick={() => toggle(o)}
+                    className={
+                      on
+                        ? "rounded-full border border-sky-400 bg-sky-500 px-3 py-1.5 text-sm font-medium text-slate-950"
+                        : "rounded-full border border-white/15 px-3 py-1.5 text-sm hover:border-sky-300 hover:bg-sky-500/20"
+                    }
+                  >
+                    {o}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+        {!filtered.length && <div className="p-3 text-sm text-slate-400">Nada encontrado.</div>}
+      </div>
+      <div className="flex items-center gap-2">
+        <SearchBox value={q} onChange={setQ} placeholder="Buscar..." />
+        <button
+          disabled={selected.length === 0}
+          onClick={() => onPick(selected.join(", "))}
+          className="h-12 shrink-0 rounded-xl bg-sky-500 px-5 text-sm font-medium text-slate-950 disabled:opacity-40"
+        >
+          Enviar
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function BotAvatar() {
   return (
     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-sky-300/30 bg-gradient-to-b from-sky-400/30 to-sky-600/30 text-sky-200">
