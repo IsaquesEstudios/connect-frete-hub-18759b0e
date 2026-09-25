@@ -206,6 +206,8 @@ export function LeadChat({ kind, questions, title }: { kind: "motorista" | "carg
             <div className="h-12" />
           ) : q.input === "city" ? (
             <CityPicker municipios={municipios} onPick={(v) => answer(v)} />
+          ) : q.input === "options" && q.multi ? (
+            <MultiOptionPicker groups={q.options ?? []} onPick={(v) => answer(v)} />
           ) : q.input === "options" ? (
             <OptionPicker groups={q.options ?? []} onPick={(v) => answer(v)} />
           ) : (
