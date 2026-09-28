@@ -137,6 +137,20 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
     () => repo.listMessages(conversationId, { staffInbox: useStaffInbox }),
     [conversationId, useStaffInbox, v],
   );
+  const history = repo.getHistoryState?.(other.id) ?? { loading: false, hasMore: false, loaded: true };
+  const prependHeightRef = useRef<number | null>(null);
+
+  // Ao abrir a conversa, busca só as últimas mensagens.
+  useEffect(() => {
+    void repo.loadConversationHistory?.(other.id, me.id, false);
+  }, [other.id, me.id]);
+
+  const loadOlder = () => {
+    const el = scrollRef.current;
+    prependHeightRef.current = el ? el.scrollHeight - el.scrollTop : null;
+    void repo.loadConversationHistory?.(other.id, me.id, true);
+  };
+
   const otherOnline = useMemo(() => repo.isOnline(other.id), [other.id, ev, v]);
 
   useEffect(() => {
@@ -215,7 +229,14 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
 
   useEffect(() => {
     const el = scrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    if (!el) return;
+    if (prependHeightRef.current !== null) {
+      // Carregou mensagens antigas: mantém a posição de leitura.
+      el.scrollTop = el.scrollHeight - prependHeightRef.current;
+      prependHeightRef.current = null;
+      return;
+    }
+    el.scrollTop = el.scrollHeight;
   }, [messages.length, conversationId]);
 
   useEffect(() => {
@@ -527,12 +548,19 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
 
 
       <div ref={scrollRef} className="relative flex-1 overflow-y-auto px-4 py-4 space-y-4">
-        {(switching || !repo.isBootstrapped()) && (
+        {(switching || (history.loading && !history.loaded && messages.length === 0)) && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-sm">
             <LoadingSpinner size="md" label="Carregando conversa..." />
           </div>
         )}
-        {groups.length === 0 && (
+        {history.loaded && history.hasMore && messages.length > 0 && (
+          <div className="flex justify-center">
+            <Button variant="outline" size="sm" onClick={loadOlder} disabled={history.loading}>
+              {history.loading ? "Carregando..." : "Carregar mensagens mais antigas"}
+            </Button>
+          </div>
+        )}
+        {groups.length === 0 && !history.loading && (
           <div className="text-center text-sm text-muted-foreground pt-10">
             Nenhuma mensagem ainda. Diga olá!
           </div>

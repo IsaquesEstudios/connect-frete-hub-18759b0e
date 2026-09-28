@@ -82,8 +82,12 @@ export function StaffPanel({ role }: { role: "admin" | "colaborador" }) {
     () => Object.fromEntries(allTags.map((t) => [t.id, t] as const)),
     [allTags],
   );
+  const hasMoreConvs = repo.hasMoreConversations?.() ?? false;
+  const loadingConvs = repo.isLoadingConversations?.() ?? false;
   const filtered = useMemo(() => {
     return conversations.filter((c) => {
+      // Enquanto houver conversas a carregar, sem busca mostra só as já carregadas.
+      if (!query && hasMoreConvs && !c.lastMessage) return false;
       if (tab === "empresas" && c.user.type !== "empresa") return false;
       if (tab === "motoristas" && c.user.type !== "motorista") return false;
       if (tab === "colaboradores" && c.user.type !== "colaborador") return false;
@@ -114,7 +118,7 @@ export function StaffPanel({ role }: { role: "admin" | "colaborador" }) {
 
       return true;
     });
-  }, [conversations, tab, query, tagFilter, unreadOnly]);
+  }, [conversations, tab, query, tagFilter, unreadOnly, hasMoreConvs]);
 
   // Conversas fixadas sempre no topo (mantendo a ordem de fixação).
   const ordered = useMemo(() => {
@@ -241,7 +245,15 @@ export function StaffPanel({ role }: { role: "admin" | "colaborador" }) {
               </button>
             )}
           </div>
-          <div className="flex-1 overflow-y-auto">
+          <div
+            className="flex-1 overflow-y-auto"
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              if (hasMoreConvs && el.scrollTop + el.clientHeight >= el.scrollHeight - 200) {
+                void repo.loadMoreConversations?.();
+              }
+            }}
+          >
             {ordered.length === 0 && (
               <div className="p-6 text-center text-sm text-muted-foreground">
                 Nenhuma conversa
@@ -366,6 +378,18 @@ export function StaffPanel({ role }: { role: "admin" | "colaborador" }) {
                 </div>
               );
             })}
+            {hasMoreConvs && (
+              <div className="p-3 text-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={loadingConvs}
+                  onClick={() => void repo.loadMoreConversations?.()}
+                >
+                  {loadingConvs ? "Carregando conversas..." : "Carregar mais conversas"}
+                </Button>
+              </div>
+            )}
           </div>
         </aside>
 

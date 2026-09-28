@@ -1269,13 +1269,16 @@ class SupabaseRepository implements Repository {
    */
   unreadForViewer(conversationId: string, viewerId: string): number {
     if (!viewerId) return 0;
-    return this.messages.filter(
+    const [pa, pb] = conversationId.split("__");
+    const otherId = viewerId === pa ? pb : viewerId === pb ? pa : "";
+    const remote = (otherId && this.unreadMap.get(otherId)) || 0;
+    return Math.max(remote, this.messages.filter(
       (m) =>
         m.conversationId === conversationId &&
         m.toUserId === viewerId &&
         m.fromUserId !== viewerId &&
         !this.readByRecipient(m),
-    ).length;
+    ).length);
   }
 
   unreadCount(conversationId: string, viewer: "admin" | "user"): number {
