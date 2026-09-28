@@ -23,6 +23,12 @@ export interface Repository {
   // messages
   listMessages(conversationId: string, options?: { staffInbox?: boolean }): Message[];
   refreshMessages(): Promise<void>;
+  // carregamento sob demanda
+  hasMoreConversations?(): boolean;
+  isLoadingConversations?(): boolean;
+  loadMoreConversations?(reset?: boolean): Promise<void>;
+  getHistoryState?(otherUserId: string): { loading: boolean; hasMore: boolean; loaded: boolean };
+  loadConversationHistory?(otherUserId: string, meId: string, older?: boolean): Promise<void>;
   sendMessage(input: { fromUserId: string; toUserId: string; body: string }): Message;
   deleteMessage(id: string): void;
   deleteConversation(conversationId: string): void;

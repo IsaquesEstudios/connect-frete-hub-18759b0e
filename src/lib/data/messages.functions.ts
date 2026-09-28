@@ -250,3 +250,106 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     if (!rows[0]) throw new Error("Mensagem não foi salva.");
     return { ok: true as const, row: rows[0] };
   });
+
+/**
+ * Lista as conversas de quem está logado (uma linha por contato, com a última
+ * mensagem), da mais recente para a mais antiga. Paginado por `offset` de
+ * mensagens varridas — o cliente pede mais quando o usuário rola a lista.
+ */
+export const listConversationSummaries = createServerFn({ method: "POST" })
+  .inputValidator((data) =>
+    z
+      .object({
+        offset: z.number().int().min(0).optional(),
+        want: z.number().int().min(1).max(60).optional(),
+        accessToken: z.string().optional(),
+      })
+      .parse(data ?? {}),
+  )
+  .handler(async ({ data }) => {
+    const serviceKey = process.env.EXT_SUPABASE_SERVICE_ROLE_KEY;
+    if (!serviceKey) throw new Error("Configuração do servidor ausente.");
+    const profile = await getCurrentProfile(serviceKey, data.accessToken);
+    if (!profile) return { rows: [] as MessageForClient[], unread: {} as Record<string, number>, nextOffset: null as number | null };
+
+    const me = profile.id;
+    const uid = encodeURIComponent(me);
+    const want = data.want ?? 30;
+    const pageSize = 300;
+    let offset = data.offset ?? 0;
+    const seen = new Set<string>();
+    const rows: MessageForClient[] = [];
+    let exhausted = false;
+
+    for (let page = 0; page < 6 && rows.length < want; page++) {
+      const res = await fetch(
+        `${EXT_SUPABASE_URL}/rest/v1/messages?select=*&or=(from_user_id.eq.${uid},to_user_id.eq.${uid})` +
+          `&order=created_at.desc&limit=${pageSize}&offset=${offset}`,
+        { headers: apiHeaders(serviceKey) },
+      );
+      if (!res.ok) throw new Error(`Não foi possível carregar as conversas. ${await readError(res)}`.trim());
+      const batch = (await res.json()) as MessageForClient[];
+      for (const r of batch) {
+        offset++;
+        const other = r.from_user_id === me ? r.to_user_id : r.from_user_id;
+        if (seen.has(other)) continue;
+        seen.add(other);
+        rows.push(r);
+        if (rows.length >= want) break;
+      }
+      if (batch.length < pageSize) {
+        if (rows.length < want) exhausted = true;
+        break;
+      }
+    }
+
+    // Contagem de não lidas só na primeira página.
+    const unread: Record<string, number> = {};
+    if (!data.offset) {
+      const flag = isStaff(profile) ? "read_by_admin" : "read_by_user";
+      const res = await fetch(
+        `${EXT_SUPABASE_URL}/rest/v1/messages?select=from_user_id&to_user_id=eq.${uid}&${flag}=is.false&limit=5000`,
+        { headers: apiHeaders(serviceKey) },
+      );
+      if (res.ok) {
+        const list = (await res.json()) as { from_user_id: string }[];
+        for (const r of list) {
+          if (r.from_user_id === me) continue;
+          unread[r.from_user_id] = (unread[r.from_user_id] ?? 0) + 1;
+        }
+      }
+    }
+
+    return { rows, unread, nextOffset: exhausted ? null : offset };
+  });
+
+/** Últimas mensagens de UMA conversa (eu ↔ outro), com paginação para trás. */
+export const listConversationMessages = createServerFn({ method: "POST" })
+  .inputValidator((data) =>
+    z
+      .object({
+        otherUserId: z.string().uuid(),
+        before: z.string().optional(),
+        limit: z.number().int().min(1).max(50).optional(),
+        accessToken: z.string().optional(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    const serviceKey = process.env.EXT_SUPABASE_SERVICE_ROLE_KEY;
+    if (!serviceKey) throw new Error("Configuração do servidor ausente.");
+    const profile = requireProfile(await getCurrentProfile(serviceKey, data.accessToken));
+    const me = encodeURIComponent(profile.id);
+    const other = encodeURIComponent(data.otherUserId);
+    const limit = data.limit ?? 15;
+    const before = data.before ? `&created_at=lt.${encodeURIComponent(data.before)}` : "";
+    const res = await fetch(
+      `${EXT_SUPABASE_URL}/rest/v1/messages?select=*` +
+        `&or=(and(from_user_id.eq.${me},to_user_id.eq.${other}),and(from_user_id.eq.${other},to_user_id.eq.${me}))` +
+        `&order=created_at.desc&limit=${limit}${before}`,
+      { headers: apiHeaders(serviceKey) },
+    );
+    if (!res.ok) throw new Error(`Não foi possível carregar as mensagens. ${await readError(res)}`.trim());
+    const rows = (await res.json()) as MessageForClient[];
+    return { rows, hasMore: rows.length >= limit };
+  });
