@@ -566,7 +566,7 @@ class SupabaseRepository implements Repository {
     }
   }
 
-  private async syncMessages() {
+  private async syncMessages(showProgress = true) {
     // Skip authenticated server call when there's no session (e.g. /auth route).
     const { data: sessionData } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
     if (!sessionData?.session) {
@@ -583,7 +583,10 @@ class SupabaseRepository implements Repository {
     try {
       if (cachedLastCreatedAt > 0) {
         // Delta sync: fetch only messages newer than what we already have.
-        const sinceIso = new Date(cachedLastCreatedAt).toISOString();
+        // +1ms: o banco guarda microssegundos e o app só milissegundos. Sem isso,
+        // um envio em massa (todas as linhas com o mesmo horário) voltava em
+        // toda sincronização e a tela de "Sincronizando" ficava em loop.
+        const sinceIso = new Date(cachedLastCreatedAt + 1).toISOString();
         const pageSize = 100;
         let offset = 0;
         let total = 0;
@@ -599,7 +602,7 @@ class SupabaseRepository implements Repository {
           // progress bar doesn't shrink as later pages come in.
           if (offset === 0) total = result.total || result.rows.length;
 
-          if (offset === 0 && total > 10) {
+          if (showProgress && offset === 0 && total > 10) {
             this.setSync({ phase: "syncing", done: 0, total });
           }
           for (const row of result.rows) {
@@ -950,7 +953,7 @@ class SupabaseRepository implements Repository {
   }
 
   async refreshMessages(): Promise<void> {
-    await this.syncMessages();
+    await this.syncMessages(false);
     this.normalizeMessageConversationIds();
     this.notify();
   }
