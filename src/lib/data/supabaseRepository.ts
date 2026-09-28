@@ -385,13 +385,14 @@ class SupabaseRepository implements Repository {
     }
     if (!blob) return false;
     this.users = blob.users ?? [];
-    this.messages = blob.messages ?? [];
+    // Mensagens não vêm mais do cache: são pedidas ao servidor sob demanda.
+    this.messages = [];
     this.tags = blob.tags ?? [];
     this.convTags = blob.convTags ?? [];
     this.broadcasts = blob.broadcasts ?? [];
     this.lastSeen = new Map(blob.lastSeen ?? []);
     this.applyPhotoCache();
-    return this.messages.length > 0 || this.users.length > 0;
+    return this.users.length > 0;
   }
 
   private persistCache() {
@@ -404,7 +405,7 @@ class SupabaseRepository implements Repository {
       const build = (messageLimit?: number): CacheBlob => ({
         // Sem as fotos: elas vivem no cache dedicado acima.
         users: this.users.map((u) => (u.fotoUrl ? { ...u, fotoUrl: undefined } : u)),
-        messages: messageLimit ? this.messages.slice(-messageLimit) : this.messages,
+        messages: messageLimit ? [] : [],
         tags: this.tags,
         convTags: this.convTags,
         broadcasts: this.broadcasts,
@@ -507,7 +508,7 @@ class SupabaseRepository implements Repository {
         this.loadBroadcasts(),
       ]);
 
-      const msgSync = sessionUserId ? this.syncMessages() : (this.messages = [], Promise.resolve());
+      const msgSync = sessionUserId ? this.loadMoreConversations(true) : (this.messages = [], Promise.resolve());
       await Promise.all([coldLoads, msgSync]);
       this.normalizeMessageConversationIds();
 
@@ -566,7 +567,7 @@ class SupabaseRepository implements Repository {
     }
   }
 
-  private async syncMessages(showProgress = true) {
+  private async syncMessages(showProgress = false) {
     // Skip authenticated server call when there's no session (e.g. /auth route).
     const { data: sessionData } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
     if (!sessionData?.session) {
@@ -617,25 +618,10 @@ class SupabaseRepository implements Repository {
           this.notify();
           if (result.rows.length < pageSize || offset >= total) break;
         }
-      } else {
-        // Cold load — one shot, the server returns the latest window.
-        const result = await listVisibleMessages({ data: {} });
-        this.messages = (result.rows as MessageRow[]).map((r) => this.mapMessage(r));
       }
+      // Sem nada carregado ainda: a lista de conversas cuida da primeira carga.
     } catch (error) {
       console.error("syncMessages failed", error);
-      if (cachedLastCreatedAt === 0) {
-        // No cache and server failed — fall back to public REST read.
-        const { data } = await supabase
-          .from("messages")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(500);
-        if (data) {
-          const rows = (data as MessageRow[]).slice().reverse();
-          this.messages = rows.map((r) => this.mapMessage(r));
-        }
-      }
     } finally {
       if (this.sync.phase === "syncing") {
         this.setSync({ phase: "idle", done: 0, total: 0 });
@@ -952,6 +938,109 @@ class SupabaseRepository implements Repository {
       });
   }
 
+  // ---------- carregamento sob demanda ----------
+  private convNextOffset: number | null = 0;
+  private convLoading: Promise<void> | null = null;
+  private unreadMap = new Map<string, number>();
+  private history = new Map<string, { loading: boolean; hasMore: boolean; loaded: boolean }>();
+
+  private async accessToken(): Promise<string | undefined> {
+    const { data } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
+    return data?.session?.access_token ?? undefined;
+  }
+
+  private addRows(rows: MessageRow[]) {
+    const known = new Set(this.messages.map((m) => m.id));
+    for (const r of rows) {
+      if (known.has(r.id)) continue;
+      known.add(r.id);
+      this.messages.push(this.mapMessage(r));
+    }
+  }
+
+  hasMoreConversations(): boolean {
+    return this.convNextOffset !== null;
+  }
+  isLoadingConversations(): boolean {
+    return this.convLoading !== null;
+  }
+
+  /** Carrega a próxima página da lista de conversas (com a última mensagem). */
+  loadMoreConversations(reset = false): Promise<void> {
+    if (reset) this.convNextOffset = 0;
+    if (this.convLoading) return this.convLoading;
+    if (this.convNextOffset === null) return Promise.resolve();
+    const offset = this.convNextOffset;
+    this.convLoading = (async () => {
+      try {
+        const { listConversationSummaries } = await import("./messages.functions");
+        const res = await listConversationSummaries({
+          data: { offset, want: 30, accessToken: await this.accessToken() },
+        });
+        this.addRows(res.rows as MessageRow[]);
+        if (offset === 0) this.unreadMap = new Map(Object.entries(res.unread));
+        this.convNextOffset = res.nextOffset;
+      } catch (error) {
+        console.error("loadMoreConversations failed", error);
+      } finally {
+        this.convLoading = null;
+        this.notify();
+      }
+    })();
+    this.notify();
+    return this.convLoading;
+  }
+
+  getHistoryState(otherUserId: string) {
+    return this.history.get(otherUserId) ?? { loading: false, hasMore: true, loaded: false };
+  }
+
+  /**
+   * Busca as últimas mensagens de uma conversa (older=false) ou um lote mais
+   * antigo (older=true). Mensagens curtas: até 15; longas: pelo menos 5.
+   */
+  async loadConversationHistory(otherUserId: string, meId: string, older = false): Promise<void> {
+    const state = this.getHistoryState(otherUserId);
+    if (state.loading) return;
+    if (!older && state.loaded) return;
+    this.history.set(otherUserId, { ...state, loading: true });
+    this.notify();
+    try {
+      const pairId = this.staffPairId(meId, otherUserId);
+      const loaded = this.messages.filter((m) => m.conversationId === pairId && !m.id.startsWith("tmp_"));
+      const oldest = older && loaded.length ? Math.min(...loaded.map((m) => m.createdAt)) : 0;
+      const { listConversationMessages } = await import("./messages.functions");
+      const res = await listConversationMessages({
+        data: {
+          otherUserId,
+          before: oldest ? new Date(oldest).toISOString() : undefined,
+          limit: 15,
+          accessToken: await this.accessToken(),
+        },
+      });
+      const rows = res.rows as MessageRow[]; // mais nova primeiro
+      const picked: MessageRow[] = [];
+      let chars = 0;
+      for (const r of rows) {
+        const size = r.body.startsWith("img:") || r.body.startsWith("aud:") ? 400 : r.body.length;
+        if (picked.length >= 5 && chars + size > 1500) break;
+        picked.push(r);
+        chars += size;
+      }
+      this.addRows(picked);
+      this.history.set(otherUserId, {
+        loading: false,
+        loaded: true,
+        hasMore: res.hasMore || picked.length < rows.length,
+      });
+    } catch (error) {
+      console.error("loadConversationHistory failed", error);
+      this.history.set(otherUserId, { ...state, loading: false, loaded: true });
+    } finally {
+      this.notify();
+    }
+  }
+
   async refreshMessages(): Promise<void> {
     await this.syncMessages(false);
     this.normalizeMessageConversationIds();
@@ -1141,6 +1230,23 @@ class SupabaseRepository implements Repository {
       if (!m.id.startsWith("tmp_")) idsToUpdate.push(m.id);
     }
 
+    // Não lidas que ainda não foram baixadas (contadas pelo servidor).
+    const [pa, pb] = conversationId.split("__");
+    const meId = viewer === "admin" ? this.adminAuthId : this.authUserId;
+    const otherId = meId === pa ? pb : meId === pb ? pa : null;
+    if (meId && otherId && this.unreadMap.get(otherId)) {
+      this.unreadMap.delete(otherId);
+      changed = true;
+      void supabase
+        .from("messages")
+        .update({ [field]: true })
+        .eq("to_user_id", meId)
+        .eq("from_user_id", otherId)
+        .eq(field, false)
+        .then(({ error }) => {
+          if (error) console.error("markConversationRead (remote) failed", error);
+        });
+    }
     if (changed) this.notify();
     if (idsToUpdate.length === 0) return;
     void supabase
@@ -1202,11 +1308,12 @@ class SupabaseRepository implements Repository {
         const lastMessage = [...conv].sort((a, b) => b.createdAt - a.createdAt)[0];
         const viewerId = staffId ?? this.adminAuthId ?? "";
         // Só conta o que foi enviado PARA quem está vendo a lista.
-        const unreadForAdmin = viewerId
+        const loadedUnread = viewerId
           ? conv.filter(
               (m) => m.toUserId === viewerId && m.fromUserId !== viewerId && !this.readByRecipient(m),
             ).length
           : 0;
+        const unreadForAdmin = Math.max(loadedUnread, this.unreadMap.get(user.id) ?? 0);
 
         const tagIds = this.convTags
           .filter((c) => c.conversationId === user.id)
