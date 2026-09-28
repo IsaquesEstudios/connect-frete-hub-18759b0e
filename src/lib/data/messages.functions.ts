@@ -298,7 +298,6 @@ export const listConversationSummaries = createServerFn({ method: "POST" })
         if (rows.length >= want) break;
       }
       if (batch.length < pageSize) {
-        exhausted = rows.length < want || offset >= (data.offset ?? 0) + batch.length;
         if (rows.length < want) exhausted = true;
         break;
       }
