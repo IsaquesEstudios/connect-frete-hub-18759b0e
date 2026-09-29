@@ -23,19 +23,11 @@ export const MOTORISTA_QUESTIONS: LeadQuestion[] = [
   { key: "nome", question: "Olá! 👋 Para começar, qual é o seu nome?", input: "text", placeholder: "Seu nome" },
   { key: "whatsapp", question: "Qual é o seu WhatsApp com DDD?", input: "phone" },
   { key: "origem", question: "Em qual cidade e estado você está (origem)?", input: "city" },
-  { key: "tipo_veiculo", question: "Qual é o tipo do seu veículo?", input: "options", options: TIPOS_VEICULO },
-  { key: "carroceria", question: "E o tipo de carroceria?", input: "options", options: CARROCERIAS },
-  { key: "peso", question: "Qual o peso suportado (kg)?", input: "weight" },
-  { key: "info_extra", question: "Alguma informação extra? Se não tiver, toque em “Pular”.", input: "optional" },
-];
-
-export const CARGA_QUESTIONS: LeadQuestion[] = [
-  { key: "nome", question: "Olá! 👋 Vamos cadastrar sua carga. Qual é o seu nome ou da empresa?", input: "text", placeholder: "Nome" },
-  { key: "whatsapp", question: "Qual é o WhatsApp para contato, com DDD?", input: "phone" },
-  { key: "origem", question: "Qual a cidade e estado de ORIGEM da carga?", input: "city" },
-  { key: "destino", question: "E a cidade e estado de DESTINO?", input: "city" },
-  { key: "tipo_veiculo", question: "Qual tipo de veículo você precisa?", input: "options", options: TIPOS_VEICULO },
-  { key: "carroceria", question: "Qual tipo de carroceria? Você pode escolher mais de uma.", input: "options", options: CARROCERIAS, multi: true },
+  { key: "tipo_veiculo", question: "Qual é o tipo do seu veículo? Escolha de 1 até 5.", input: "options", options: TIPOS_VEICULO, multi: true },
+  { key: "carroceria", question: "E o tipo de carroceria? Escolha de 1 até 5.", input: "options", options: CARROCERIAS, multi: true },
+...
+  { key: "tipo_veiculo", question: "Qual tipo de veículo você precisa? Escolha de 1 até 5.", input: "options", options: TIPOS_VEICULO, multi: true },
+  { key: "carroceria", question: "Qual tipo de carroceria? Escolha de 1 até 5.", input: "options", options: CARROCERIAS, multi: true },
   { key: "peso", question: "Qual o peso da carga (kg)?", input: "weight" },
   { key: "valor", question: "Qual o valor do frete?", input: "money" },
   { key: "material", question: "Qual o material desta carga?", input: "text", placeholder: "Ex.: grãos, madeira, máquinas" },
@@ -336,8 +328,11 @@ function MultiOptionPicker({ groups, onPick }: { groups: { grupo: string; opcoes
     .map((g) => ({ ...g, opcoes: g.opcoes.filter((o) => !t || norm(o).includes(t)) }))
     .filter((g) => g.opcoes.length);
 
+  const MAX = 5;
   const toggle = (o: string) =>
-    setSelected((prev) => (prev.includes(o) ? prev.filter((x) => x !== o) : [...prev, o]));
+    setSelected((prev) =>
+      prev.includes(o) ? prev.filter((x) => x !== o) : prev.length >= MAX ? prev : [...prev, o],
+    );
 
   return (
     <div className="space-y-2">

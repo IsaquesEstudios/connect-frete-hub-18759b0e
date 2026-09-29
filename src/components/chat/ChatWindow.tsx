@@ -449,7 +449,8 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
 
           </button>
         </SheetTrigger>
-        <SheetContent>
+        <SheetContent className="flex h-[100dvh] flex-col">
+          <div className="shrink-0">
           <SheetHeader>
             <SheetTitle>Perfil</SheetTitle>
             <SheetDescription>Dados de {other.name}</SheetDescription>
@@ -482,7 +483,8 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
           <Badge variant="default" className="mt-3 w-fit">
             {perfilLabel(other)}
           </Badge>
-          <div className="mt-6 space-y-3 text-sm max-h-[65vh] overflow-y-auto pr-1">
+          </div>
+          <div className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 text-sm">
             <ProfileField label="Tipo" value={other.type} />
             <ProfileField
               label="Email"
@@ -535,7 +537,7 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
             )}
           </div>
           {viewer === "admin" && other.type !== "admin" && (
-            <div className="mt-4">
+            <div className="shrink-0 border-t pt-3">
               <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
                 <Pencil className="h-4 w-4 mr-1" /> Editar dados
               </Button>
