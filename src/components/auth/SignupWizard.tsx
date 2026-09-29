@@ -300,7 +300,7 @@ export function SignupWizard({
       {isEmpresa && step === 1 && <StepBasicEmpresa data={data} update={update} />}
       {isEmpresa && step === 2 && <StepDetalhesEmpresa data={data} update={update} />}
       {isEmpresa && step === 3 && <StepLocalByEstado data={data} update={update} />}
-      {isEmpresa && step === 4 && <StepRedesSociais data={data} update={update} />}
+
 
       {!isEmpresa && step === 1 && <StepBasic data={data} update={update} />}
       {!isEmpresa && step === 2 && <StepLocalByEstado data={data} update={update} />}
@@ -308,7 +308,7 @@ export function SignupWizard({
       {!isEmpresa && step === 4 && <StepTipoVeiculo data={data} update={update} />}
       {!isEmpresa && step === 5 && <StepRntrc data={data} update={update} />}
       {!isEmpresa && step === 6 && <StepCarroceria data={data} update={update} />}
-      {!isEmpresa && step === 7 && <StepRedesSociais data={data} update={update} />}
+
 
       <div className="flex items-center gap-2 pt-2">
         <Button
@@ -851,55 +851,8 @@ function StepCarroceria({ data, update }: StepProps) {
   );
 }
 
-function StepRedesSociais({ data, update }: StepProps) {
-  return (
-    <div className="space-y-3">
-      <h2 className="text-sm uppercase tracking-wider text-slate-400">Redes sociais (opcional)</h2>
-      <Field label="Instagram">
-        <Input
-          value={data.instagram}
-          onChange={(e) => update("instagram", e.target.value)}
-          placeholder="@perfil ou link"
-          className={fieldInput}
-        />
-      </Field>
-      <Field label="Facebook">
-        <Input
-          value={data.facebook}
-          onChange={(e) => update("facebook", e.target.value)}
-          placeholder="facebook.com/perfil"
-          className={fieldInput}
-        />
-      </Field>
-      <Field label="Youtube">
-        <Input
-          value={data.youtube}
-          onChange={(e) => update("youtube", e.target.value)}
-          placeholder="youtube.com/@canal"
-          className={fieldInput}
-        />
-      </Field>
-      <Field label="Tiktok">
-        <Input
-          value={data.tiktok}
-          onChange={(e) => update("tiktok", e.target.value)}
-          placeholder="@perfil"
-          className={fieldInput}
-        />
-      </Field>
-      <Field label="Outros">
-        <Input
-          value={data.redeOutros}
-          onChange={(e) => update("redeOutros", e.target.value)}
-          placeholder="Site ou outra rede"
-          className={fieldInput}
-        />
-      </Field>
-    </div>
-  );
-}
-
 // ---------- EMPRESA STEPS ----------
+
 
 function StepBasicEmpresa({ data, update }: StepProps) {
   return (
