@@ -62,12 +62,6 @@ interface WizardData {
   carroceria: string;
   carroceriaObs: string;
   peso: string; // dígitos apenas
-  // Redes sociais
-  instagram: string;
-  facebook: string;
-  youtube: string;
-  tiktok: string;
-  redeOutros: string;
 }
 
 const initial: WizardData = {
@@ -90,11 +84,6 @@ const initial: WizardData = {
   carroceria: "",
   carroceriaObs: "",
   peso: "",
-  instagram: "",
-  facebook: "",
-  youtube: "",
-  tiktok: "",
-  redeOutros: "",
 };
 
 export function SignupWizard({
@@ -115,7 +104,7 @@ export function SignupWizard({
 
 
   const isEmpresa = data.kind === "empresa";
-  const totalSteps = isEmpresa ? 4 : 7;
+  const totalSteps = isEmpresa ? 3 : 6;
 
   const update = <K extends keyof WizardData>(k: K, v: WizardData[K]) =>
     setData((d) => ({ ...d, [k]: v }));
@@ -212,14 +201,6 @@ export function SignupWizard({
   const submit = async () => {
     setLoading(true);
     try {
-      const redes: Record<string, string> = {};
-      if (data.instagram.trim()) redes.instagram = data.instagram.trim();
-      if (data.facebook.trim()) redes.facebook = data.facebook.trim();
-      if (data.youtube.trim()) redes.youtube = data.youtube.trim();
-      if (data.tiktok.trim()) redes.tiktok = data.tiktok.trim();
-      if (data.redeOutros.trim()) redes.outros = data.redeOutros.trim();
-      const redesStr = Object.keys(redes).length ? JSON.stringify(redes) : undefined;
-
       const pesoDigits = data.peso.replace(/\D/g, "");
       const pesoFinal = pesoDigits ? `${Number(pesoDigits).toLocaleString("pt-BR")} kg` : undefined;
       const carroceriaParts = !isEmpresa && data.carroceria
@@ -252,7 +233,6 @@ export function SignupWizard({
         peso: pesoFinal,
         nomeFantasia: isEmpresa && data.documentoTipo === "cnpj" ? data.nomeFantasia.trim() : undefined,
         perfilEmpresa: isEmpresa ? (data.perfilEmpresa || undefined) : "motorista",
-        siteRedeSocial: redesStr,
       });
       toast.success(`Cadastro criado: ${u.number}`);
       setCreatedUser(u);
@@ -320,7 +300,7 @@ export function SignupWizard({
       {isEmpresa && step === 1 && <StepBasicEmpresa data={data} update={update} />}
       {isEmpresa && step === 2 && <StepDetalhesEmpresa data={data} update={update} />}
       {isEmpresa && step === 3 && <StepLocalByEstado data={data} update={update} />}
-      {isEmpresa && step === 4 && <StepRedesSociais data={data} update={update} />}
+
 
       {!isEmpresa && step === 1 && <StepBasic data={data} update={update} />}
       {!isEmpresa && step === 2 && <StepLocalByEstado data={data} update={update} />}
@@ -328,7 +308,7 @@ export function SignupWizard({
       {!isEmpresa && step === 4 && <StepTipoVeiculo data={data} update={update} />}
       {!isEmpresa && step === 5 && <StepRntrc data={data} update={update} />}
       {!isEmpresa && step === 6 && <StepCarroceria data={data} update={update} />}
-      {!isEmpresa && step === 7 && <StepRedesSociais data={data} update={update} />}
+
 
       <div className="flex items-center gap-2 pt-2">
         <Button
@@ -871,55 +851,8 @@ function StepCarroceria({ data, update }: StepProps) {
   );
 }
 
-function StepRedesSociais({ data, update }: StepProps) {
-  return (
-    <div className="space-y-3">
-      <h2 className="text-sm uppercase tracking-wider text-slate-400">Redes sociais (opcional)</h2>
-      <Field label="Instagram">
-        <Input
-          value={data.instagram}
-          onChange={(e) => update("instagram", e.target.value)}
-          placeholder="@perfil ou link"
-          className={fieldInput}
-        />
-      </Field>
-      <Field label="Facebook">
-        <Input
-          value={data.facebook}
-          onChange={(e) => update("facebook", e.target.value)}
-          placeholder="facebook.com/perfil"
-          className={fieldInput}
-        />
-      </Field>
-      <Field label="Youtube">
-        <Input
-          value={data.youtube}
-          onChange={(e) => update("youtube", e.target.value)}
-          placeholder="youtube.com/@canal"
-          className={fieldInput}
-        />
-      </Field>
-      <Field label="Tiktok">
-        <Input
-          value={data.tiktok}
-          onChange={(e) => update("tiktok", e.target.value)}
-          placeholder="@perfil"
-          className={fieldInput}
-        />
-      </Field>
-      <Field label="Outros">
-        <Input
-          value={data.redeOutros}
-          onChange={(e) => update("redeOutros", e.target.value)}
-          placeholder="Site ou outra rede"
-          className={fieldInput}
-        />
-      </Field>
-    </div>
-  );
-}
-
 // ---------- EMPRESA STEPS ----------
+
 
 function StepBasicEmpresa({ data, update }: StepProps) {
   return (
