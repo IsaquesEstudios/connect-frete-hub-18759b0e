@@ -27,6 +27,7 @@ export const Route = createFileRoute("/_app/leads")({
 });
 
 type KindFilter = "todos" | "motorista" | "carga";
+type SortKey = "kind" | "nome" | "whatsapp" | "origem" | "veiculo" | "detalhes" | "created_at";
 
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString("pt-BR", {
@@ -63,13 +64,44 @@ function LeadsPage() {
     void load();
   }, [load]);
 
+  const [sortKey, setSortKey] = useState<SortKey>("created_at");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const toggleSort = (k: SortKey) => {
+    if (k === sortKey) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortKey(k);
+      setSortDir(k === "created_at" ? "desc" : "asc");
+    }
+  };
+
   const filtered = useMemo(() => {
-    return leads.filter((l) => {
+    const list = leads.filter((l) => {
       if (kind !== "todos" && l.kind !== kind) return false;
       if (!search.trim()) return true;
       return matchesSearch(search, [l.nome, l.whatsapp, l.origem, l.tipo_veiculo, l.carroceria, l.material]);
     });
-  }, [leads, kind, search]);
+    const val = (l: ChatLead): string => {
+      if (sortKey === "veiculo") return [l.tipo_veiculo, l.carroceria].filter(Boolean).join(" ");
+      if (sortKey === "detalhes") return [l.peso, l.valor, l.material, l.forma_pagamento, l.info_extra].filter(Boolean).join(" ");
+      return (l[sortKey] ?? "") as string;
+    };
+    const mult = sortDir === "asc" ? 1 : -1;
+    return [...list].sort((a, b) => {
+      const va = val(a), vb = val(b);
+      if (!va && vb) return 1;
+      if (va && !vb) return -1;
+      return va.localeCompare(vb, "pt-BR", { numeric: true, sensitivity: "base" }) * mult;
+    });
+  }, [leads, kind, search, sortKey, sortDir]);
+
+  const SortTh = ({ k, label }: { k: SortKey; label: string }) => (
+    <th className="px-4 py-3">
+      <button onClick={() => toggleSort(k)} className="inline-flex items-center gap-1 uppercase hover:text-black">
+        {label}
+        <span className="text-[10px]">{sortKey === k ? (sortDir === "asc" ? "▲" : "▼") : "↕"}</span>
+      </button>
+    </th>
+  );
 
   const exportXlsx = () => {
     const rows = filtered.map((l) => [
@@ -178,13 +210,13 @@ function LeadsPage() {
         <table className="w-full min-w-[900px] text-sm">
           <thead className="sticky top-0 bg-slate-100 text-left text-xs uppercase tracking-wider text-slate-600">
             <tr>
-              <th className="px-4 py-3">Tipo</th>
-              <th className="px-4 py-3">Nome</th>
-              <th className="px-4 py-3">WhatsApp</th>
-              <th className="px-4 py-3">Origem</th>
-              <th className="px-4 py-3">Veículo / Carroceria</th>
-              <th className="px-4 py-3">Detalhes</th>
-              <th className="px-4 py-3">Data</th>
+              <SortTh k="kind" label="Tipo" />
+              <SortTh k="nome" label="Nome" />
+              <SortTh k="whatsapp" label="WhatsApp" />
+              <SortTh k="origem" label="Origem" />
+              <SortTh k="veiculo" label="Veículo / Carroceria" />
+              <SortTh k="detalhes" label="Detalhes" />
+              <SortTh k="created_at" label="Preenchido em" />
               <th className="whitespace-nowrap px-4 py-3 text-right">Ações</th>
             </tr>
           </thead>
