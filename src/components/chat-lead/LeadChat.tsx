@@ -25,7 +25,15 @@ export const MOTORISTA_QUESTIONS: LeadQuestion[] = [
   { key: "origem", question: "Em qual cidade e estado você está (origem)?", input: "city" },
   { key: "tipo_veiculo", question: "Qual é o tipo do seu veículo? Escolha de 1 até 5.", input: "options", options: TIPOS_VEICULO, multi: true },
   { key: "carroceria", question: "E o tipo de carroceria? Escolha de 1 até 5.", input: "options", options: CARROCERIAS, multi: true },
-...
+  { key: "peso", question: "Qual o peso suportado (kg)?", input: "weight" },
+  { key: "info_extra", question: "Alguma informação extra? Se não tiver, toque em “Pular”.", input: "optional" },
+];
+
+export const CARGA_QUESTIONS: LeadQuestion[] = [
+  { key: "nome", question: "Olá! 👋 Vamos cadastrar sua carga. Qual é o seu nome ou da empresa?", input: "text", placeholder: "Nome" },
+  { key: "whatsapp", question: "Qual é o WhatsApp para contato, com DDD?", input: "phone" },
+  { key: "origem", question: "Qual a cidade e estado de ORIGEM da carga?", input: "city" },
+  { key: "destino", question: "E a cidade e estado de DESTINO?", input: "city" },
   { key: "tipo_veiculo", question: "Qual tipo de veículo você precisa? Escolha de 1 até 5.", input: "options", options: TIPOS_VEICULO, multi: true },
   { key: "carroceria", question: "Qual tipo de carroceria? Escolha de 1 até 5.", input: "options", options: CARROCERIAS, multi: true },
   { key: "peso", question: "Qual o peso da carga (kg)?", input: "weight" },
