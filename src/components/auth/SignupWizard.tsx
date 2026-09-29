@@ -62,12 +62,6 @@ interface WizardData {
   carroceria: string;
   carroceriaObs: string;
   peso: string; // dígitos apenas
-  // Redes sociais
-  instagram: string;
-  facebook: string;
-  youtube: string;
-  tiktok: string;
-  redeOutros: string;
 }
 
 const initial: WizardData = {
@@ -90,11 +84,6 @@ const initial: WizardData = {
   carroceria: "",
   carroceriaObs: "",
   peso: "",
-  instagram: "",
-  facebook: "",
-  youtube: "",
-  tiktok: "",
-  redeOutros: "",
 };
 
 export function SignupWizard({
@@ -115,7 +104,7 @@ export function SignupWizard({
 
 
   const isEmpresa = data.kind === "empresa";
-  const totalSteps = isEmpresa ? 4 : 7;
+  const totalSteps = isEmpresa ? 3 : 6;
 
   const update = <K extends keyof WizardData>(k: K, v: WizardData[K]) =>
     setData((d) => ({ ...d, [k]: v }));
@@ -212,14 +201,6 @@ export function SignupWizard({
   const submit = async () => {
     setLoading(true);
     try {
-      const redes: Record<string, string> = {};
-      if (data.instagram.trim()) redes.instagram = data.instagram.trim();
-      if (data.facebook.trim()) redes.facebook = data.facebook.trim();
-      if (data.youtube.trim()) redes.youtube = data.youtube.trim();
-      if (data.tiktok.trim()) redes.tiktok = data.tiktok.trim();
-      if (data.redeOutros.trim()) redes.outros = data.redeOutros.trim();
-      const redesStr = Object.keys(redes).length ? JSON.stringify(redes) : undefined;
-
       const pesoDigits = data.peso.replace(/\D/g, "");
       const pesoFinal = pesoDigits ? `${Number(pesoDigits).toLocaleString("pt-BR")} kg` : undefined;
       const carroceriaParts = !isEmpresa && data.carroceria
@@ -252,7 +233,6 @@ export function SignupWizard({
         peso: pesoFinal,
         nomeFantasia: isEmpresa && data.documentoTipo === "cnpj" ? data.nomeFantasia.trim() : undefined,
         perfilEmpresa: isEmpresa ? (data.perfilEmpresa || undefined) : "motorista",
-        siteRedeSocial: redesStr,
       });
       toast.success(`Cadastro criado: ${u.number}`);
       setCreatedUser(u);
