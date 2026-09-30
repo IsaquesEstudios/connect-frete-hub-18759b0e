@@ -66,7 +66,7 @@ export const saveQuickReplies = createServerFn({ method: "POST" })
             z.object({
               id: z.string().min(1),
               title: z.string().trim().min(1, "Informe um título").max(80),
-              body: z.string().trim().min(1, "Informe a mensagem").max(4000),
+              body: z.string().trim().min(1, "Informe a mensagem").max(20000, "A mensagem pode ter no máximo 20.000 caracteres"),
             }),
           )
           .max(100),
