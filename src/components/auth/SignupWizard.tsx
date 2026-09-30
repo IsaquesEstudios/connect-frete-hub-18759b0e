@@ -57,10 +57,7 @@ interface WizardData {
   // Motorista
   placa: string;
   tipoVeiculo: string;
-  tipoVeiculoObs: string;
-  rntrc: string;
   carroceria: string;
-  carroceriaObs: string;
   peso: string; // dígitos apenas
 }
 
@@ -79,10 +76,7 @@ const initial: WizardData = {
   estado: "",
   placa: "",
   tipoVeiculo: "",
-  tipoVeiculoObs: "",
-  rntrc: "",
   carroceria: "",
-  carroceriaObs: "",
   peso: "",
 };
 
@@ -104,7 +98,7 @@ export function SignupWizard({
 
 
   const isEmpresa = data.kind === "empresa";
-  const totalSteps = isEmpresa ? 3 : 6;
+  const totalSteps = isEmpresa ? 3 : 5;
 
   const update = <K extends keyof WizardData>(k: K, v: WizardData[K]) =>
     setData((d) => ({ ...d, [k]: v }));
@@ -162,8 +156,7 @@ export function SignupWizard({
     }
     if (step === 3) return data.placa.trim().length >= 5 ? null : "Informe a placa do veículo (mín. 5 caracteres).";
     if (step === 4) return data.tipoVeiculo ? null : "Selecione o tipo de veículo.";
-    if (step === 5) return null;
-    if (step === 6) {
+    if (step === 5) {
       if (!data.carroceria) return "Selecione o tipo de carroceria.";
       if (data.peso.replace(/\D/g, "").length === 0) return "Informe o peso (kg).";
       return null;
@@ -203,15 +196,8 @@ export function SignupWizard({
     try {
       const pesoDigits = data.peso.replace(/\D/g, "");
       const pesoFinal = pesoDigits ? `${Number(pesoDigits).toLocaleString("pt-BR")} kg` : undefined;
-      const carroceriaParts = !isEmpresa && data.carroceria
-        ? [data.carroceria, data.carroceriaObs.trim() ? `Obs: ${data.carroceriaObs.trim()}` : ""].filter(Boolean)
-        : [];
-      const carroceriaFinal = carroceriaParts.length ? carroceriaParts.join(" | ") : undefined;
-      const tipoVeiculoFinal = !isEmpresa && data.tipoVeiculo
-        ? data.tipoVeiculoObs.trim()
-          ? `${data.tipoVeiculo} | Obs: ${data.tipoVeiculoObs.trim()}`
-          : data.tipoVeiculo
-        : undefined;
+      const carroceriaFinal = !isEmpresa && data.carroceria ? data.carroceria : undefined;
+      const tipoVeiculoFinal = !isEmpresa && data.tipoVeiculo ? data.tipoVeiculo : undefined;
 
       const u = await signup({
         email: data.email,
@@ -228,7 +214,6 @@ export function SignupWizard({
         estado: data.estado || undefined,
         placa: !isEmpresa ? data.placa : undefined,
         tipoVeiculo: tipoVeiculoFinal,
-        rntrc: !isEmpresa && data.rntrc.trim() ? data.rntrc.trim() : undefined,
         carroceria: carroceriaFinal,
         peso: pesoFinal,
         nomeFantasia: isEmpresa && data.documentoTipo === "cnpj" ? data.nomeFantasia.trim() : undefined,
@@ -306,8 +291,7 @@ export function SignupWizard({
       {!isEmpresa && step === 2 && <StepLocalByEstado data={data} update={update} />}
       {!isEmpresa && step === 3 && <StepPlaca data={data} update={update} />}
       {!isEmpresa && step === 4 && <StepTipoVeiculo data={data} update={update} />}
-      {!isEmpresa && step === 5 && <StepRntrc data={data} update={update} />}
-      {!isEmpresa && step === 6 && <StepCarroceria data={data} update={update} />}
+      {!isEmpresa && step === 5 && <StepCarroceria data={data} update={update} />}
 
 
       <div className="flex items-center gap-2 pt-2">
@@ -784,36 +768,13 @@ function GroupedSelect({
 
 function StepTipoVeiculo({ data, update }: StepProps) {
   return (
-    <div className="space-y-3">
-      <GroupedSelect
-        label="Tipo de veículo"
-        value={data.tipoVeiculo}
-        onChange={(v) => update("tipoVeiculo", v)}
-        groups={TIPOS_VEICULO}
-        placeholder="Selecione o tipo de veículo"
-      />
-      <Field label="Observações adicionais (opcional)">
-        <Input
-          value={data.tipoVeiculoObs}
-          onChange={(e) => update("tipoVeiculoObs", e.target.value)}
-          placeholder="Ex.: 2020, ar-condicionado, rastreador..."
-          className={fieldInput}
-        />
-      </Field>
-    </div>
-  );
-}
-
-function StepRntrc({ data, update }: StepProps) {
-  return (
-    <Field label="RNTRC do veículo (opcional)">
-      <Input
-        value={data.rntrc}
-        onChange={(e) => update("rntrc", e.target.value)}
-        placeholder="Digite o RNTRC (se tiver)"
-        className={fieldInput}
-      />
-    </Field>
+    <GroupedSelect
+      label="Tipo de veículo"
+      value={data.tipoVeiculo}
+      onChange={(v) => update("tipoVeiculo", v)}
+      groups={TIPOS_VEICULO}
+      placeholder="Selecione o tipo de veículo"
+    />
   );
 }
 
@@ -836,14 +797,6 @@ function StepCarroceria({ data, update }: StepProps) {
           }}
           placeholder="Ex.: 15.000 kg"
           inputMode="numeric"
-          className={fieldInput}
-        />
-      </Field>
-      <Field label="Observações adicionais (opcional)">
-        <Input
-          value={data.carroceriaObs}
-          onChange={(e) => update("carroceriaObs", e.target.value)}
-          placeholder="Ex.: portas laterais, lonas..."
           className={fieldInput}
         />
       </Field>
