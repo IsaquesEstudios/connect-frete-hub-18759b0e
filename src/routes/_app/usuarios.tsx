@@ -5,6 +5,8 @@ import {
   ArrowDown,
   ArrowUp,
   ChevronsUpDown,
+  Copy,
+  MessageCircle,
   FileSpreadsheet,
   FileType,
   Lock,
@@ -156,6 +158,35 @@ function UsuariosPage() {
     }
   };
 
+  const copyUser = async (u: User) => {
+    const doc = (u as { cnpj?: string }).cnpj || (u as { cpf?: string }).cpf || "";
+    const cidade = [u.cidade, u.estado].filter(Boolean).join(" / ");
+    const parts = [
+      `Tipo: ${typeLabel(resolveDisplayType(u))}`,
+      `Nome: ${u.name}`,
+      `Código: ${u.number}`,
+      u.whatsapp && `WhatsApp: ${formatPhone(u.whatsapp)}`,
+      (u.email || emails[u.id]) && `Email: ${u.email || emails[u.id]}`,
+      doc && `CPF/CNPJ: ${doc}`,
+      cidade && `Cidade/UF: ${cidade}`,
+      u.createdAt && `Cadastro: ${formatDateTime(u.createdAt)}`,
+      repo.isOnline(u.id)
+        ? "Status: online agora"
+        : `Status: ${u.active === false ? "bloqueado" : formatDateTime(repo.getLastSeen(u.id))}`,
+      `Etiquetas: ${tagsFor(u).map((t) => t.label).join(", ") || "—"}`,
+    ].filter(Boolean);
+    try {
+      await navigator.clipboard.writeText(parts.join("\n"));
+      toast.success("Usuário copiado.");
+    } catch {
+      toast.error("Não foi possível copiar.");
+    }
+  };
+
+  const waLink = (phone: string) => {
+    const digits = (phone || "").replace(/\D/g, "");
+    return digits.length >= 10 ? `https://wa.me/55${digits}` : `https://wa.me/${digits}`;
+  };
 
 
   useEffect(() => {
@@ -640,6 +671,26 @@ function UsuariosPage() {
                         className="sticky right-0 z-10 bg-card px-2 py-3 text-right whitespace-nowrap shadow-[-12px_0_16px_-16px_hsl(var(--foreground))]"
                       >
                         <div className="flex items-center justify-end gap-1">
+                          {u.whatsapp && (
+                            <a
+                              href={waLink(u.whatsapp)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-emerald-500 px-3 text-xs font-medium text-white hover:bg-emerald-600"
+                              aria-label="Falar no WhatsApp"
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                              <span className="hidden sm:inline">WhatsApp</span>
+                            </a>
+                          )}
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            title="Copiar informações"
+                            onClick={() => void copyUser(u)}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
                           <Button
                             size="icon"
                             variant="ghost"
