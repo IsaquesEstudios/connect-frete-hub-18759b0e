@@ -730,7 +730,7 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
             </Button>
             <div className="relative flex-1">
               {slashOpen && slashMatches.length > 0 && (
-                <div className="absolute bottom-full left-0 z-50 mb-2 w-full max-h-64 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                <div className="fixed inset-x-3 bottom-24 z-50 max-h-[50vh] overflow-y-auto rounded-xl border bg-popover p-1.5 shadow-lg sm:absolute sm:inset-x-auto sm:bottom-full sm:left-0 sm:mb-2 sm:w-full sm:max-h-64 sm:rounded-md sm:p-1 sm:shadow-md">
                   <div className="px-2 py-1 text-[11px] uppercase tracking-wide text-muted-foreground">
                     Mensagens rápidas
                   </div>
@@ -743,12 +743,12 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
                         applyQuickReply(qr);
                       }}
                       onMouseEnter={() => setSlashIndex(i)}
-                      className={`block w-full rounded-sm px-2 py-1.5 text-left ${
+                      className={`block w-full rounded-lg px-3 py-3 text-left sm:rounded-sm sm:px-2 sm:py-1.5 ${
                         i === slashIndex ? "bg-accent" : ""
                       }`}
                     >
                       <div className="truncate text-sm font-medium">{qr.title}</div>
-                      <div className="truncate text-xs text-muted-foreground">{qr.body}</div>
+                      <div className="text-xs text-muted-foreground line-clamp-2 sm:truncate">{qr.body}</div>
                     </button>
                   ))}
                 </div>
