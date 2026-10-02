@@ -5,6 +5,8 @@ import {
   ArrowDown,
   ArrowUp,
   ChevronsUpDown,
+  Copy,
+  MessageCircle,
   FileSpreadsheet,
   FileType,
   Lock,
@@ -156,6 +158,35 @@ function UsuariosPage() {
     }
   };
 
+  const copyUser = async (u: User) => {
+    const doc = (u as { cnpj?: string }).cnpj || (u as { cpf?: string }).cpf || "";
+    const cidade = [u.cidade, u.estado].filter(Boolean).join(" / ");
+    const parts = [
+      `Tipo: ${typeLabel(resolveDisplayType(u))}`,
+      `Nome: ${u.name}`,
+      `Código: ${u.number}`,
+      u.whatsapp && `WhatsApp: ${formatPhone(u.whatsapp)}`,
+      (u.email || emails[u.id]) && `Email: ${u.email || emails[u.id]}`,
+      doc && `CPF/CNPJ: ${doc}`,
+      cidade && `Cidade/UF: ${cidade}`,
+      u.createdAt && `Cadastro: ${formatDateTime(u.createdAt)}`,
+      repo.isOnline(u.id)
+        ? "Status: online agora"
+        : `Status: ${u.active === false ? "bloqueado" : formatDateTime(repo.getLastSeen(u.id))}`,
+      `Etiquetas: ${tagsFor(u).map((t) => t.label).join(", ") || "—"}`,
+    ].filter(Boolean);
+    try {
+      await navigator.clipboard.writeText(parts.join("\n"));
+      toast.success("Usuário copiado.");
+    } catch {
+      toast.error("Não foi possível copiar.");
+    }
+  };
+
+  const waLink = (phone: string) => {
+    const digits = (phone || "").replace(/\D/g, "");
+    return digits.length >= 10 ? `https://wa.me/55${digits}` : `https://wa.me/${digits}`;
+  };
 
 
   useEffect(() => {
