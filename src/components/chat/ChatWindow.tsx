@@ -743,12 +743,12 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
                         applyQuickReply(qr);
                       }}
                       onMouseEnter={() => setSlashIndex(i)}
-                      className={`block w-full rounded-sm px-2 py-1.5 text-left ${
+                      className={`block w-full rounded-lg px-3 py-3 text-left sm:rounded-sm sm:px-2 sm:py-1.5 ${
                         i === slashIndex ? "bg-accent" : ""
                       }`}
                     >
                       <div className="truncate text-sm font-medium">{qr.title}</div>
-                      <div className="truncate text-xs text-muted-foreground">{qr.body}</div>
+                      <div className="text-xs text-muted-foreground line-clamp-2 sm:truncate">{qr.body}</div>
                     </button>
                   ))}
                 </div>
