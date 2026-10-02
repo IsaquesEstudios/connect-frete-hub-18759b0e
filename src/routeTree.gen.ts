@@ -9,48 +9,35 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppRouteRouteImport } from './routes/_app/route'
-import { Route as DisponRouteImport } from './routes/_dispon'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as DisponibilidadeRouteImport } from './routes/disponibilidade'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as AppAdminRouteImport } from './routes/_app/admin'
-import { Route as AppColaboradorRouteImport } from './routes/_app/colaborador'
-import { Route as AppConfiguracoesRouteImport } from './routes/_app/configuracoes'
-import { Route as AppEmpresaRouteImport } from './routes/_app/empresa'
-import { Route as AppLeadsRouteImport } from './routes/_app/leads'
-import { Route as AppMensagensRapidasRouteImport } from './routes/_app/mensagens-rapidas'
-import { Route as AppMetricasRouteImport } from './routes/_app/metricas'
-import { Route as AppMotoristaRouteImport } from './routes/_app/motorista'
-import { Route as AppPerfilRouteImport } from './routes/_app/perfil'
-import { Route as AppUsuariosRouteImport } from './routes/_app/usuarios'
-import { Route as CadastrarCaminhoneiroRouteImport } from './routes/cadastrar.caminhoneiro'
-import { Route as CadastrarEmpresaRouteImport } from './routes/cadastrar.empresa'
-import { Route as ChatCargaRouteImport } from './routes/chat.carga'
-import { Route as ChatMotoristaRouteImport } from './routes/chat.motorista'
+import { Route as DisponibilidadeRouteImport } from './routes/disponibilidade'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DisponRouteImport } from './routes/_dispon'
+import { Route as AppRouteRouteImport } from './routes/_app/route'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as DisponibilidadeIndexRouteImport } from './routes/disponibilidade.index'
-import { Route as DisponibilidadeEmpresasRouteImport } from './routes/disponibilidade.empresas'
 import { Route as DisponibilidadeMotoristasRouteImport } from './routes/disponibilidade.motoristas'
-import { Route as DisponFretesDisponivelRouteImport } from './routes/_dispon.fretes.disponivel'
+import { Route as DisponibilidadeEmpresasRouteImport } from './routes/disponibilidade.empresas'
+import { Route as ChatMotoristaRouteImport } from './routes/chat.motorista'
+import { Route as ChatCargaRouteImport } from './routes/chat.carga'
+import { Route as CadastrarEmpresaRouteImport } from './routes/cadastrar.empresa'
+import { Route as CadastrarCaminhoneiroRouteImport } from './routes/cadastrar.caminhoneiro'
+import { Route as AppUsuariosRouteImport } from './routes/_app/usuarios'
+import { Route as AppPerfilRouteImport } from './routes/_app/perfil'
+import { Route as AppMotoristaRouteImport } from './routes/_app/motorista'
+import { Route as AppMetricasRouteImport } from './routes/_app/metricas'
+import { Route as AppMensagensRapidasRouteImport } from './routes/_app/mensagens-rapidas'
+import { Route as AppLeadsRouteImport } from './routes/_app/leads'
+import { Route as AppEmpresaRouteImport } from './routes/_app/empresa'
+import { Route as AppConfiguracoesRouteImport } from './routes/_app/configuracoes'
+import { Route as AppColaboradorRouteImport } from './routes/_app/colaborador'
+import { Route as AppAdminRouteImport } from './routes/_app/admin'
 import { Route as DisponMotoristaDisponivelRouteImport } from './routes/_dispon.motorista.disponivel'
+import { Route as DisponFretesDisponivelRouteImport } from './routes/_dispon.fretes.disponivel'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppRouteRoute = AppRouteRouteImport.update({
-  id: '/_app',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DisponRoute = DisponRouteImport.update({
-  id: '/_dispon',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DisponibilidadeRoute = DisponibilidadeRouteImport.update({
@@ -58,89 +45,27 @@ const DisponibilidadeRoute = DisponibilidadeRouteImport.update({
   path: '/disponibilidade',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppAdminRoute = AppAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => AppRouteRoute,
-} as any)
-const AppColaboradorRoute = AppColaboradorRouteImport.update({
-  id: '/colaborador',
-  path: '/colaborador',
-  getParentRoute: () => AppRouteRoute,
-} as any)
-const AppConfiguracoesRoute = AppConfiguracoesRouteImport.update({
-  id: '/configuracoes',
-  path: '/configuracoes',
-  getParentRoute: () => AppRouteRoute,
-} as any)
-const AppEmpresaRoute = AppEmpresaRouteImport.update({
-  id: '/empresa',
-  path: '/empresa',
-  getParentRoute: () => AppRouteRoute,
-} as any)
-const AppLeadsRoute = AppLeadsRouteImport.update({
-  id: '/leads',
-  path: '/leads',
-  getParentRoute: () => AppRouteRoute,
-} as any)
-const AppMensagensRapidasRoute = AppMensagensRapidasRouteImport.update({
-  id: '/mensagens-rapidas',
-  path: '/mensagens-rapidas',
-  getParentRoute: () => AppRouteRoute,
-} as any)
-const AppMetricasRoute = AppMetricasRouteImport.update({
-  id: '/metricas',
-  path: '/metricas',
-  getParentRoute: () => AppRouteRoute,
-} as any)
-const AppMotoristaRoute = AppMotoristaRouteImport.update({
-  id: '/motorista',
-  path: '/motorista',
-  getParentRoute: () => AppRouteRoute,
-} as any)
-const AppPerfilRoute = AppPerfilRouteImport.update({
-  id: '/perfil',
-  path: '/perfil',
-  getParentRoute: () => AppRouteRoute,
-} as any)
-const AppUsuariosRoute = AppUsuariosRouteImport.update({
-  id: '/usuarios',
-  path: '/usuarios',
-  getParentRoute: () => AppRouteRoute,
-} as any)
-const CadastrarCaminhoneiroRoute = CadastrarCaminhoneiroRouteImport.update({
-  id: '/cadastrar/caminhoneiro',
-  path: '/cadastrar/caminhoneiro',
+const DisponRoute = DisponRouteImport.update({
+  id: '/_dispon',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CadastrarEmpresaRoute = CadastrarEmpresaRouteImport.update({
-  id: '/cadastrar/empresa',
-  path: '/cadastrar/empresa',
+const AppRouteRoute = AppRouteRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ChatCargaRoute = ChatCargaRouteImport.update({
-  id: '/chat/carga',
-  path: '/chat/carga',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChatMotoristaRoute = ChatMotoristaRouteImport.update({
-  id: '/chat/motorista',
-  path: '/chat/motorista',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DisponibilidadeIndexRoute = DisponibilidadeIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => DisponibilidadeRoute,
-} as any)
-const DisponibilidadeEmpresasRoute = DisponibilidadeEmpresasRouteImport.update({
-  id: '/empresas',
-  path: '/empresas',
   getParentRoute: () => DisponibilidadeRoute,
 } as any)
 const DisponibilidadeMotoristasRoute =
@@ -149,10 +74,80 @@ const DisponibilidadeMotoristasRoute =
     path: '/motoristas',
     getParentRoute: () => DisponibilidadeRoute,
   } as any)
-const DisponFretesDisponivelRoute = DisponFretesDisponivelRouteImport.update({
-  id: '/fretes/disponivel',
-  path: '/fretes/disponivel',
-  getParentRoute: () => DisponRoute,
+const DisponibilidadeEmpresasRoute = DisponibilidadeEmpresasRouteImport.update({
+  id: '/empresas',
+  path: '/empresas',
+  getParentRoute: () => DisponibilidadeRoute,
+} as any)
+const ChatMotoristaRoute = ChatMotoristaRouteImport.update({
+  id: '/chat/motorista',
+  path: '/chat/motorista',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatCargaRoute = ChatCargaRouteImport.update({
+  id: '/chat/carga',
+  path: '/chat/carga',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CadastrarEmpresaRoute = CadastrarEmpresaRouteImport.update({
+  id: '/cadastrar/empresa',
+  path: '/cadastrar/empresa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CadastrarCaminhoneiroRoute = CadastrarCaminhoneiroRouteImport.update({
+  id: '/cadastrar/caminhoneiro',
+  path: '/cadastrar/caminhoneiro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppUsuariosRoute = AppUsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppPerfilRoute = AppPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppMotoristaRoute = AppMotoristaRouteImport.update({
+  id: '/motorista',
+  path: '/motorista',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppMetricasRoute = AppMetricasRouteImport.update({
+  id: '/metricas',
+  path: '/metricas',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppMensagensRapidasRoute = AppMensagensRapidasRouteImport.update({
+  id: '/mensagens-rapidas',
+  path: '/mensagens-rapidas',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppLeadsRoute = AppLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppEmpresaRoute = AppEmpresaRouteImport.update({
+  id: '/empresa',
+  path: '/empresa',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppConfiguracoesRoute = AppConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppColaboradorRoute = AppColaboradorRouteImport.update({
+  id: '/colaborador',
+  path: '/colaborador',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AppRouteRoute,
 } as any)
 const DisponMotoristaDisponivelRoute =
   DisponMotoristaDisponivelRouteImport.update({
@@ -160,6 +155,11 @@ const DisponMotoristaDisponivelRoute =
     path: '/motorista/disponivel',
     getParentRoute: () => DisponRoute,
   } as any)
+const DisponFretesDisponivelRoute = DisponFretesDisponivelRouteImport.update({
+  id: '/fretes/disponivel',
+  path: '/fretes/disponivel',
+  getParentRoute: () => DisponRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -332,32 +332,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_app': {
-      id: '/_app'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AppRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_dispon': {
-      id: '/_dispon'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof DisponRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/disponibilidade': {
@@ -367,109 +346,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DisponibilidadeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/admin': {
-      id: '/_app/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AppAdminRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
-    '/_app/colaborador': {
-      id: '/_app/colaborador'
-      path: '/colaborador'
-      fullPath: '/colaborador'
-      preLoaderRoute: typeof AppColaboradorRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
-    '/_app/configuracoes': {
-      id: '/_app/configuracoes'
-      path: '/configuracoes'
-      fullPath: '/configuracoes'
-      preLoaderRoute: typeof AppConfiguracoesRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
-    '/_app/empresa': {
-      id: '/_app/empresa'
-      path: '/empresa'
-      fullPath: '/empresa'
-      preLoaderRoute: typeof AppEmpresaRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
-    '/_app/leads': {
-      id: '/_app/leads'
-      path: '/leads'
-      fullPath: '/leads'
-      preLoaderRoute: typeof AppLeadsRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
-    '/_app/mensagens-rapidas': {
-      id: '/_app/mensagens-rapidas'
-      path: '/mensagens-rapidas'
-      fullPath: '/mensagens-rapidas'
-      preLoaderRoute: typeof AppMensagensRapidasRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
-    '/_app/metricas': {
-      id: '/_app/metricas'
-      path: '/metricas'
-      fullPath: '/metricas'
-      preLoaderRoute: typeof AppMetricasRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
-    '/_app/motorista': {
-      id: '/_app/motorista'
-      path: '/motorista'
-      fullPath: '/motorista'
-      preLoaderRoute: typeof AppMotoristaRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
-    '/_app/perfil': {
-      id: '/_app/perfil'
-      path: '/perfil'
-      fullPath: '/perfil'
-      preLoaderRoute: typeof AppPerfilRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
-    '/_app/usuarios': {
-      id: '/_app/usuarios'
-      path: '/usuarios'
-      fullPath: '/usuarios'
-      preLoaderRoute: typeof AppUsuariosRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
-    '/cadastrar/caminhoneiro': {
-      id: '/cadastrar/caminhoneiro'
-      path: '/cadastrar/caminhoneiro'
-      fullPath: '/cadastrar/caminhoneiro'
-      preLoaderRoute: typeof CadastrarCaminhoneiroRouteImport
+    '/_dispon': {
+      id: '/_dispon'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof DisponRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/cadastrar/empresa': {
-      id: '/cadastrar/empresa'
-      path: '/cadastrar/empresa'
-      fullPath: '/cadastrar/empresa'
-      preLoaderRoute: typeof CadastrarEmpresaRouteImport
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/chat/carga': {
-      id: '/chat/carga'
-      path: '/chat/carga'
-      fullPath: '/chat/carga'
-      preLoaderRoute: typeof ChatCargaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/chat/motorista': {
-      id: '/chat/motorista'
-      path: '/chat/motorista'
-      fullPath: '/chat/motorista'
-      preLoaderRoute: typeof ChatMotoristaRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/disponibilidade/': {
@@ -479,13 +381,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DisponibilidadeIndexRouteImport
       parentRoute: typeof DisponibilidadeRoute
     }
-    '/disponibilidade/empresas': {
-      id: '/disponibilidade/empresas'
-      path: '/empresas'
-      fullPath: '/disponibilidade/empresas'
-      preLoaderRoute: typeof DisponibilidadeEmpresasRouteImport
-      parentRoute: typeof DisponibilidadeRoute
-    }
     '/disponibilidade/motoristas': {
       id: '/disponibilidade/motoristas'
       path: '/motoristas'
@@ -493,18 +388,123 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DisponibilidadeMotoristasRouteImport
       parentRoute: typeof DisponibilidadeRoute
     }
-    '/_dispon/fretes/disponivel': {
-      id: '/_dispon/fretes/disponivel'
-      path: '/fretes/disponivel'
-      fullPath: '/fretes/disponivel'
-      preLoaderRoute: typeof DisponFretesDisponivelRouteImport
-      parentRoute: typeof DisponRoute
+    '/disponibilidade/empresas': {
+      id: '/disponibilidade/empresas'
+      path: '/empresas'
+      fullPath: '/disponibilidade/empresas'
+      preLoaderRoute: typeof DisponibilidadeEmpresasRouteImport
+      parentRoute: typeof DisponibilidadeRoute
+    }
+    '/chat/motorista': {
+      id: '/chat/motorista'
+      path: '/chat/motorista'
+      fullPath: '/chat/motorista'
+      preLoaderRoute: typeof ChatMotoristaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat/carga': {
+      id: '/chat/carga'
+      path: '/chat/carga'
+      fullPath: '/chat/carga'
+      preLoaderRoute: typeof ChatCargaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cadastrar/empresa': {
+      id: '/cadastrar/empresa'
+      path: '/cadastrar/empresa'
+      fullPath: '/cadastrar/empresa'
+      preLoaderRoute: typeof CadastrarEmpresaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cadastrar/caminhoneiro': {
+      id: '/cadastrar/caminhoneiro'
+      path: '/cadastrar/caminhoneiro'
+      fullPath: '/cadastrar/caminhoneiro'
+      preLoaderRoute: typeof CadastrarCaminhoneiroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/usuarios': {
+      id: '/_app/usuarios'
+      path: '/usuarios'
+      fullPath: '/usuarios'
+      preLoaderRoute: typeof AppUsuariosRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/perfil': {
+      id: '/_app/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof AppPerfilRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/motorista': {
+      id: '/_app/motorista'
+      path: '/motorista'
+      fullPath: '/motorista'
+      preLoaderRoute: typeof AppMotoristaRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/metricas': {
+      id: '/_app/metricas'
+      path: '/metricas'
+      fullPath: '/metricas'
+      preLoaderRoute: typeof AppMetricasRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/mensagens-rapidas': {
+      id: '/_app/mensagens-rapidas'
+      path: '/mensagens-rapidas'
+      fullPath: '/mensagens-rapidas'
+      preLoaderRoute: typeof AppMensagensRapidasRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/leads': {
+      id: '/_app/leads'
+      path: '/leads'
+      fullPath: '/leads'
+      preLoaderRoute: typeof AppLeadsRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/empresa': {
+      id: '/_app/empresa'
+      path: '/empresa'
+      fullPath: '/empresa'
+      preLoaderRoute: typeof AppEmpresaRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/configuracoes': {
+      id: '/_app/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof AppConfiguracoesRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/colaborador': {
+      id: '/_app/colaborador'
+      path: '/colaborador'
+      fullPath: '/colaborador'
+      preLoaderRoute: typeof AppColaboradorRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/admin': {
+      id: '/_app/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRouteRoute
     }
     '/_dispon/motorista/disponivel': {
       id: '/_dispon/motorista/disponivel'
       path: '/motorista/disponivel'
       fullPath: '/motorista/disponivel'
       preLoaderRoute: typeof DisponMotoristaDisponivelRouteImport
+      parentRoute: typeof DisponRoute
+    }
+    '/_dispon/fretes/disponivel': {
+      id: '/_dispon/fretes/disponivel'
+      path: '/fretes/disponivel'
+      fullPath: '/fretes/disponivel'
+      preLoaderRoute: typeof DisponFretesDisponivelRouteImport
       parentRoute: typeof DisponRoute
     }
   }
