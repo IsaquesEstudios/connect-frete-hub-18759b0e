@@ -671,6 +671,26 @@ function UsuariosPage() {
                         className="sticky right-0 z-10 bg-card px-2 py-3 text-right whitespace-nowrap shadow-[-12px_0_16px_-16px_hsl(var(--foreground))]"
                       >
                         <div className="flex items-center justify-end gap-1">
+                          {u.whatsapp && (
+                            <a
+                              href={waLink(u.whatsapp)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-emerald-500 px-3 text-xs font-medium text-white hover:bg-emerald-600"
+                              aria-label="Falar no WhatsApp"
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                              <span className="hidden sm:inline">WhatsApp</span>
+                            </a>
+                          )}
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            title="Copiar informações"
+                            onClick={() => void copyUser(u)}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
                           <Button
                             size="icon"
                             variant="ghost"
