@@ -2,7 +2,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/loose-client";
 import { translateAuthError } from "@/lib/auth/translate-error";
 import type { BroadcastAudience, NewUserInput, Repository } from "./repository";
-import type { BroadcastMessage, Message, Tag, User, UserProfilePatch, UserType } from "./types";
+import type { BroadcastMessage, Message, MessageReplyInfo, Tag, User, UserProfilePatch, UserType } from "./types";
 import { idbGet, idbSet } from "./idb-cache";
 
 
@@ -80,6 +80,9 @@ type MessageRow = {
   created_at: string;
   read_by_admin: boolean;
   read_by_user: boolean;
+  reply_to?: string | null;
+  reply_body?: string | null;
+  reply_from?: string | null;
 };
 
 type BroadcastRow = {
@@ -144,6 +147,10 @@ function mapMessage(r: MessageRow): Message {
     createdAt: new Date(r.created_at).getTime(),
     readByAdmin: r.read_by_admin,
     readByUser: r.read_by_user,
+    replyTo:
+      r.reply_to && r.reply_body
+        ? { id: r.reply_to, body: r.reply_body, fromName: r.reply_from ?? "" }
+        : null,
   };
 }
 
@@ -1070,10 +1077,12 @@ class SupabaseRepository implements Repository {
     fromUserId,
     toUserId,
     body,
+    replyTo,
   }: {
     fromUserId: string;
     toUserId: string;
     body: string;
+    replyTo?: MessageReplyInfo;
   }): Message {
     const from = this.getUser(fromUserId);
     const fromStaff = this.isStaff(from);
@@ -1111,6 +1120,7 @@ class SupabaseRepository implements Repository {
       // o flag do destinatário.
       readByAdmin: toStaff ? false : fromStaff,
       readByUser: toStaff ? true : !fromStaff,
+      replyTo: replyTo ?? null,
     };
 
     this.messages.push(msg);
@@ -1125,7 +1135,7 @@ class SupabaseRepository implements Repository {
         // o envio ainda é aceito.
         const { data: sessionData } = await supabase.auth.getSession();
         const result = await sendChatMessage({
-          data: { toUserId, body, accessToken: sessionData.session?.access_token },
+          data: { toUserId, body, replyTo, accessToken: sessionData.session?.access_token },
         });
         const real = this.mapMessage(result.row as MessageRow);
         // Ajusta o desvio do relógio local em relação ao servidor (o horário

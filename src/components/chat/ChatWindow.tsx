@@ -15,10 +15,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Camera, CheckCheck, Clock, Copy, Download, ExternalLink, FileText, ImagePlus, Mic, Paperclip, Pencil, Send, Square, Trash2, X } from "lucide-react";
+import { Camera, CheckCheck, Clock, Copy, Download, ExternalLink, FileText, ImagePlus, Mic, Paperclip, Pencil, Reply, Send, Square, Trash2, X } from "lucide-react";
 import { AdminEditUserDialog } from "@/components/admin/AdminEditUserDialog";
 import { AudioMessage } from "./AudioMessage";
-import { isAudioBody, isFileBody, isImageBody, mediaSrc, parseFileBody } from "@/lib/chat/messagePreview";
+import { isAudioBody, isFileBody, isImageBody, mediaSrc, messagePreview, parseFileBody } from "@/lib/chat/messagePreview";
 import { getExternalUserEmailsForIds } from "@/lib/data/emails.functions";
 import { reportEmailsUnavailable, EMAIL_UNAVAILABLE_LABEL } from "@/lib/data/emails-client";
 import { formatPhone } from "@/lib/format-phone";
@@ -106,6 +106,7 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
   const [slashIndex, setSlashIndex] = useState(0);
   const [slashDismissed, setSlashDismissed] = useState(false);
   const { items: quickReplies } = useQuickReplies();
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
@@ -131,6 +132,7 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
   // Feedback visual ao trocar de conversa
   useEffect(() => {
     setSwitching(true);
+    setReplyTo(null);
     const t = window.setTimeout(() => setSwitching(false), 250);
     return () => clearTimeout(t);
   }, [conversationId]);
@@ -247,17 +249,27 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
     return () => clearInterval(id);
   }, [recording]);
 
-  function sendBody(body: string) {
+  function sendBody(body: string, quote?: Message | null) {
     const trimmed = body.trim();
     if (!trimmed) return;
-    repo.sendMessage({ fromUserId: me.id, toUserId: other.id, body: trimmed });
+    // Snapshot da mensagem citada: sobrevive à exclusão da original.
+    const replyTo = quote
+      ? {
+          id: quote.id,
+          body: quote.body,
+          fromName: isOwnMessage(quote, me.id, other.id) ? me.name : other.name,
+        }
+      : undefined;
+    repo.sendMessage({ fromUserId: me.id, toUserId: other.id, body: trimmed, replyTo });
   }
 
   function sendText() {
     const current = text;
     if (!current.trim()) return;
     setText("");
-    sendBody(current);
+    const quote = replyTo;
+    setReplyTo(null);
+    sendBody(current, quote);
   }
 
   // Mensagens rápidas: digitar "/" no início do campo abre a lista de títulos.
@@ -557,8 +569,10 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
               return (
                 <div
                   key={m.id}
+                  id={`msg-${m.id}`}
                   className={`group flex items-center gap-2 ${mine ? "justify-end" : "justify-start"}`}
                 >
+                  {mine && <ReplyMessageButton onClick={() => setReplyTo(m)} />}
                   {isAdmin && mine && (
                     <DeleteMessageButton onConfirm={() => repo.deleteMessage(m.id)} />
                   )}
@@ -576,6 +590,35 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
                     >
                       {mine ? me.name : other.name}
                     </div>
+                    {m.replyTo && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const el = document.getElementById(`msg-${m.replyTo?.id}`);
+                          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }}
+                        className={`block w-full text-left mb-1 rounded-md border-l-4 px-2 py-1 overflow-hidden ${
+                          mine
+                            ? "border-primary-foreground/70 bg-primary-foreground/10"
+                            : "border-primary/70 bg-muted"
+                        } ${isMedia ? "mx-2 mt-0.5" : ""}`}
+                      >
+                        <div
+                          className={`text-[11px] font-semibold truncate ${
+                            mine ? "text-primary-foreground/90" : "text-primary"
+                          }`}
+                        >
+                          {m.replyTo.fromName || "Mensagem"}
+                        </div>
+                        <div
+                          className={`text-xs line-clamp-2 ${
+                            mine ? "text-primary-foreground/80" : "text-muted-foreground"
+                          }`}
+                        >
+                          {messagePreview(m.replyTo.body)}
+                        </div>
+                      </button>
+                    )}
                     {isImage ? (
                       <ImagePreview src={mediaSrc(m.body)} />
                     ) : isAudio ? (
@@ -598,6 +641,7 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
 
                     </div>
                   </div>
+                  {!mine && <ReplyMessageButton onClick={() => setReplyTo(m)} />}
                   {isAdmin && !mine && (
                     <DeleteMessageButton onConfirm={() => repo.deleteMessage(m.id)} />
                   )}
@@ -609,7 +653,7 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
       </div>
 
       <form
-        className="border-t bg-card p-3 flex gap-2 items-center"
+        className="border-t bg-card p-3 flex flex-col gap-2"
         onSubmit={(e) => {
           e.preventDefault();
           sendText();
@@ -648,6 +692,30 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
         />
 
 
+        {replyTo && !recording && (
+          <div className="flex items-start gap-2 rounded-lg border-l-4 border-primary bg-muted/60 px-2 py-1.5">
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-semibold text-primary truncate">
+                {isOwnMessage(replyTo, me.id, other.id) ? me.name : other.name}
+              </div>
+              <div className="text-xs text-muted-foreground line-clamp-2">
+                {messagePreview(replyTo.body)}
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 shrink-0"
+              onClick={() => setReplyTo(null)}
+              aria-label="Cancelar resposta"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
+        <div className="flex gap-2 items-center">
         {recording ? (
           <>
             <div className="flex-1 flex items-center gap-2 text-sm">
@@ -782,8 +850,22 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
             </Button>
           </>
         )}
+        </div>
       </form>
     </div>
+  );
+}
+
+function ReplyMessageButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition text-muted-foreground hover:text-foreground p-1"
+      aria-label="Responder mensagem"
+    >
+      <Reply className="h-3.5 w-3.5" />
+    </button>
   );
 }
 
