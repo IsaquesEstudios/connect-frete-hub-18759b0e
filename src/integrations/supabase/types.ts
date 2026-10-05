@@ -84,6 +84,9 @@ export type Database = {
           id: string
           read_by_admin: boolean
           read_by_user: boolean
+          reply_body: string | null
+          reply_from: string | null
+          reply_to: string | null
           to_user_id: string
         }
         Insert: {
@@ -94,6 +97,9 @@ export type Database = {
           id?: string
           read_by_admin?: boolean
           read_by_user?: boolean
+          reply_body?: string | null
+          reply_from?: string | null
+          reply_to?: string | null
           to_user_id: string
         }
         Update: {
@@ -104,6 +110,9 @@ export type Database = {
           id?: string
           read_by_admin?: boolean
           read_by_user?: boolean
+          reply_body?: string | null
+          reply_from?: string | null
+          reply_to?: string | null
           to_user_id?: string
         }
         Relationships: [
@@ -112,6 +121,13 @@ export type Database = {
             columns: ["from_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
           {
