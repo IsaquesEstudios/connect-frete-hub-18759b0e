@@ -1,4 +1,4 @@
-import type { BroadcastMessage, Message, Tag, User, UserProfilePatch, UserType } from "./types";
+import type { BroadcastMessage, Message, MessageReplyInfo, Tag, User, UserProfilePatch, UserType } from "./types";
 
 export type BroadcastAudience =
   | { kind: "all" }

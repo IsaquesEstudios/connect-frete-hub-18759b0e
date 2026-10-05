@@ -80,6 +80,9 @@ type MessageRow = {
   created_at: string;
   read_by_admin: boolean;
   read_by_user: boolean;
+  reply_to?: string | null;
+  reply_body?: string | null;
+  reply_from?: string | null;
 };
 
 type BroadcastRow = {
@@ -144,6 +147,10 @@ function mapMessage(r: MessageRow): Message {
     createdAt: new Date(r.created_at).getTime(),
     readByAdmin: r.read_by_admin,
     readByUser: r.read_by_user,
+    replyTo:
+      r.reply_to && r.reply_body
+        ? { id: r.reply_to, body: r.reply_body, fromName: r.reply_from ?? "" }
+        : null,
   };
 }
 
@@ -1070,10 +1077,12 @@ class SupabaseRepository implements Repository {
     fromUserId,
     toUserId,
     body,
+    replyTo,
   }: {
     fromUserId: string;
     toUserId: string;
     body: string;
+    replyTo?: MessageReplyInfo;
   }): Message {
     const from = this.getUser(fromUserId);
     const fromStaff = this.isStaff(from);
