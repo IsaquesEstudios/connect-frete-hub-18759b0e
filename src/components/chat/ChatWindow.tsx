@@ -15,10 +15,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Camera, CheckCheck, Clock, Copy, Download, ExternalLink, FileText, ImagePlus, Mic, Paperclip, Pencil, Send, Square, Trash2, X } from "lucide-react";
+import { Camera, CheckCheck, Clock, Copy, Download, ExternalLink, FileText, ImagePlus, Mic, Paperclip, Pencil, Reply, Send, Square, Trash2, X } from "lucide-react";
 import { AdminEditUserDialog } from "@/components/admin/AdminEditUserDialog";
 import { AudioMessage } from "./AudioMessage";
-import { isAudioBody, isFileBody, isImageBody, mediaSrc, parseFileBody } from "@/lib/chat/messagePreview";
+import { isAudioBody, isFileBody, isImageBody, mediaSrc, messagePreview, parseFileBody } from "@/lib/chat/messagePreview";
 import { getExternalUserEmailsForIds } from "@/lib/data/emails.functions";
 import { reportEmailsUnavailable, EMAIL_UNAVAILABLE_LABEL } from "@/lib/data/emails-client";
 import { formatPhone } from "@/lib/format-phone";
@@ -106,6 +106,7 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
   const [slashIndex, setSlashIndex] = useState(0);
   const [slashDismissed, setSlashDismissed] = useState(false);
   const { items: quickReplies } = useQuickReplies();
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
@@ -131,6 +132,7 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
   // Feedback visual ao trocar de conversa
   useEffect(() => {
     setSwitching(true);
+    setReplyTo(null);
     const t = window.setTimeout(() => setSwitching(false), 250);
     return () => clearTimeout(t);
   }, [conversationId]);
@@ -247,17 +249,27 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
     return () => clearInterval(id);
   }, [recording]);
 
-  function sendBody(body: string) {
+  function sendBody(body: string, quote?: Message | null) {
     const trimmed = body.trim();
     if (!trimmed) return;
-    repo.sendMessage({ fromUserId: me.id, toUserId: other.id, body: trimmed });
+    // Snapshot da mensagem citada: sobrevive à exclusão da original.
+    const replyTo = quote
+      ? {
+          id: quote.id,
+          body: quote.body,
+          fromName: isOwnMessage(quote, me.id, other.id) ? me.name : other.name,
+        }
+      : undefined;
+    repo.sendMessage({ fromUserId: me.id, toUserId: other.id, body: trimmed, replyTo });
   }
 
   function sendText() {
     const current = text;
     if (!current.trim()) return;
     setText("");
-    sendBody(current);
+    const quote = replyTo;
+    setReplyTo(null);
+    sendBody(current, quote);
   }
 
   // Mensagens rápidas: digitar "/" no início do campo abre a lista de títulos.
