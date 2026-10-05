@@ -498,37 +498,31 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
             )}
             {other.type === "empresa" && (
               <>
-
-                {other.nomeFantasia && (
-                  <ProfileField label="Nome fantasia" value={other.nomeFantasia} />
-                )}
-                {other.perfilEmpresa && (
-                  <ProfileField label="Perfil da empresa" value={other.perfilEmpresa} />
-                )}
+                <ProfileField label="Nome fantasia" value={other.nomeFantasia || "Não informado"} />
+                <ProfileField
+                  label="Perfil da empresa"
+                  value={perfilLabel(other) || other.perfilEmpresa || "Não informado"}
+                />
+                <ProfileField
+                  label="Site / Rede social"
+                  value={other.siteRedeSocial || "Não informado"}
+                />
+              </>
+            )}
+            {other.type === "motorista" && (
+              <>
+                <ProfileField label="Placa" value={other.placa || "Não informado"} />
+                <ProfileField label="Tipo de veículo" value={other.tipoVeiculo || "Não informado"} />
+                <ProfileField label="Tipo de carroceria" value={other.carroceria || "Não informado"} />
+                <ProfileField label="Peso suportado (kg)" value={other.peso || "Não informado"} />
+                {other.rntrc && <ProfileField label="RNTRC" value={other.rntrc} />}
                 {other.siteRedeSocial && (
                   <ProfileField label="Site / Rede social" value={other.siteRedeSocial} />
                 )}
               </>
             )}
-            {other.type === "motorista" && (
-              <>
-                <ProfileField label="Placa" value={other.placa} />
-                {other.tipoVeiculo && (
-                  <ProfileField label="Tipo de veículo" value={other.tipoVeiculo} />
-                )}
-                {other.carroceria && (
-                  <ProfileField label="Tipo de carroceria" value={other.carroceria} />
-                )}
-                {other.peso && <ProfileField label="Peso suportado (kg)" value={other.peso} />}
-                {other.rntrc && <ProfileField label="RNTRC" value={other.rntrc} />}
-              </>
-            )}
-            {(other.cidade || other.estado) && (
-              <ProfileField
-                label="Localização"
-                value={[other.cidade, other.estado].filter(Boolean).join(" - ")}
-              />
-            )}
+            <ProfileField label="Cidade" value={other.cidade || "Não informado"} />
+            <ProfileField label="Estado" value={other.estado || "Não informado"} />
             {other.createdAt > 0 && (
               <ProfileField
                 label="Conta criada em"
