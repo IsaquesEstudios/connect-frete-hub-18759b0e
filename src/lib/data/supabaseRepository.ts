@@ -147,10 +147,11 @@ function mapMessage(r: MessageRow): Message {
     createdAt: new Date(r.created_at).getTime(),
     readByAdmin: r.read_by_admin,
     readByUser: r.read_by_user,
-    replyTo:
-      r.reply_to && r.reply_body
-        ? { id: r.reply_to, body: r.reply_body, fromName: r.reply_from ?? "" }
-        : null,
+    // O snapshot (reply_body/reply_from) sobrevive à exclusão da original —
+    // reply_to é zerado no banco (ON DELETE SET NULL), mas a citação continua.
+    replyTo: r.reply_body
+      ? { id: r.reply_to ?? "", body: r.reply_body, fromName: r.reply_from ?? "" }
+      : null,
   };
 }
 
