@@ -15,13 +15,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Camera, CheckCheck, Clock, Download, ExternalLink, FileText, ImagePlus, Mic, Paperclip, Pencil, Send, Square, Trash2, X } from "lucide-react";
+import { Camera, CheckCheck, Clock, Copy, Download, ExternalLink, FileText, ImagePlus, Mic, Paperclip, Pencil, Send, Square, Trash2, X } from "lucide-react";
 import { AdminEditUserDialog } from "@/components/admin/AdminEditUserDialog";
 import { AudioMessage } from "./AudioMessage";
 import { isAudioBody, isFileBody, isImageBody, mediaSrc, parseFileBody } from "@/lib/chat/messagePreview";
 import { getExternalUserEmailsForIds } from "@/lib/data/emails.functions";
 import { reportEmailsUnavailable, EMAIL_UNAVAILABLE_LABEL } from "@/lib/data/emails-client";
 import { formatPhone } from "@/lib/format-phone";
+import { toast } from "sonner";
+import { userDetailFields, userDetailsText } from "@/lib/user-details";
 import { optimizeImage } from "@/lib/media/optimize";
 import { uploadMedia } from "@/lib/media/upload";
 import { Badge } from "@/components/ui/badge";
@@ -485,55 +487,33 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
           </Badge>
           </div>
           <div className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 text-sm">
-            <ProfileField label="Tipo" value={other.type} />
-            <ProfileField
-              label="Email"
-              value={otherEmailLoading ? "Carregando email..." : otherEmail || "Não informado"}
-            />
-            {other.whatsapp && <ProfileField label="WhatsApp" value={formatPhone(other.whatsapp)} />}
-            {other.cpf && <ProfileField label="CPF" value={other.cpf} />}
-            {other.cnpj && <ProfileField label="CNPJ" value={other.cnpj} />}
-            {!other.cpf && !other.cnpj && (
-              <ProfileField label="CPF / CNPJ" value="Não informado" />
-            )}
-            {other.type === "empresa" && (
-              <>
-                <ProfileField label="Nome fantasia" value={other.nomeFantasia || "Não informado"} />
-                <ProfileField
-                  label="Perfil da empresa"
-                  value={perfilLabel(other) || other.perfilEmpresa || "Não informado"}
-                />
-                <ProfileField
-                  label="Site / Rede social"
-                  value={other.siteRedeSocial || "Não informado"}
-                />
-              </>
-            )}
-            {other.type === "motorista" && (
-              <>
-                <ProfileField label="Placa" value={other.placa || "Não informado"} />
-                <ProfileField label="Tipo de veículo" value={other.tipoVeiculo || "Não informado"} />
-                <ProfileField label="Tipo de carroceria" value={other.carroceria || "Não informado"} />
-                <ProfileField label="Peso suportado (kg)" value={other.peso || "Não informado"} />
-                {other.rntrc && <ProfileField label="RNTRC" value={other.rntrc} />}
-                {other.siteRedeSocial && (
-                  <ProfileField label="Site / Rede social" value={other.siteRedeSocial} />
-                )}
-              </>
-            )}
-            <ProfileField label="Cidade" value={other.cidade || "Não informado"} />
-            <ProfileField label="Estado" value={other.estado || "Não informado"} />
-            {other.createdAt > 0 && (
-              <ProfileField
-                label="Conta criada em"
-                value={new Date(other.createdAt).toLocaleString("pt-BR")}
-              />
-            )}
+            {userDetailFields(
+              other,
+              otherEmailLoading ? "Carregando email..." : otherEmail || undefined,
+            ).map((f) => (
+              <ProfileField key={f.label} label={f.label} value={f.value} />
+            ))}
           </div>
           {viewer === "admin" && other.type !== "admin" && (
-            <div className="shrink-0 border-t pt-3">
+            <div className="shrink-0 flex flex-wrap gap-2 border-t pt-3">
               <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
                 <Pencil className="h-4 w-4 mr-1" /> Editar dados
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(
+                      userDetailsText(other, otherEmail || undefined),
+                    );
+                    toast.success("Informações copiadas.");
+                  } catch {
+                    toast.error("Não foi possível copiar.");
+                  }
+                }}
+              >
+                <Copy className="h-4 w-4 mr-1" /> Copiar informações
               </Button>
             </div>
           )}

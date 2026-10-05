@@ -36,6 +36,7 @@ import { homeFor } from "@/lib/auth/session";
 import { useAuth } from "@/lib/auth/useAuth";
 import { useRepoVersion, useEphemeralVersion } from "@/lib/hooks/useRepo";
 import { formatPhone } from "@/lib/format-phone";
+import { userDetailsText } from "@/lib/user-details";
 import { AdminEditUserDialog } from "@/components/admin/AdminEditUserDialog";
 import { TagBadges } from "@/components/chat/TagBadges";
 import { setExternalUserActive } from "@/lib/data/admin-users.functions";
@@ -159,24 +160,15 @@ function UsuariosPage() {
   };
 
   const copyUser = async (u: User) => {
-    const doc = (u as { cnpj?: string }).cnpj || (u as { cpf?: string }).cpf || "";
-    const cidade = [u.cidade, u.estado].filter(Boolean).join(" / ");
-    const parts = [
-      `Tipo: ${typeLabel(resolveDisplayType(u))}`,
-      `Nome: ${u.name}`,
-      `Código: ${u.number}`,
-      u.whatsapp && `WhatsApp: ${formatPhone(u.whatsapp)}`,
-      (u.email || emails[u.id]) && `Email: ${u.email || emails[u.id]}`,
-      doc && `CPF/CNPJ: ${doc}`,
-      cidade && `Cidade/UF: ${cidade}`,
-      u.createdAt && `Cadastro: ${formatDateTime(u.createdAt)}`,
-      repo.isOnline(u.id)
-        ? "Status: online agora"
-        : `Status: ${u.active === false ? "bloqueado" : formatDateTime(repo.getLastSeen(u.id))}`,
+    const status = repo.isOnline(u.id)
+      ? "Status: online agora"
+      : `Último acesso: ${u.active === false ? "bloqueado" : formatDateTime(repo.getLastSeen(u.id))}`;
+    const text = userDetailsText(u, u.email || emails[u.id], [
+      status,
       `Etiquetas: ${tagsFor(u).map((t) => t.label).join(", ") || "—"}`,
-    ].filter(Boolean);
+    ]);
     try {
-      await navigator.clipboard.writeText(parts.join("\n"));
+      await navigator.clipboard.writeText(text);
       toast.success("Usuário copiado.");
     } catch {
       toast.error("Não foi possível copiar.");
