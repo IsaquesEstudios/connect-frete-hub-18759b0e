@@ -1,3 +1,4 @@
+import type { ErrorRouteComponent } from "@tanstack/react-router";
 import { Outlet, createFileRoute, useNavigate, useLocation, useRouter, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { toast } from "sonner";
@@ -67,7 +68,7 @@ function AppNotFoundComponent() {
 export const Route = createFileRoute("/_app")({
   ssr: false,
   component: AppGate,
-  errorComponent: AppErrorComponent,
+  errorComponent: AppErrorComponent as unknown as ErrorRouteComponent,
   notFoundComponent: AppNotFoundComponent,
 });
 
