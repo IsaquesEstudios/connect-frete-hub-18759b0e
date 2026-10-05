@@ -641,6 +641,7 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
 
                     </div>
                   </div>
+                  {!mine && <ReplyMessageButton onClick={() => setReplyTo(m)} />}
                   {isAdmin && !mine && (
                     <DeleteMessageButton onConfirm={() => repo.deleteMessage(m.id)} />
                   )}
@@ -652,7 +653,7 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
       </div>
 
       <form
-        className="border-t bg-card p-3 flex gap-2 items-center"
+        className="border-t bg-card p-3 flex flex-col gap-2"
         onSubmit={(e) => {
           e.preventDefault();
           sendText();
@@ -691,6 +692,30 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
         />
 
 
+        {replyTo && !recording && (
+          <div className="flex items-start gap-2 rounded-lg border-l-4 border-primary bg-muted/60 px-2 py-1.5">
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-semibold text-primary truncate">
+                {isOwnMessage(replyTo, me.id, other.id) ? me.name : other.name}
+              </div>
+              <div className="text-xs text-muted-foreground line-clamp-2">
+                {messagePreview(replyTo.body)}
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 shrink-0"
+              onClick={() => setReplyTo(null)}
+              aria-label="Cancelar resposta"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
+        <div className="flex gap-2 items-center">
         {recording ? (
           <>
             <div className="flex-1 flex items-center gap-2 text-sm">
