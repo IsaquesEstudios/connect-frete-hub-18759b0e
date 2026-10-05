@@ -569,8 +569,10 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
               return (
                 <div
                   key={m.id}
+                  id={`msg-${m.id}`}
                   className={`group flex items-center gap-2 ${mine ? "justify-end" : "justify-start"}`}
                 >
+                  {mine && <ReplyMessageButton onClick={() => setReplyTo(m)} />}
                   {isAdmin && mine && (
                     <DeleteMessageButton onConfirm={() => repo.deleteMessage(m.id)} />
                   )}
@@ -588,6 +590,35 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
                     >
                       {mine ? me.name : other.name}
                     </div>
+                    {m.replyTo && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const el = document.getElementById(`msg-${m.replyTo?.id}`);
+                          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }}
+                        className={`block w-full text-left mb-1 rounded-md border-l-4 px-2 py-1 overflow-hidden ${
+                          mine
+                            ? "border-primary-foreground/70 bg-primary-foreground/10"
+                            : "border-primary/70 bg-muted"
+                        } ${isMedia ? "mx-2 mt-0.5" : ""}`}
+                      >
+                        <div
+                          className={`text-[11px] font-semibold truncate ${
+                            mine ? "text-primary-foreground/90" : "text-primary"
+                          }`}
+                        >
+                          {m.replyTo.fromName || "Mensagem"}
+                        </div>
+                        <div
+                          className={`text-xs line-clamp-2 ${
+                            mine ? "text-primary-foreground/80" : "text-muted-foreground"
+                          }`}
+                        >
+                          {messagePreview(m.replyTo.body)}
+                        </div>
+                      </button>
+                    )}
                     {isImage ? (
                       <ImagePreview src={mediaSrc(m.body)} />
                     ) : isAudio ? (
