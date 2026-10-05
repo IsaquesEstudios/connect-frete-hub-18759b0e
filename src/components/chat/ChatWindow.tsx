@@ -850,8 +850,22 @@ export function ChatWindow({ me, other, viewer, sharedInbox }: Props) {
             </Button>
           </>
         )}
+        </div>
       </form>
     </div>
+  );
+}
+
+function ReplyMessageButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition text-muted-foreground hover:text-foreground p-1"
+      aria-label="Responder mensagem"
+    >
+      <Reply className="h-3.5 w-3.5" />
+    </button>
   );
 }
 
