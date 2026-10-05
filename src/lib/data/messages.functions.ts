@@ -232,6 +232,36 @@ export const sendChatMessage = createServerFn({ method: "POST" })
 
     const fromStaff = isStaff(from);
     const toStaff = isStaff(to);
+
+    // A citação só é aceita se a mensagem respondida pertence a esta conversa.
+    let replyToPayload: { reply_to: string; reply_body: string; reply_from: string } | undefined;
+    if (data.replyTo) {
+      const convId = messageConversationId(from, to);
+      const targetRes = await fetch(
+        `${EXT_SUPABASE_URL}/rest/v1/messages?id=eq.${encodeURIComponent(data.replyTo.id)}&select=conversation_id,from_user_id,to_user_id&limit=1`,
+        { headers: apiHeaders(serviceKey) },
+      );
+      if (targetRes.ok) {
+        const targets = (await targetRes.json()) as {
+          conversation_id: string;
+          from_user_id: string;
+          to_user_id: string;
+        }[];
+        const target = targets[0];
+        const sameConversation =
+          target &&
+          (target.conversation_id === convId ||
+            [target.from_user_id, target.to_user_id].sort().join("__") === convId);
+        if (sameConversation) {
+          replyToPayload = {
+            reply_to: data.replyTo.id,
+            reply_body: data.replyTo.body,
+            reply_from: data.replyTo.fromName,
+          };
+        }
+      }
+    }
+
     const insertRes = await fetch(`${EXT_SUPABASE_URL}/rest/v1/messages`, {
       method: "POST",
       headers: {
@@ -249,6 +279,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         // destinatário.
         read_by_admin: toStaff ? false : fromStaff,
         read_by_user: toStaff ? true : !fromStaff,
+        ...(replyToPayload ?? {}),
       }),
     });
 
