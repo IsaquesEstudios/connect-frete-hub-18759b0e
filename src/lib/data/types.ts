@@ -67,6 +67,13 @@ export type UserProfilePatch = Partial<{
 }>;
 
 
+export interface MessageReplyInfo {
+  id: string;
+  body: string;
+  /** Nome exibido do autor da mensagem citada (foto no momento do envio). */
+  fromName: string;
+}
+
 export interface Message {
   id: string;
   conversationId: string; // = the non-admin user's number (EMP-0001 / MOT-0001)
@@ -76,6 +83,8 @@ export interface Message {
   createdAt: number;
   readByAdmin?: boolean;
   readByUser?: boolean;
+  /** Mensagem citada (resposta), se houver. Guarda um snapshot para sobreviver à exclusão da original. */
+  replyTo?: MessageReplyInfo | null;
 }
 
 export interface Tag {

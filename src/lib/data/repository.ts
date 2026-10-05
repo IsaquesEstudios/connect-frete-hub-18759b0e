@@ -29,7 +29,7 @@ export interface Repository {
   loadMoreConversations?(reset?: boolean): Promise<void>;
   getHistoryState?(otherUserId: string): { loading: boolean; hasMore: boolean; loaded: boolean };
   loadConversationHistory?(otherUserId: string, meId: string, older?: boolean): Promise<void>;
-  sendMessage(input: { fromUserId: string; toUserId: string; body: string }): Message;
+  sendMessage(input: { fromUserId: string; toUserId: string; body: string; replyTo?: MessageReplyInfo }): Message;
   deleteMessage(id: string): void;
   deleteConversation(conversationId: string): void;
   markConversationRead(conversationId: string, viewer: "admin" | "user", options?: { staffInbox?: boolean }): void;
