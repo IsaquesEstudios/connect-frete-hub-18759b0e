@@ -24,6 +24,11 @@ export function AppSidebar({ user }: { user: User }) {
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
   const isMobile = useIsMobile();
   const home = homeFor(user);
+  const { setOpenMobile } = useSidebar();
+  // No celular o menu é uma gaveta: fecha ao tocar num item para não bloquear a tela.
+  const closeMobile = () => {
+    if (isMobile) setOpenMobile(false);
+  };
 
   const items = [
     { title: "Início", url: home, icon: Home },
@@ -59,7 +64,7 @@ export function AppSidebar({ user }: { user: User }) {
                     size={isMobile ? "lg" : "default"}
                     className={isMobile ? "text-base" : undefined}
                   >
-                    <Link to={item.url as "/admin"}>
+                    <Link to={item.url as "/admin"} onClick={closeMobile}>
                       <item.icon className={ICON_CLASS} />
                       <span>{item.title}</span>
                     </Link>
@@ -80,7 +85,7 @@ export function AppSidebar({ user }: { user: User }) {
               size={isMobile ? "lg" : "default"}
               className={isMobile ? "text-base" : undefined}
             >
-              <Link to="/perfil">
+              <Link to="/perfil" onClick={closeMobile}>
                 <UserIcon className={ICON_CLASS} />
                 <span>Perfil</span>
               </Link>
@@ -90,6 +95,7 @@ export function AppSidebar({ user }: { user: User }) {
             <SidebarMenuButton
               tooltip="Sair"
               onClick={async () => {
+                closeMobile();
                 await logout();
                 navigate({ to: "/auth" });
               }}
