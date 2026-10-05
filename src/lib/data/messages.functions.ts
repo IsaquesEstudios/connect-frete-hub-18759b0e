@@ -19,6 +19,9 @@ type MessageForClient = {
   created_at: string;
   read_by_admin: boolean;
   read_by_user: boolean;
+  reply_to?: string | null;
+  reply_body?: string | null;
+  reply_from?: string | null;
 };
 
 const CANONICAL_ADMIN_NUMBER = "ADM-0001";
@@ -190,6 +193,13 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       .object({
         toUserId: z.string().uuid(),
         body: z.string().trim().min(1, "Mensagem vazia."),
+        replyTo: z
+          .object({
+            id: z.string().uuid(),
+            body: z.string().max(20000),
+            fromName: z.string().max(200).default(""),
+          })
+          .optional(),
         accessToken: z.string().optional(),
       })
       .parse(data),
