@@ -683,6 +683,9 @@ class SupabaseRepository implements Repository {
                 this.messages[tempIdx] = { ...m, conversationId: prev.conversationId, fromUserId: prev.fromUserId };
               } else {
                 this.messages.push(m);
+                if (this.authUserId && m.fromUserId !== this.authUserId) {
+                  void import("@/lib/chat/notificationSound").then((s) => s.playNotificationSound());
+                }
               }
             }
             // If the message references a user we haven't loaded yet
