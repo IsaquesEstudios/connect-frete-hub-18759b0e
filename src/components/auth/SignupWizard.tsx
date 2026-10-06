@@ -98,7 +98,7 @@ export function SignupWizard({
 
 
   const isEmpresa = data.kind === "empresa";
-  const totalSteps = isEmpresa ? 3 : 5;
+  const totalSteps = isEmpresa ? 4 : 5;
 
   const update = <K extends keyof WizardData>(k: K, v: WizardData[K]) =>
     setData((d) => ({ ...d, [k]: v }));
@@ -132,6 +132,13 @@ export function SignupWizard({
       if (step === 3) {
         if (!data.estado) return "Selecione o estado.";
         if (!data.cidade) return "Selecione a cidade.";
+        return null;
+      }
+      if (step === 4) {
+        if (!data.tipoVeiculo) return "Selecione o tipo de veículo.";
+        if (!data.carroceria) return "Selecione o tipo de carroceria.";
+        if (data.peso.replace(/\D/g, "").length === 0) return "Informe o peso (kg).";
+        if (data.placa.trim().length < 5) return "Informe a placa do veículo (mín. 5 caracteres).";
         return null;
       }
       return null;
@@ -196,8 +203,8 @@ export function SignupWizard({
     try {
       const pesoDigits = data.peso.replace(/\D/g, "");
       const pesoFinal = pesoDigits ? `${Number(pesoDigits).toLocaleString("pt-BR")} kg` : undefined;
-      const carroceriaFinal = !isEmpresa && data.carroceria ? data.carroceria : undefined;
-      const tipoVeiculoFinal = !isEmpresa && data.tipoVeiculo ? data.tipoVeiculo : undefined;
+      const carroceriaFinal = data.carroceria ? data.carroceria : undefined;
+      const tipoVeiculoFinal = data.tipoVeiculo ? data.tipoVeiculo : undefined;
 
       const u = await signup({
         email: data.email,
@@ -212,7 +219,7 @@ export function SignupWizard({
         fotoUrl: data.fotoUrl || undefined,
         cidade: data.cidade || undefined,
         estado: data.estado || undefined,
-        placa: !isEmpresa ? data.placa : undefined,
+        placa: data.placa || undefined,
         tipoVeiculo: tipoVeiculoFinal,
         carroceria: carroceriaFinal,
         peso: pesoFinal,
@@ -285,6 +292,13 @@ export function SignupWizard({
       {isEmpresa && step === 1 && <StepBasicEmpresa data={data} update={update} />}
       {isEmpresa && step === 2 && <StepDetalhesEmpresa data={data} update={update} />}
       {isEmpresa && step === 3 && <StepLocalByEstado data={data} update={update} />}
+      {isEmpresa && step === 4 && (
+        <div className="space-y-6">
+          <StepTipoVeiculo data={data} update={update} />
+          <StepCarroceria data={data} update={update} />
+          <StepPlaca data={data} update={update} />
+        </div>
+      )}
 
 
       {!isEmpresa && step === 1 && <StepBasic data={data} update={update} />}
