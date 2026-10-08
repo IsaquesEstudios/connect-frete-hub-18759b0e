@@ -349,35 +349,20 @@ function UsuariosPage() {
 
 
   const exportCsv = async () => {
-    const header = [
-      "Nome",
-      "Telefone",
-      "Tipo",
-      "Cidade",
-      "Estado",
-      "Email",
-      "CPF/CNPJ",
-      "Código",
-      "Data de cadastro",
-      "Último login",
-      "Status",
-      "Etiquetas",
-    ];
-    const rows = filtered.map((u) => {
-      const doc = (u as { cnpj?: string }).cnpj || (u as { cpf?: string }).cpf || "";
+    const perUser = filtered.map((u) => ({
+      u,
+      fields: userDetailFields(u, u.email || emails[u.id]),
+    }));
+    const header: string[] = [];
+    for (const { fields } of perUser)
+      for (const f of fields) if (!header.includes(f.label)) header.push(f.label);
+    header.push("Último login", "Etiquetas");
+    const rows = perUser.map(({ u, fields }) => {
+      const map = new Map(fields.map((f) => [f.label, f.value]));
       const last = repo.getLastSeen(u.id);
       return [
-        u.name,
-        u.whatsapp ? formatPhone(u.whatsapp) : "",
-        typeLabel(resolveDisplayType(u)),
-        u.cidade || "",
-        u.estado || "",
-        u.email || emails[u.id] || "",
-        doc,
-        u.number,
-        formatDateTime(u.createdAt),
+        ...header.slice(0, -2).map((h) => map.get(h) ?? ""),
         repo.isOnline(u.id) ? "online agora" : formatDateTime(last),
-        u.active === false ? "bloqueado" : "ativo",
         tagsFor(u).map((t) => t.label).join(", "),
       ];
     });
@@ -391,7 +376,6 @@ function UsuariosPage() {
     const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import("docx");
     const paras: InstanceType<typeof Paragraph>[] = [];
     for (const u of filtered) {
-      const doc = (u as { cnpj?: string }).cnpj || (u as { cpf?: string }).cpf || "—";
       const last = repo.getLastSeen(u.id);
       const labels = tagsFor(u).map((t) => t.label).join(", ");
       paras.push(
@@ -401,16 +385,12 @@ function UsuariosPage() {
             new TextRun({ text: `[${typeLabel(resolveDisplayType(u))}]` }),
           ],
         }),
-        new Paragraph(`  Código: ${u.number}`),
-        new Paragraph(`  Telefone: ${u.whatsapp ? formatPhone(u.whatsapp) : "—"}`),
-        new Paragraph(`  Email: ${u.email || emails[u.id] || "—"}`),
-        new Paragraph(`  CPF/CNPJ: ${doc}`),
-        new Paragraph(`  Cidade/UF: ${[u.cidade, u.estado].filter(Boolean).join(" / ") || "—"}`),
-        new Paragraph(`  Cadastro: ${formatDateTime(u.createdAt)}`),
+        ...userDetailFields(u, u.email || emails[u.id]).map(
+          (f) => new Paragraph(`  ${f.label}: ${f.value}`),
+        ),
         new Paragraph(
           `  Último login: ${repo.isOnline(u.id) ? "online agora" : formatDateTime(last)}`,
         ),
-        new Paragraph(`  Status: ${u.active === false ? "bloqueado" : "ativo"}`),
         new Paragraph(`  Etiquetas: ${labels || "—"}`),
         new Paragraph(""),
       );
