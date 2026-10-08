@@ -36,7 +36,7 @@ import { homeFor } from "@/lib/auth/session";
 import { useAuth } from "@/lib/auth/useAuth";
 import { useRepoVersion, useEphemeralVersion } from "@/lib/hooks/useRepo";
 import { formatPhone } from "@/lib/format-phone";
-import { userDetailsText } from "@/lib/user-details";
+import { userDetailFields, userDetailsText } from "@/lib/user-details";
 import { AdminEditUserDialog } from "@/components/admin/AdminEditUserDialog";
 import { TagBadges } from "@/components/chat/TagBadges";
 import { setExternalUserActive } from "@/lib/data/admin-users.functions";
