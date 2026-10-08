@@ -120,6 +120,10 @@ export function profileToUser(p: ProfileRow): User {
       nomeFantasia: p.nome_fantasia ?? undefined,
       perfilEmpresa: p.perfil_empresa ?? undefined,
       siteRedeSocial: p.site_rede_social ?? undefined,
+      placa: p.placa ?? undefined,
+      tipoVeiculo: p.tipo_veiculo ?? undefined,
+      carroceria: p.carroceria ?? undefined,
+      peso: p.peso ?? undefined,
     };
   if (p.type === "motorista")
     return {
