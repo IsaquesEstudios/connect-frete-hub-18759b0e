@@ -23,6 +23,10 @@ export interface EmpresaUser extends BaseUser {
   nomeFantasia?: string;
   perfilEmpresa?: string;
   siteRedeSocial?: string;
+  placa?: string;
+  tipoVeiculo?: string;
+  carroceria?: string;
+  peso?: string;
 }
 
 export interface MotoristaUser extends BaseUser {

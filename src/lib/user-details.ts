@@ -36,18 +36,15 @@ export function userDetailFields(u: User, email?: string): { label: string; valu
         label: "Perfil da empresa",
         value: x.perfilEmpresa ? PERFIL_EMPRESA[x.perfilEmpresa] || x.perfilEmpresa : NA,
       },
-      { label: "Site / Rede social", value: x.siteRedeSocial || NA },
     );
   }
-  if (u.type === "motorista") {
+  if (u.type === "empresa" || u.type === "motorista") {
     fields.push(
       { label: "Placa", value: x.placa || NA },
       { label: "Tipo de veículo", value: x.tipoVeiculo || NA },
       { label: "Tipo de carroceria", value: x.carroceria || NA },
       { label: "Peso suportado (kg)", value: x.peso || NA },
     );
-    if (x.rntrc) fields.push({ label: "RNTRC", value: x.rntrc });
-    if (x.siteRedeSocial) fields.push({ label: "Site / Rede social", value: x.siteRedeSocial });
   }
   fields.push(
     { label: "Cidade", value: u.cidade || NA },
