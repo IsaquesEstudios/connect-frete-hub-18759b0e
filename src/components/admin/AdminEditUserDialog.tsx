@@ -170,24 +170,21 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
       if (targetType === "empresa") {
         setIf("nomeFantasia", form.nomeFantasia);
         setIf("perfilEmpresa", perfil);
-        setIf("siteRedeSocial", form.siteRedeSocial);
       }
 
-      if (targetType === "motorista") {
+      if (targetType === "empresa" || targetType === "motorista") {
         const joinObs = (base: string, obs: string) => {
           const b = (base || "").trim();
           const o = (obs || "").trim();
           if (!b) return "";
           return o ? `${b} | Obs: ${o}` : b;
         };
-        setIf("cpf", form.cpf);
         setIf("placa", form.placa);
         setIf("tipoVeiculo", joinObs(form.tipoVeiculo, form.tipoVeiculoObs));
-        setIf("rntrc", form.rntrc);
         setIf("carroceria", joinObs(form.carroceria, form.carroceriaObs));
         setIf("peso", form.peso);
-        setIf("perfilEmpresa", perfil);
       }
+      if (targetType === "motorista") setIf("perfilEmpresa", perfil);
       await repo.updateUser(user.id, patch);
       if (active !== (user.active !== false)) {
         await setExternalUserActive({ data: { userId: user.id, active } });
@@ -265,25 +262,15 @@ export function AdminEditUserDialog({ user, open, onOpenChange, onSaved }: Props
             </Field>
 
             {user.type === "empresa" && (
-              <>
-                <Field label="Nome fantasia"><Input value={form.nomeFantasia || ""} onChange={(e) => set("nomeFantasia", e.target.value)} /></Field>
-
-                <Field label="Perfil">
-                  <PerfilSelect value={form.perfilEmpresa || ""} onChange={(v) => set("perfilEmpresa", v)} />
-                </Field>
-                <Field label="Site / Redes sociais" className="md:col-span-2">
-                  <Textarea value={form.siteRedeSocial || ""} onChange={(e) => set("siteRedeSocial", e.target.value)} />
-                </Field>
-              </>
+              <Field label="Nome fantasia"><Input value={form.nomeFantasia || ""} onChange={(e) => set("nomeFantasia", e.target.value)} /></Field>
             )}
 
-            {user.type === "motorista" && (
+            {(user.type === "empresa" || user.type === "motorista") && (
               <>
                 <Field label="Perfil">
                   <PerfilSelect value={form.perfilEmpresa || ""} onChange={(v) => set("perfilEmpresa", v)} />
                 </Field>
-                <Field label="Placa"><Input value={form.placa || ""} onChange={(e) => set("placa", e.target.value)} /></Field>
-                <Field label="RNTRC"><Input value={form.rntrc || ""} onChange={(e) => set("rntrc", e.target.value)} /></Field>
+                <Field label="Placa"><Input value={form.placa || ""} onChange={(e) => set("placa", e.target.value.toUpperCase())} /></Field>
                 <Field label="Tipo de veículo"><Input value={form.tipoVeiculo || ""} onChange={(e) => set("tipoVeiculo", e.target.value)} /></Field>
                 <Field label="Tipo de carroceria"><Input value={form.carroceria || ""} onChange={(e) => set("carroceria", e.target.value)} /></Field>
                 <Field label="Observação do veículo"><Input value={form.tipoVeiculoObs || ""} onChange={(e) => set("tipoVeiculoObs", e.target.value)} placeholder="Ex.: 2 eixos, ano 2020" /></Field>
