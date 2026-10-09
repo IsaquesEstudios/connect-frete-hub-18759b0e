@@ -1,4 +1,5 @@
-import soundAsset from "@/assets/notification.mp3.asset.json";
+// Arquivo em public/ para funcionar também no servidor próprio (Coolify).
+const soundAsset = { url: "/notification.mp3" };
 
 let audio: HTMLAudioElement | null = null;
 let lastPlayed = 0;
