@@ -1139,12 +1139,24 @@ class SupabaseRepository implements Repository {
     void (async () => {
       try {
         const { sendChatMessage } = await import("./messages.functions");
-        // Token explícito: se o header de autorização não chegar ao servidor,
-        // o envio ainda é aceito.
-        const { data: sessionData } = await supabase.auth.getSession();
-        const result = await sendChatMessage({
-          data: { toUserId, body, replyTo, accessToken: sessionData.session?.access_token },
-        });
+        // Falhas passageiras (rede lenta, servidor acordando) não podem fazer a
+        // mensagem sumir: tenta de novo algumas vezes antes de desistir.
+        let result: Awaited<ReturnType<typeof sendChatMessage>> | undefined;
+        let lastError: unknown;
+        for (let attempt = 0; attempt < 3 && !result; attempt++) {
+          if (attempt > 0) await new Promise((r) => setTimeout(r, 1000 * attempt));
+          try {
+            // Token explícito: se o header de autorização não chegar ao servidor,
+            // o envio ainda é aceito.
+            const { data: sessionData } = await supabase.auth.getSession();
+            result = await sendChatMessage({
+              data: { toUserId, body, replyTo, accessToken: sessionData.session?.access_token },
+            });
+          } catch (err) {
+            lastError = err;
+          }
+        }
+        if (!result) throw lastError;
         const real = this.mapMessage(result.row as MessageRow);
         // Ajusta o desvio do relógio local em relação ao servidor (o horário
         // do servidor é sempre >= o instante local do envio).
