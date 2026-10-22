@@ -1510,7 +1510,7 @@ class SupabaseRepository implements Repository {
       this.broadcastQueue = this.broadcastQueue.then(async () => {
         // Envia em lotes: mensagens longas para centenas de contatos geravam
         // uma requisição grande demais e o banco recusava o envio.
-        const CHUNK = 50;
+        const CHUNK = 25;
         let failed = 0;
         for (let i = 0; i < rows.length; i += CHUNK) {
           const chunk = rows.slice(i, i + CHUNK);
