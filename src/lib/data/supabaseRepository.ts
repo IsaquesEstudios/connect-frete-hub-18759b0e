@@ -1508,17 +1508,40 @@ class SupabaseRepository implements Repository {
       // Serializa os envios: várias imagens/textos disparados juntos chegam ao
       // banco na mesma ordem em que foram compostos.
       this.broadcastQueue = this.broadcastQueue.then(async () => {
-        const { data, error } = await supabase.from("messages").insert(rows).select("*");
-        if (error) {
-          reportError("Não foi possível enviar a mensagem em massa", error);
-          return;
-        }
-        if (data) {
-          for (const row of data as MessageRow[]) {
+        // Envia em lotes: mensagens longas para centenas de contatos geravam
+        // uma requisição grande demais e o banco recusava o envio.
+        const CHUNK = 50;
+        let failed = 0;
+        for (let i = 0; i < rows.length; i += CHUNK) {
+          const chunk = rows.slice(i, i + CHUNK);
+          let lastError: unknown = null;
+          let data: MessageRow[] | null = null;
+          for (let attempt = 0; attempt < 3; attempt++) {
+            if (attempt > 0) await new Promise((r) => setTimeout(r, 1000 * attempt));
+            const res = await supabase.from("messages").insert(chunk).select("*");
+            if (!res.error) {
+              data = (res.data ?? []) as MessageRow[];
+              lastError = null;
+              break;
+            }
+            lastError = res.error;
+          }
+          if (lastError) {
+            failed += chunk.length;
+            console.error("broadcast chunk failed", lastError);
+            continue;
+          }
+          for (const row of data ?? []) {
             const m = this.mapMessage(row);
             if (!this.messages.find((x) => x.id === m.id)) this.messages.push(m);
           }
           this.notify();
+        }
+        if (failed > 0) {
+          reportError(
+            `Não foi possível enviar a mensagem em massa para ${failed} de ${rows.length} contato(s)`,
+            new Error("broadcast"),
+          );
         }
       });
       void this.broadcastQueue.catch(() => undefined);
